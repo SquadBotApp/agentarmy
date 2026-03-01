@@ -1,0 +1,74 @@
+# Tool registry listing integrated models and metadata
+# Add or update entries here; adapters should reference 'id' and 'api_env_var'
+
+- id: openai-gpt
+  name: OpenAI GPT (chat/completions)
+  type: llm
+  capabilities:
+    - chat
+    - code
+    - summarization
+  api_env_var: OPENAI_API_KEY
+  endpoint: https://api.openai.com/v1/chat/completions
+  cost_per_1k_tokens_usd: 0.02
+  latency_ms_estimate: 200
+  reliability: high
+
+- id: anthropic-claude
+  name: Anthropic Claude
+  type: llm
+  capabilities:
+    - chat
+    - instruction
+  api_env_var: ANTHROPIC_API_KEY
+  endpoint: https://api.anthropic.com/v1/complete
+  cost_per_1k_tokens_usd: 0.03
+  latency_ms_estimate: 250
+  reliability: high
+
+- id: google-gemini
+  name: Google Gemini
+  type: llm
+  capabilities:
+    - chat
+    - reasoning
+  api_env_var: GOOGLE_API_KEY
+  endpoint: https://api.generativeai.google/v1beta2
+  cost_per_1k_tokens_usd: 0.025
+  latency_ms_estimate: 220
+  reliability: high
+
+- id: stable-diffusion
+  name: Stable Diffusion (image-gen)
+  type: image
+  capabilities:
+    - image-generation
+  api_env_var: STABLE_DIFFUSION_API_KEY
+  endpoint: https://api.stablediffusion.example/v1/generate
+  cost_per_image_usd: 0.08
+  latency_ms_estimate: 1500
+  reliability: medium
+
+- id: clip-vision
+  name: CLIP (image understanding)
+  type: vision
+  capabilities:
+    - image-embedding
+    - image-classification
+  api_env_var: CLIP_API_KEY
+  endpoint: https://api.clip.example/v1/encode
+  cost_per_1k_images_usd: 0.005
+  latency_ms_estimate: 300
+  reliability: medium
+
+- id: local-llama
+  name: Local LLaMA (ggml)
+  type: llm
+  capabilities:
+    - chat
+    - local-hosted
+  api_env_var: LOCAL_LLAMA_PATH
+  endpoint: file://{LOCAL_LLAMA_PATH}
+  cost_per_1k_tokens_usd: 0.0
+  latency_ms_estimate: 500
+  reliability: variable

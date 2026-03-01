@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { ZPECard } from "./components/ZPECard";
 import { RoutingCard } from "./components/RoutingCard";
 import { EventsCard } from "./components/EventsCard";
+import { OrchestrationPanel } from "./components/OrchestrationPanel";
 import { ThemeProvider, useThemeStore } from "./store/themeStore";
 import { AgentArmyState, initialAgentArmyState } from "./core/types";
 import { proposeCandidates, ScoredCandidate } from "./core/upgrade";
@@ -126,6 +127,39 @@ function InnerApp() {
   const [candidateModalOpen, setCandidateModalOpen] = useState(false);
   const [candidateList, setCandidateList] = useState<ScoredCandidate[] | null>(null);
   const [promptManagerOpen, setPromptManagerOpen] = useState(false);
+  const [orchestrationDecision, setOrchestrationDecision] = useState<any>(null);
+  const [orchestrationLoading, setOrchestrationLoading] = useState(false);
+
+  async function handleSubmitTask(taskGoal: string) {
+    setOrchestrationLoading(true);
+    try {
+      const token = useAgentStore.getState().token;
+      const response = await fetch('http://localhost:4000/orchestrate', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token || 'demo'}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          task: taskGoal,
+          priority: 'normal',
+          context: {},
+        }),
+      });
+      const result = await response.json();
+      if (result.result?.decision) {
+        setOrchestrationDecision(result.result.decision);
+        const item = { text: `📊 Orchestrated task: ${taskGoal}`, ts: new Date().toISOString() };
+        setEvents((e) => [item, ...e].slice(0, 50));
+      }
+    } catch (err) {
+      console.error('Orchestration error:', err);
+      const item = { text: `❌ Orchestration failed: ${err}`, ts: new Date().toISOString() };
+      setEvents((e) => [item, ...e].slice(0, 50));
+    } finally {
+      setOrchestrationLoading(false);
+    }
+  }
 
   function applyCandidate(s: AgentArmyState) {
     setPastCoreStates((p) => [...p, coreState]);
@@ -188,8 +222,7 @@ function InnerApp() {
 
       <main className="dashboard-grid">
         <ZPECard zpe={zpe} setZpe={setZpe} useWebGL={useWebGL} setUseWebGL={setUseWebGL} theme={theme} expanded={expanded} setExpanded={setExpanded} />
-        <WorkspaceCard />
-
+        <WorkspaceCard />        <OrchestrationPanel decision={orchestrationDecision} isLoading={orchestrationLoading} onSubmitTask={handleSubmitTask} />
         <button
           className={`card ${expanded === "gov" ? "expanded" : ""}`}
           type="button"

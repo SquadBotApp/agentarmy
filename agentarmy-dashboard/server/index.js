@@ -1,122 +1,38 @@
+// initialize tracing as early as possible
+require('./tracing');
+
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
-// `fetch` is available globally in Node 18+; no extra dependency needed
-
+const RouterAgent = require('./router_agent');
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// LLM configuration
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
-const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
-// list of enabled providers and simple stats for routing
-const enabledProviders = [];
-const providerStats = {};
-function recordProviderLatency(provider, latency) {
-  if (!providerStats[provider]) providerStats[provider] = {count:0,totalLatency:0};
-  providerStats[provider].count += 1;
-  providerStats[provider].totalLatency += latency;
-}
+// Initialize router agent with caching and intelligent routing
+const router = new RouterAgent();
 
-if (OPENAI_API_KEY) enabledProviders.push('openai');
-if (ANTHROPIC_API_KEY) enabledProviders.push('anthropic');
-// secret for JWT tokens
+// Configuration from environment
+const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
+const XAI_API_KEY = process.env.XAI_API_KEY || '';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 
-/**
- * Call OpenAI API with fallback for dev/testing.
- * In production, requires OPENAI_API_KEY env var.
- */
-async function callOpenAI(messages) {
-  if (!OPENAI_API_KEY) {
-    // Fallback: return mock response for development
-    const lastUserMsg = messages.filter(m => m.role === 'user').pop();
-    return {
-      content: `[Mock response] Processed: "${lastUserMsg?.content?.slice(0, 50) || 'N/A'}..."`,
-      model: 'mock',
-      usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 }
-    };
-  }
+// Build enabled providers list dynamically
+const enabledProviders = [];
+if (OPENAI_API_KEY) enabledProviders.push('openai');
+if (ANTHROPIC_API_KEY) enabledProviders.push('anthropic');
+if (GROQ_API_KEY) enabledProviders.push('groq');
+if (XAI_API_KEY) enabledProviders.push('xai');
+if (GEMINI_API_KEY) enabledProviders.push('gemini');
 
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: OPENAI_MODEL,
-        messages: messages,
-        temperature: 0.7,
-        max_tokens: 1000,
-      }),
-    });
+console.log(`[AgentArmy Server] Enabled providers: ${enabledProviders.join(', ') || 'mock'}`);
 
-    if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(`OpenAI API error: ${response.status} ${JSON.stringify(errData)}`);
-    }
-
-    const data = await response.json();
-    return {
-      content: data.choices[0]?.message?.content || '',
-      model: data.model,
-      usage: data.usage,
-    };
-  } catch (err) {
-    console.error('OpenAI call failed:', err);
-    throw err;
-  }
-}
-
-async function callAnthropic(messages) {
-  if (!ANTHROPIC_API_KEY) {
-    const lastUserMsg = messages.filter(m => m.role === 'user').pop();
-    return {
-      content: `[Mock Anthropic] ${lastUserMsg?.content || ''}`,
-      model: 'mock-anthropic',
-    };
-  }
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/complete', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-      },
-      body: JSON.stringify({
-        model: 'claude-2',
-        prompt: messages.map(m => `${m.role}: ${m.content}`).join('\n'),
-        max_tokens: 1000,
-      }),
-    });
-    if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(`Anthropic error: ${response.status} ${JSON.stringify(errData)}`);
-    }
-    const data = await response.json();
-    return {
-      content: data.completion || '',
-      model: data.model,
-    };
-  } catch (err) {
-    console.error('Anthropic call failed:', err);
-    throw err;
-  }
-}
-
-/**
- * POST /llm
- * Call LLM with given messages.
- * Expected body: { messages: LLMMessage[], model?: string }
- * Returns: { content: string, model: string }
- */
-// simple auth middleware
+// ============ Auth Middleware ============
 function authenticate(req, res, next) {
   const auth = req.headers.authorization || '';
   const token = auth.replace(/^Bearer\s+/i, '');
@@ -126,17 +42,18 @@ function authenticate(req, res, next) {
     req.user = payload;
     next();
   } catch (e) {
+    console.error('[Auth] JWT validation error:', e.message);
     return res.status(401).json({ error: 'invalid token' });
   }
 }
 
-// login route (demo only)
+// ============ Auth Routes ============
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
-  // simple hardcoded users
   const users = {
     admin: { password: 'admin', role: 'admin' },
     user: { password: 'user', role: 'user' },
+    demo: { password: 'demo', role: 'user' },
   };
   const user = users[username];
   if (!user || user.password !== password) {
@@ -146,6 +63,13 @@ app.post('/login', (req, res) => {
   res.json({ token, role: user.role });
 });
 
+app.post('/logout', authenticate, (req, res) => {
+  // Stateless JWT: no server-side session to clear.
+  // Client removes token from localStorage.
+  res.json({ ok: true });
+});
+
+// ============ LLM Routing ============
 app.post('/llm', authenticate, async (req, res) => {
   try {
     const { messages, model } = req.body;
@@ -153,88 +77,109 @@ app.post('/llm', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'messages array required' });
     }
 
-    // helper to dispatch to provider and record latency
-    async function callProvider(p) {
-      const start = Date.now();
-      try {
-        if (p === 'anthropic') {
-          const r = await callAnthropic(messages);
-          recordProviderLatency(p, Date.now() - start);
-          return r;
-        }
-        const r = await callOpenAI(messages);
-        recordProviderLatency(p, Date.now() - start);
-        return r;
-      } catch (e) {
-        recordProviderLatency(p, Date.now() - start);
-        throw e;
-      }
-    }
-
-    // if model==='all' or unspecified, return multi-results
-    if (!model || model === 'all') {
-      // compute best provider when unspecified
-      if (!model && enabledProviders.length > 1) {
-        // choose provider with lowest average latency
-        let best = enabledProviders[0];
-        let bestScore = Infinity;
-        for (const p of enabledProviders) {
-          const stats = providerStats[p];
-          if (stats && stats.count > 0) {
-            const avg = stats.totalLatency / stats.count;
-            if (avg < bestScore) {
-              bestScore = avg;
-              best = p;
-            }
-          }
-        }
-        try {
-          const r = await callProvider(best);
-          return res.json({ content: r.content, model: best });
-        } catch (e) {
-          // fallback to others
-          console.warn('fallback routing from', best, e.message);
-        }
-      }
-      const calls = enabledProviders.map(p => callProvider(p).catch(err => ({ content: `[Error:${err.message}]`, model: p })));
-      const results = await Promise.all(calls);
-      return res.json({ results });
-    }
-
-    // explicit provider requested
-    let result;
-    try {
-      result = await callProvider(model);
-    } catch (err) {
-      // fallback to another provider
-      const fallback = enabledProviders.find(p => p !== model);
-      if (fallback) result = await callProvider(fallback);
-      else throw err;
-    }
-    res.json({ content: result.content, model: model || result.model });
+    // Route to best provider, with caching and fallback
+    const result = await router.route(messages, model, enabledProviders);
+    
+    res.json({
+      content: result.content,
+      model: result.model || 'unknown',
+    });
   } catch (err) {
-    console.error('LLM endpoint error:', err);
+    console.error('[LLM] Error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Simple in-memory prompts store
+// ============ Routing Metrics ============
+app.get('/metrics', authenticate, (req, res) => {
+  const metrics = router.getMetrics();
+  res.json({
+    providers: enabledProviders,
+    stats: metrics.stats,
+    cacheSize: metrics.cache.keys.length,
+  });
+});
+
+// ============ Orchestration (Multi-Agent Brain) ============
+const { getOrchestrationClient } = require('./adapters/orchestration');
+
+app.post('/orchestrate', authenticate, async (req, res) => {
+  try {
+    const client = getOrchestrationClient(req.headers.authorization.replace(/^Bearer\s+/i, ''));
+
+    let jobResult;
+    const body = req.body || {};
+
+    // legacy form: {task, priority, context, modelPreferences}
+    if (body.task && typeof body.task === 'string') {
+      jobResult = await client.submitTask(body.task, {
+        priority: body.priority || 'normal',
+        context: body.context || {},
+        model_preferences: body.modelPreferences || {},
+      });
+    }
+    // advanced/orchestrator form: {job: {...}, state: {...}, previous_zpe: ...}
+    else if (body.job) {
+      jobResult = await client.submitTask(body);
+    } else {
+      return res.status(400).json({ error: 'invalid payload; expected task or job object' });
+    }
+
+    res.json(jobResult);
+  } catch (err) {
+    console.error('[Orchestration] Submit failed:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/orchestrate/jobs/:jobId', authenticate, async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const client = getOrchestrationClient(req.headers.authorization.replace(/^Bearer\s+/i, ''));
+    const jobResult = await client.getJobStatus(jobId);
+    res.json(jobResult);
+  } catch (err) {
+    console.error('[Orchestration] Get job failed:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/orchestrate/jobs', authenticate, async (req, res) => {
+  try {
+    const { status } = req.query;
+    const client = getOrchestrationClient(req.headers.authorization.replace(/^Bearer\s+/i, ''));
+    const jobs = await client.listJobs(status);
+    res.json(jobs);
+  } catch (err) {
+    console.error('[Orchestration] List jobs failed:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============ Prompts Management ============
 let prompts = [
-  { id: 'p-1', name: 'Conservative Governance', content: 'Prioritize safety. Request human confirmation for risky changes.', createdAt: new Date().toISOString(), author: 'system' },
-  { id: 'p-2', name: 'Concise Explanations', content: 'Provide short diffs and one-line rationale.', createdAt: new Date().toISOString(), author: 'system' },
+  { id: 'p-1', name: 'Conservative Governance', content: 'Prioritize safety and request human confirmation for risky changes.', createdAt: new Date().toISOString(), author: 'system' },
+  { id: 'p-2', name: 'Concise Explanations', content: 'Provide short, clear explanations with one-line rationale.', createdAt: new Date().toISOString(), author: 'system' },
 ];
 
 app.get('/prompts', authenticate, (req, res) => {
   res.json(prompts);
 });
 
-// Require admin role for POST (JWT-based RBAC)
 app.post('/prompts', authenticate, (req, res) => {
   if (req.user?.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
-  const { body } = req;
-  if (!Array.isArray(body)) return res.status(400).json({ error: 'expected array' });
-  prompts = body;
+  if (!Array.isArray(req.body)) return res.status(400).json({ error: 'expected array' });
+  prompts = req.body;
   res.json({ ok: true });
 });
 
-app.listen(4000, () => console.log('AgentArmy backend listening on http://localhost:4000 | LLM: ' + (OPENAI_API_KEY ? 'OpenAI' : 'mock')));
+// ============ Startup ============
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`\n🚀 AgentArmy API Server running at http://localhost:${PORT}`);
+  console.log(`   LLM providers: ${enabledProviders.length ? enabledProviders.join(', ') : 'mock (no keys configured)'}`);
+  console.log(`   Orchestration: ${process.env.ORCHESTRATION_SERVICE_URL || 'http://localhost:5000'}`);
+  console.log(`   Available endpoints: /login, /logout, /llm, /prompts, /metrics, /orchestrate\n`);
+});
+
+module.exports = app;
