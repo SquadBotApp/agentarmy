@@ -8,7 +8,7 @@ AgentArmy dashboard — React + TypeScript + AI workspace with self-evolving gov
 - ZPE-driven fractal visual with interactive sliders
 - AI-powered Taskade-style workspace (Rewrite, Summarize, Plan)
 - LLM integration with OpenAI backend (multi-model ready)
-- Physics-inspired scoring for model consensus
+- Physics-inspired scoring for model consensus (front-end supports multiple model names; server echoes the model field)
 - Prompt management with RBAC & audit trail
 - Candidate evolution loop with constitutional governance
 - UI RBAC enforcement + server-side validation
@@ -74,6 +74,18 @@ You can add a GitHub Actions badge for the `CI` workflow once you know your repo
 ```
 
 ## Developer notes
+
+The repository is ready to be pushed to your own remote if desired:
+
+```bash
+git remote add origin https://github.com/OWNER/REPO.git
+git branch -M main
+git push -u origin main
+```
+
+Replace `OWNER/REPO` with your GitHub path; ensure you have permission.
+
+
 
 - `src/App.tsx` contains the dashboard layout and interactive logic.
 - `src/FractalCanvas.tsx` implements a simple fractal-like canvas; it accepts `zpe` and `theme` props to drive visuals.

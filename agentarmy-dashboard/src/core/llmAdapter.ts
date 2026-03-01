@@ -16,12 +16,13 @@ export type LLMResponse = {
  */
 export async function callLLM(messages: LLMMessage[], model?: string): Promise<LLMResponse> {
   const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:4000";
+  // try to include token from localStorage
+  const token = localStorage.getItem('agent-token');
+  const headers: Record<string,string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   const res = await fetch(`${backendUrl}/llm`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-user-role": "user", // Can be overridden by app context
-    },
+    headers,
     body: JSON.stringify({ messages, model }),
   });
 

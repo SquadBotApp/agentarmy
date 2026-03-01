@@ -8,21 +8,23 @@ export type Prompt = {
 
 const STORAGE_KEY = 'agentarmy_prompts_v1';
 
-export function loadPrompts(): Prompt[] {
+export async function loadPrompts(): Promise<Prompt[]> {
   try {
     // If a backend is configured, fetch from backend — REACT_APP_BACKEND_URL
     const backend = (process.env as any).REACT_APP_BACKEND_URL;
     if (backend) {
-      // this is best-effort; fallback to localStorage
+      const token = localStorage.getItem('agent-token');
+      const headers: Record<string,string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
       try {
-        // attempt an async fetch but fall back to localStorage immediately
-        try { fetch(`${backend.replace(/\/$/, '')}/prompts`).then(r => r.json()).catch(() => {}); } catch {}
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') as Prompt[] || defaultPrompts();
-      } catch {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return defaultPrompts();
-        return JSON.parse(raw) as Prompt[];
-      }
+        const res = await fetch(`${backend.replace(/\/$/, '')}/prompts`, { headers });
+        if (res.ok) {
+          const json = await res.json();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(json));
+          return json;
+        }
+      } catch {}
+      // fall through to localStorage
     }
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultPrompts();

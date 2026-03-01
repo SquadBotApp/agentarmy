@@ -166,6 +166,23 @@ function InnerApp() {
             <button className="btn" onClick={evolveOnce}>Evolve</button>
             <button className="btn" onClick={revertLastEvolution} style={{marginLeft:8}}>Revert</button>
           </div>
+          <div style={{marginLeft:'auto'}}> 
+            {useAgentStore.getState().token ? (
+              <button className="btn" onClick={() => {
+                useAgentStore.getState().logout();
+                localStorage.removeItem('agent-token');
+              }}>Logout</button>
+            ) : (
+              <button className="btn" onClick={async () => {
+                const user = prompt('Username');
+                const pass = prompt('Password');
+                if (user && pass) {
+                  const success = await useAgentStore.getState().login(user, pass);
+                  if (!success) alert('login failed');
+                }
+              }}>Login</button>
+            )}
+          </div>
         </div>
       </header>
 
