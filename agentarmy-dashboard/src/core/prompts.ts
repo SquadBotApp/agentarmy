@@ -1,0 +1,64 @@
+export type Prompt = {
+  id: string;
+  name: string;
+  content: string;
+  createdAt: string;
+  author?: string;
+};
+
+const STORAGE_KEY = 'agentarmy_prompts_v1';
+
+export function loadPrompts(): Prompt[] {
+  try {
+    // If a backend is configured, fetch from backend — REACT_APP_BACKEND_URL
+    const backend = (process.env as any).REACT_APP_BACKEND_URL;
+    if (backend) {
+      // this is best-effort; fallback to localStorage
+      try {
+        // attempt an async fetch but fall back to localStorage immediately
+        try { fetch(`${backend.replace(/\/$/, '')}/prompts`).then(r => r.json()).catch(() => {}); } catch {}
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') as Prompt[] || defaultPrompts();
+      } catch {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return defaultPrompts();
+        return JSON.parse(raw) as Prompt[];
+      }
+    }
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultPrompts();
+    return JSON.parse(raw) as Prompt[];
+  } catch {
+    return defaultPrompts();
+  }
+}
+
+export function savePrompts(prompts: Prompt[]) {
+  try {
+    // If backend configured, attempt push; still persist locally as fallback
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(prompts));
+    const backend = (process.env as any).REACT_APP_BACKEND_URL;
+    if (backend) {
+      try { fetch(`${backend.replace(/\/$/, '')}/prompts`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(prompts) }); } catch {}
+    }
+  } catch {}
+}
+
+function defaultPrompts(): Prompt[] {
+  const now = new Date().toISOString();
+  return [
+    {
+      id: `p-${Date.now()}-1`,
+      name: 'Conservative Governance',
+      content: `You are an assistant for AgentArmy. Always prefer human review for actions that decrease safety or dramatically increase cost. If a proposed change fails safety checks, present reasons and request explicit human confirmation.`,
+      createdAt: now,
+      author: 'system',
+    },
+    {
+      id: `p-${Date.now()}-2`,
+      name: 'Concise Explanation',
+      content: `When summarizing candidate diffs, be concise: list changed metrics and tools, and provide one-line rationale for the change.`,
+      createdAt: now,
+      author: 'system',
+    },
+  ];
+}
