@@ -63,7 +63,7 @@ def _call_anthropic_direct(messages: List[LLMMessage], model: str) -> str:
 
     payload: Dict[str, Any] = {
         "model": model,
-        "max_tokens": 800,
+        "max_tokens": 2048,
         "messages": user_messages or [{"role": "user", "content": "Hello"}],
     }
     if system:
@@ -101,7 +101,7 @@ def call_llm(messages: List[LLMMessage], model: str = "claude-3-5-haiku-20241022
     prompt_text = " ".join(m.get("content", "") for m in messages)
     prompt_tokens = max(1, len(prompt_text) // 4)
     
-    with trace_llm_call(model=model, provider="anthropic", prompt_tokens=prompt_tokens, max_tokens=800) as span:
+    with trace_llm_call(model=model, provider="anthropic", prompt_tokens=prompt_tokens, max_tokens=2048) as span:
         try:
             result = _call_backend_llm(messages, model)
             if span:

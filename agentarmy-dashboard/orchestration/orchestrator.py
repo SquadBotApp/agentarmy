@@ -13,6 +13,9 @@ from tracing_utils import (
     add_span_event,
 )
 
+# Canonical ZPE weights — single source of truth from prompts module
+from agents.prompts import ZPE_WEIGHTS as _CANONICAL_ZPE_WEIGHTS
+
 # =========
 # Core models
 # =========
@@ -195,14 +198,7 @@ def zpe_score(
     Higher is better.
     """
     if weights is None:
-        weights = {
-            "usefulness": 0.25,
-            "coherence": 0.2,
-            "cost": 0.15,
-            "latency": 0.1,
-            "risk": 0.15,
-            "alignment": 0.15,
-        }
+        weights = dict(_CANONICAL_ZPE_WEIGHTS)
 
     # Invert cost/latency/risk (lower is better)
     cost_term = 1.0 - cost

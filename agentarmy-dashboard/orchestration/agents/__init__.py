@@ -5,6 +5,7 @@ from .executor_agent import ExecutorAgent
 from .critic_agent import CriticAgent
 from .governor_agent import GovernorAgent
 from .synthesizer_agent import SynthesizerAgent
+from .prompts import get_agent_prompt, ZPE_WEIGHTS, SENSITIVE_MARKERS
 
 __all__ = [
     "PlannerAgent",
@@ -12,4 +13,7 @@ __all__ = [
     "CriticAgent",
     "GovernorAgent",
     "SynthesizerAgent",
+    "get_agent_prompt",
+    "ZPE_WEIGHTS",
+    "SENSITIVE_MARKERS",
 ]

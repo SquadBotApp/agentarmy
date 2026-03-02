@@ -1,62 +1,39 @@
 import unittest
-import os
 import json
 import asyncio
 from unittest.mock import patch
-from aioresponses import aioresponses
+from . import planner_agent as _mod
 from .planner_agent import PlannerAgent
 
 class TestPlannerAgent(unittest.TestCase):
     def setUp(self):
-        # Patch environment variable to ensure the agent tries to make an API call
-        # instead of using the internal mock fallback.
-        self.env_patcher = patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"})
-        self.env_patcher.start()
         self.agent = PlannerAgent()
 
-    def tearDown(self):
-        self.env_patcher.stop()
-
     def test_execute_success(self):
+        mock_plan = {
+            "tasks": [
+                {"id": "t1", "description": "Step 1", "dependencies": [], "estimated_duration": 1}
+            ]
+        }
+
         async def run_test():
-            with aioresponses() as m:
-                mock_plan = {
-                    "tasks": [
-                        {"id": "t1", "description": "Step 1", "dependencies": [], "estimated_duration": 1}
-                    ]
-                }
-                m.post(
-                    "https://api.anthropic.com/v1/messages",
-                    payload={
-                        "content": [{"text": json.dumps(mock_plan)}],
-                        "usage": {"input_tokens": 10, "output_tokens": 50}
-                    },
-                    status=200
-                )
-                
+            with patch.object(_mod, "call_llm", return_value=json.dumps(mock_plan)):
                 task_spec = {"goal": "Create a plan"}
                 result = await self.agent.execute(task_spec)
                 
                 self.assertEqual(result["status"], "success")
                 self.assertEqual(result["plan"], mock_plan)
-                self.assertEqual(result["tokens_used"]["output_tokens"], 50)
 
         asyncio.run(run_test())
 
-    def test_execute_api_failure(self):
+    def test_execute_llm_failure(self):
         async def run_test():
-            with aioresponses() as m:
-                m.post(
-                    "https://api.anthropic.com/v1/messages",
-                    body="Server error",
-                    status=500
-                )
-                
+            with patch.object(_mod, "call_llm", side_effect=RuntimeError("LLM error")):
                 task_spec = {"goal": "Create a plan"}
                 result = await self.agent.execute(task_spec)
                 
                 self.assertEqual(result["status"], "failed")
-                self.assertIn("Anthropic API Error", result["error"])
+                self.assertIn("LLM error", result["error"])
 
         asyncio.run(run_test())
 
@@ -68,23 +45,24 @@ class TestPlannerAgent(unittest.TestCase):
 
         asyncio.run(run_test())
 
-    def test_mock_fallback_when_no_api_key(self):
-        # Temporarily remove the API key for this test
-        self.env_patcher.stop()
-        agent_no_key = PlannerAgent()
-        
+    def test_mock_fallback_produces_plan(self):
+        """When call_llm returns non-JSON (mock fallback), agent still returns a valid plan."""
         async def run_test():
-            task_spec = {"goal": "Test mock"}
-            result = await agent_no_key.execute(task_spec)
-            
-            self.assertEqual(result["status"], "success")
-            self.assertTrue(result.get("mock"))
-            self.assertIn("Analyze requirements for: Test mock", result["plan"]["tasks"][0]["description"])
+            with patch.object(_mod, "call_llm", return_value="[mock-llm] some text"):
+                task_spec = {"goal": "Test mock"}
+                result = await self.agent.execute(task_spec)
+                
+                self.assertEqual(result["status"], "success")
+                self.assertIn("tasks", result["plan"])
+                self.assertIn("Analyze requirements for: Test mock", result["plan"]["tasks"][0]["description"])
 
         asyncio.run(run_test())
-        
-        # Restore the patcher for other tests
-        self.env_patcher.start()
+
+    def test_uses_canonical_prompt(self):
+        """Verify the agent imports its prompt from prompts.py."""
+        from .prompts import get_agent_prompt
+        expected_prompt = get_agent_prompt("planner")
+        self.assertEqual(self.agent.system_prompt, expected_prompt)
 
 if __name__ == '__main__':
     unittest.main()
