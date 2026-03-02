@@ -1,0 +1,38 @@
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.1);
+  border-left-color: #007aff; /* fallback; overridden by inline style */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  box-sizing: border-box;
+}
+
+/* Full-container translucent overlay */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: inherit;
+  z-index: 10;
+}
+
+.visuallyHidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+}

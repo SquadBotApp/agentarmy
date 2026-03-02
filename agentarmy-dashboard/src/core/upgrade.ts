@@ -108,9 +108,7 @@ export function pickWithGovernance(candidates: AgentArmyState[], humanOverride =
 }
 
 function deepClone<T>(v: T): T {
-  // structuredClone is preferred when available; fall back to JSON for older runtimes
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  try { return (structuredClone as any)(v) as T; } catch { return JSON.parse(JSON.stringify(v)); }
+  return structuredClone(v);
 }
 
 function clamp(v: number, a: number, b: number) {
@@ -122,8 +120,8 @@ function describeDiff(a: AgentArmyState, b: AgentArmyState): string[] {
   if (a.activeUniverse !== b.activeUniverse) out.push(`universe: ${a.activeUniverse} → ${b.activeUniverse}`);
   const mkeys: (keyof AgentArmyState['metrics'])[] = ['zpe', 'resonance', 'safety', 'cost'];
   for (const k of mkeys) {
-    const av = Number((a.metrics as any)[k]);
-    const bv = Number((b.metrics as any)[k]);
+    const av = Number(a.metrics[k]);
+    const bv = Number(b.metrics[k]);
     if (Math.abs(av - bv) > 0.001) out.push(`${k}: ${av.toFixed(2)} → ${bv.toFixed(2)}`);
   }
   // tools diff

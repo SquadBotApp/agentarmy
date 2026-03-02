@@ -4,6 +4,15 @@ from typing import List, Dict, Any, Optional, Tuple
 import math
 import uuid
 
+# Import tracing utilities
+from tracing_utils import (
+    trace_orchestration_step,
+    trace_cpm_calculation,
+    trace_zpe_scoring,
+    set_span_attribute,
+    add_span_event,
+)
+
 # =========
 # Core models
 # =========
@@ -326,59 +335,73 @@ def alternates_top_k(alternatives: List[Dict[str, Any]], k: int = 5) -> List[Dic
 # =========
 
 def orchestrate(payload: Dict[str, Any]) -> Dict[str, Any]:
-    # support legacy "task" payload shape for backwards compatibility
-    if "job" not in payload and "task" in payload:
-        # payload may include priority/context etc; we ignore most for now
-        job_raw = {"goal": payload.get("task", "")}
-        state_raw = (payload.get("context") or {}).get("state", {})
-        previous_zpe = float((payload.get("context") or {}).get("previous_zpe", 0.5))
-    else:
-        job_raw = payload.get("job", {})
-        state_raw = payload.get("state", {})
-        previous_zpe = float(payload.get("previous_zpe", 0.5))
+    job_id = payload.get("job_id", str(uuid.uuid4())[:8])
+    
+    with trace_orchestration_step("orchestrate", job_id=job_id) as span:
+        # support legacy "task" payload shape for backwards compatibility
+        if "job" not in payload and "task" in payload:
+            # payload may include priority/context etc; we ignore most for now
+            job_raw = {"goal": payload.get("task", "")}
+            state_raw = (payload.get("context") or {}).get("state", {})
+            previous_zpe = float((payload.get("context") or {}).get("previous_zpe", 0.5))
+        else:
+            job_raw = payload.get("job", {})
+            state_raw = payload.get("state", {})
+            previous_zpe = float(payload.get("previous_zpe", 0.5))
 
-    job = JobSpec(
-        goal=job_raw.get("goal", ""),
-        constraints=job_raw.get("constraints", {}) or {},
-        deadline_hours=job_raw.get("deadline_hours"),
-        budget=job_raw.get("budget"),
-        risk_tolerance=float(job_raw.get("risk_tolerance", 0.5)),
-    )
-
-    tasks_dict: Dict[str, Task] = {}
-    for t in state_raw.get("tasks", []):
-        tid = t.get("id") or str(uuid.uuid4())
-        tasks_dict[tid] = Task(
-            id=tid,
-            name=t.get("name", tid),
-            description=t.get("description", ""),
-            duration=float(t.get("duration", 1.0)),
-            depends_on=t.get("depends_on", []) or [],
-            assigned_agent=t.get("assigned_agent"),
+        job = JobSpec(
+            goal=job_raw.get("goal", ""),
+            constraints=job_raw.get("constraints", {}) or {},
+            deadline_hours=job_raw.get("deadline_hours"),
+            budget=job_raw.get("budget"),
+            risk_tolerance=float(job_raw.get("risk_tolerance", 0.5)),
         )
 
-    agents = default_agents()
+        tasks_dict: Dict[str, Task] = {}
+        for t in state_raw.get("tasks", []):
+            tid = t.get("id") or str(uuid.uuid4())
+            tasks_dict[tid] = Task(
+                id=tid,
+                name=t.get("name", tid),
+                description=t.get("description", ""),
+                duration=float(t.get("duration", 1.0)),
+                depends_on=t.get("depends_on", []) or [],
+                assigned_agent=t.get("assigned_agent"),
+            )
 
-    state = OrchestrationState(
-        tasks=tasks_dict,
-        agents=agents,
-        history=state_raw.get("history", []) or [],
-    )
+        agents = default_agents()
 
-    decision = pick_next_task_and_agent(
-        state=state,
-        job=job,
-        previous_zpe=previous_zpe,
-    )
+        state = OrchestrationState(
+            tasks=tasks_dict,
+            agents=agents,
+            history=state_raw.get("history", []) or [],
+        )
+        
+        # Add task count to span
+        if span:
+            set_span_attribute(span, "orchestration.task_count", len(tasks_dict))
+            set_span_attribute(span, "orchestration.goal", job.goal[:200] if job.goal else "")
 
-    return {
-        "nextTaskId": decision.next_task_id,
-        "nextAgentId": decision.next_agent_id,
-        "zpe": {
-            "total": decision.zpe_score.total,
-            "components": decision.zpe_score.components,
-        },
-        "cpm": decision.cpm_summary,
-        "rationale": decision.rationale,
-        "alternatives": decision.alternatives,
-    }
+        decision = pick_next_task_and_agent(
+            state=state,
+            job=job,
+            previous_zpe=previous_zpe,
+        )
+        
+        # Add decision info to span
+        if span:
+            set_span_attribute(span, "orchestration.next_task", decision.next_task_id or "none")
+            set_span_attribute(span, "orchestration.next_agent", decision.next_agent_id or "none")
+            set_span_attribute(span, "orchestration.zpe_score", decision.zpe_score.total)
+
+        return {
+            "nextTaskId": decision.next_task_id,
+            "nextAgentId": decision.next_agent_id,
+            "zpe": {
+                "total": decision.zpe_score.total,
+                "components": decision.zpe_score.components,
+            },
+            "cpm": decision.cpm_summary,
+            "rationale": decision.rationale,
+            "alternatives": decision.alternatives,
+        }

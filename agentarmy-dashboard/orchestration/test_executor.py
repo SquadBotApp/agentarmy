@@ -1,27 +1,42 @@
+import unittest
 import asyncio
-import sys
-from pathlib import Path
+from executor import AgentExecutor
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+class MockAgent:
+    async def execute(self, task_spec):
+        await asyncio.sleep(0)  # satisfy async requirement
+        if task_spec.get("fail"):
+            raise RuntimeError("Agent crashed")
+        return {"response": "Task Done", "tokens": 150}
 
-from agents.base_agent import BaseAgent
-from executor import RegistryAgentExecutor
+class TestAgentExecutor(unittest.TestCase):
+    def setUp(self):
+        self.executor = AgentExecutor()
+        self.agent = MockAgent()
+        self.executor.register_agent("executor_agent", self.agent)
 
+    def test_execute_success(self):
+        async def run():
+            result = await self.executor.execute(
+                task_id="t1", 
+                agent_id="executor_agent", 
+                task_spec={"input": "do work"}
+            )
+            self.assertEqual(result["status"], "completed")
+            self.assertEqual(result["output"]["response"], "Task Done")
+            self.assertGreater(result["metrics"]["latency_ms"], 0)
+        asyncio.run(run())
 
-class FakeAgent(BaseAgent):
-    def __init__(self):
-        super().__init__(agent_id="executor", name="Fake", role="executor")
+    def test_execute_failure(self):
+        async def run():
+            result = await self.executor.execute(
+                task_id="t2", 
+                agent_id="executor_agent", 
+                task_spec={"fail": True}
+            )
+            self.assertEqual(result["status"], "failed")
+            self.assertIn("Agent crashed", result["error"])
+        asyncio.run(run())
 
-    async def execute(self, task_spec, context):
-        return {"content": f"done:{task_spec.get('name', 'task')}"}
-
-
-def test_registry_agent_executor_success():
-    exec_layer = RegistryAgentExecutor({"executor": FakeAgent()})
-    result = asyncio.run(exec_layer.execute("t1", "executor", {"name": "compile"}, {}))
-
-    assert result["status"] == "completed"
-    assert result["task_id"] == "t1"
-    assert result["agent_id"] == "executor"
-    assert "done:compile" in result["output"]["content"]
-    assert result["metrics"]["latency_ms"] >= 0
+if __name__ == '__main__':
+    unittest.main()

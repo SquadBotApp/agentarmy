@@ -90,6 +90,7 @@ export interface ActiveBoost {
 
 export interface UsageStats {
   tasksCompleted: number;
+  tasksToday: number;
   orchestrationsCompleted: number;
   toolsUsedInWorkflow: number;
   currentStreak: number;
@@ -371,53 +372,78 @@ export const MILESTONES: Record<MilestoneId, Milestone> = {
 // STORE STATE
 // =============================================================================
 
-interface PricingState {
+interface PricingDataState {
   // Wallet
   Qubits: number;
-  
+
   // Current plan
   currentTier: PlanTier;
   activeAddOns: AddOnId[];
   activeBoosts: ActiveBoost[];
-  
+
   // Usage tracking
   usage: UsageStats;
-  
+
   // Milestones
   completedMilestones: MilestoneId[];
-  
+
   // Suggestions
   suggestions: UpgradeSuggestion[];
-  
-  // Actions - Wallet
+}
+
+interface PricingActions {
+  // Wallet
   addQubits: (amount: number, reason?: string) => void;
   spendQubits: (amount: number, reason?: string) => boolean;
-  
-  // Actions - Upgrades
+
+  // Upgrades
   upgradeTier: (tier: PlanTier) => boolean;
   purchaseAddOn: (id: AddOnId) => boolean;
   activateBoost: (id: BoostId) => boolean;
-  
-  // Actions - Usage
+  consumeBoost: (id: BoostId) => void;
+
+  // Usage
   recordTask: () => void;
   recordOrchestration: () => void;
   recordToolsInWorkflow: (count: number) => void;
   updateStreak: () => void;
-  
-  // Actions - Milestones
+
+  // Milestones
   checkMilestones: () => MilestoneId[];
   claimMilestone: (id: MilestoneId) => boolean;
-  
-  // Actions - Suggestions
+
+  // Suggestions
   generateSuggestions: () => void;
-  
-  // Actions - Utilities
+
+  // Utilities
   canAfford: (cost: number) => boolean;
   getEffectiveLimits: () => TierConfig['limits'];
   hasAddOn: (id: AddOnId) => boolean;
   hasActiveBoost: (id: BoostId) => boolean;
   cleanExpiredBoosts: () => void;
 }
+
+export type PricingState = PricingDataState & PricingActions;
+
+const initialState: PricingDataState = {
+  Qubits: 10, // Start with 10 Qubits to explore
+  currentTier: 'scout',
+  activeAddOns: [],
+  activeBoosts: [],
+  usage: {
+    tasksCompleted: 0,
+    tasksToday: 0,
+    orchestrationsCompleted: 0,
+    toolsUsedInWorkflow: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    lastActiveDate: '',
+    totalQubitsEarned: 10,
+    totalQubitsSpent: 0,
+  },
+  completedMilestones: [],
+  suggestions: [],
+};
 
 // =============================================================================
 // STORE IMPLEMENTATION
@@ -426,24 +452,8 @@ interface PricingState {
 export const usePricingStore = create<PricingState>()(
   persist(
     (set, get) => ({
-      // Initial state
-      Qubits: 10, // Start with 10 Qubits to explore
-      currentTier: 'scout',
-      activeAddOns: [],
-      activeBoosts: [],
-      usage: {
-        tasksCompleted: 0,
-        orchestrationsCompleted: 0,
-        toolsUsedInWorkflow: 0,
-        currentStreak: 0,
-        longestStreak: 0,
-        lastActiveDate: '',
-        totalQubitsEarned: 10,
-        totalQubitsSpent: 0,
-      },
-      completedMilestones: [],
-      suggestions: [],
-
+      ...initialState,
+      
       // Wallet actions
       addQubits: (amount, reason) => {
         set((state) => ({
@@ -550,7 +560,7 @@ export const usePricingStore = create<PricingState>()(
         }
         
         const duration = boost.id === 'tool_swarm' 
-          ? 1 // Single use (1ms expiry)
+          ? 5 * 60 * 1000 // Single use (5 min expiry window)
           : 24 * 60 * 60 * 1000; // 24 hours
         
         set((state) => ({
@@ -563,15 +573,22 @@ export const usePricingStore = create<PricingState>()(
         return true;
       },
 
+      consumeBoost: (id) => {
+        set((state) => ({
+          activeBoosts: state.activeBoosts.filter((b) => b.id !== id),
+        }));
+      },
+
       // Usage tracking
       recordTask: () => {
+        get().updateStreak();
         set((state) => ({
           usage: {
             ...state.usage,
             tasksCompleted: state.usage.tasksCompleted + 1,
+            tasksToday: (state.usage.tasksToday || 0) + 1,
           },
         }));
-        get().updateStreak();
         get().checkMilestones();
       },
 
@@ -616,6 +633,7 @@ export const usePricingStore = create<PricingState>()(
             currentStreak: newStreak,
             longestStreak: Math.max(state.usage.longestStreak, newStreak),
             lastActiveDate: today,
+            tasksToday: state.usage.lastActiveDate === today ? state.usage.tasksToday : 0,
           },
         }));
         
@@ -625,49 +643,32 @@ export const usePricingStore = create<PricingState>()(
       // Milestone checking
       checkMilestones: () => {
         const { usage, completedMilestones, addQubits } = get();
-        const newMilestones: MilestoneId[] = [];
-        
-        // Task milestones
-        if (usage.tasksCompleted >= 50 && !completedMilestones.includes('tasks_50')) {
-          newMilestones.push('tasks_50');
-        }
-        if (usage.tasksCompleted >= 100 && !completedMilestones.includes('tasks_100')) {
-          newMilestones.push('tasks_100');
-        }
-        if (usage.tasksCompleted >= 500 && !completedMilestones.includes('tasks_500')) {
-          newMilestones.push('tasks_500');
-        }
-        
-        // Orchestration milestones
-        if (usage.orchestrationsCompleted >= 10 && !completedMilestones.includes('orchestrations_10')) {
-          newMilestones.push('orchestrations_10');
-        }
-        if (usage.orchestrationsCompleted >= 50 && !completedMilestones.includes('orchestrations_50')) {
-          newMilestones.push('orchestrations_50');
-        }
-        
-        // Tool workflow milestone
-        if (usage.toolsUsedInWorkflow >= 5 && !completedMilestones.includes('tools_5_workflow')) {
-          newMilestones.push('tools_5_workflow');
-        }
-        
-        // Streak milestones
-        if (usage.currentStreak >= 7 && !completedMilestones.includes('streak_7')) {
-          newMilestones.push('streak_7');
-        }
-        if (usage.currentStreak >= 30 && !completedMilestones.includes('streak_30')) {
-          newMilestones.push('streak_30');
-        }
-        
+
+        // Threshold table: [metric value, threshold, milestone id]
+        const checks: [number, number, MilestoneId][] = [
+          [usage.tasksCompleted, 50, 'tasks_50'],
+          [usage.tasksCompleted, 100, 'tasks_100'],
+          [usage.tasksCompleted, 500, 'tasks_500'],
+          [usage.orchestrationsCompleted, 10, 'orchestrations_10'],
+          [usage.orchestrationsCompleted, 50, 'orchestrations_50'],
+          [usage.toolsUsedInWorkflow, 5, 'tools_5_workflow'],
+          [usage.currentStreak, 7, 'streak_7'],
+          [usage.currentStreak, 30, 'streak_30'],
+        ];
+
+        const newMilestones = checks
+          .filter(([value, threshold, id]) => value >= threshold && !completedMilestones.includes(id))
+          .map(([, , id]) => id);
+
         // Auto-claim new milestones
-        newMilestones.forEach((id) => {
+        for (const id of newMilestones) {
           const milestone = MILESTONES[id];
           addQubits(milestone.QubitReward, `Milestone: ${milestone.name}`);
           set((state) => ({
             completedMilestones: [...state.completedMilestones, id],
           }));
-        });
-        
+        }
+
         return newMilestones;
       },
 
@@ -691,7 +692,7 @@ export const usePricingStore = create<PricingState>()(
         const suggestions: UpgradeSuggestion[] = [];
         
         // Suggest tier upgrade based on usage
-        if (currentTier === 'scout' && usage.tasksCompleted > 8) {
+        if (currentTier === 'scout' && usage.tasksToday > 8) {
           suggestions.push({
             type: 'tier',
             id: 'operator',
@@ -749,7 +750,8 @@ export const usePricingStore = create<PricingState>()(
         }
         
         // Sort by priority and limit
-        set({ suggestions: suggestions.sort((a, b) => a.priority - b.priority).slice(0, 3) });
+        const sorted = [...suggestions].sort((a, b) => a.priority - b.priority);
+        set({ suggestions: sorted.slice(0, 3) });
       },
 
       // Utilities

@@ -1,9 +1,11 @@
+
 // Router agent: intelligent provider selection, tool routing, and request caching
 const NodeCache = require('node-cache');
 
 const adapters = require('./adapters');
 const AdvancedToolSelector = require('./toolSelector');
 const MonitoringSystem = require('./monitoring');
+const { withRouterSpan, withLLMSpan, isTracingEnabled } = require('./tracing');
 
 class RouterAgent {
   constructor() {
@@ -156,38 +158,48 @@ class RouterAgent {
     }
   }
 
-  // Dispatch to correct adapter with monitoring
+  // Dispatch to correct adapter with monitoring and tracing
   async callProvider(provider, messages, stats) {
-    const start = Date.now();
-    let result;
-    try {
-      if (provider === 'openai') result = await adapters.callOpenAI(messages);
-      else if (provider === 'anthropic') result = await adapters.callAnthropic(messages);
-      else if (provider === 'groq') result = await adapters.callGroq(messages);
-      else if (provider === 'xai') result = await adapters.callXAI(messages);
-      else if (provider === 'gemini') result = await adapters.callGemini(messages);
-      else throw new Error(`Unknown provider: ${provider}`);
-      
-      const latencyMs = Date.now() - start;
-      if (!stats[provider]) stats[provider] = { count: 0, totalLatency: 0, failures: 0 };
-      stats[provider].count += 1;
-      stats[provider].totalLatency += latencyMs;
-      
-      // Log to monitoring system
-      const cost = this.calculateCost(provider, messages);
-      this.monitor.logLLMCall(provider, result.model || provider, latencyMs, cost, messages.length, true);
-      
-      return { ...result, model: provider };
-    } catch (err) {
-      const latencyMs = Date.now() - start;
-      if (!stats[provider]) stats[provider] = { count: 0, totalLatency: 0, failures: 0 };
-      stats[provider].failures = (stats[provider].failures || 0) + 1;
-      
-      // Log error
-      this.monitor.logLLMCall(provider, provider, latencyMs, 0, 0, false);
-      this.monitor.logError('LLM_CALL_FAILED', `${provider} failed: ${err.message}`, { provider });
-      throw err;
-    }
+    const model = provider; // Use provider as model name
+    
+    return withLLMSpan(provider, model, messages, async (span) => {
+      const start = Date.now();
+      let result;
+      try {
+        if (provider === 'openai') result = await adapters.callOpenAI(messages);
+        else if (provider === 'anthropic') result = await adapters.callAnthropic(messages);
+        else if (provider === 'groq') result = await adapters.callGroq(messages);
+        else if (provider === 'xai') result = await adapters.callXAI(messages);
+        else if (provider === 'gemini') result = await adapters.callGemini(messages);
+        else throw new Error(`Unknown provider: ${provider}`);
+        
+        const latencyMs = Date.now() - start;
+        if (!stats[provider]) stats[provider] = { count: 0, totalLatency: 0, failures: 0 };
+        stats[provider].count += 1;
+        stats[provider].totalLatency += latencyMs;
+        
+        // Add latency to span
+        if (span && span.setAttribute) {
+          span.setAttribute('gen_ai.latency_ms', latencyMs);
+          span.setAttribute('gen_ai.response.model', result.model || provider);
+        }
+        
+        // Log to monitoring system
+        const cost = this.calculateCost(provider, messages);
+        this.monitor.logLLMCall(provider, result.model || provider, latencyMs, cost, messages.length, true);
+        
+        return { ...result, model: provider };
+      } catch (err) {
+        const latencyMs = Date.now() - start;
+        if (!stats[provider]) stats[provider] = { count: 0, totalLatency: 0, failures: 0 };
+        stats[provider].failures = (stats[provider].failures || 0) + 1;
+        
+        // Log error
+        this.monitor.logLLMCall(provider, provider, latencyMs, 0, 0, false);
+        this.monitor.logError('LLM_CALL_FAILED', `${provider} failed: ${err.message}`, { provider });
+        throw err;
+      }
+    });
   }
 
   // Calculate cost for an LLM call

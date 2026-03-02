@@ -139,7 +139,7 @@ app.post('/orchestrate', authenticate, async (req, res) => {
 
     let jobResult;
     const body = req.body || {};
-    let goal = 'Unknown task';
+    let goal;
     let constraints = {};
     let riskTolerance = 0.5;
     let tasks = [];
@@ -162,9 +162,7 @@ app.post('/orchestrate', authenticate, async (req, res) => {
         context: enrichedContext,
         model_preferences: body.modelPreferences || {},
       });
-    }
-    // advanced/orchestrator form: {job: {...}, state: {...}, previous_zpe: ...}
-    else if (body.job) {
+    } else if (body.job) {
       goal = body.job.goal || 'Advanced orchestration task';
       constraints = body.job.constraints || {};
       riskTolerance = body.job.risk_tolerance || 0.5;
@@ -244,8 +242,8 @@ app.post('/orchestrate', authenticate, async (req, res) => {
         finishedAt: jobResult.completed_at || new Date().toISOString(),
       });
 
-    } catch (dbErr) {
-      console.error('[DB] Persistence error (non-fatal):', dbErr.message);
+    } catch (error_) {
+      console.error('[DB] Persistence error (non-fatal):', error_.message);
       // Continue - persistence failure shouldn't block orchestration
     }
 
@@ -290,7 +288,7 @@ app.get('/analytics/agents', authenticate, (req, res) => {
     res.json({
       agents: stats.map(agent => ({
         ...agent,
-        learned_weight: weights[agent.agent_id] || 1.0,
+        learned_weight: weights[agent.agent_id] || 1,
       })),
       last_updated: new Date().toISOString(),
     });
@@ -303,7 +301,7 @@ app.get('/analytics/agents', authenticate, (req, res) => {
 // Get recent decisions (for audit/debugging)
 app.get('/analytics/decisions', authenticate, (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 50;
+    const limit = Number.parseInt(req.query.limit) || 50;
     const decisions = db.decisions.getRecent(limit);
     res.json(decisions.map(d => ({
       ...d,

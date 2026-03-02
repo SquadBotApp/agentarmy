@@ -146,7 +146,7 @@ function InnerApp() {
   async function handleSubmitTask(taskGoal: string) {
     setOrchestrationLoading(true);
     try {
-      const token = useAgentStore.getState().token;
+      const { token } = useAgentStore.getState();
       const response = await fetch('http://localhost:4000/orchestrate', {
         method: 'POST',
         headers: {
@@ -326,10 +326,11 @@ function InnerApp() {
       )}
 
       {expanded && (
-        <dialog className="modal" open onClick={() => setExpanded(null)} onKeyDown={(e) => { if (e.key === 'Escape') setExpanded(null); }}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <dialog className="modal" open>
+          <div className="modal-content" role="none" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
             <h2>{expanded.toUpperCase()} Details</h2>
             <p>More detailed metrics will go here.</p>
+            <button type="button" onClick={() => setExpanded(null)} style={{ marginTop: '1rem' }}>Close</button>
           </div>
         </dialog>
       )}

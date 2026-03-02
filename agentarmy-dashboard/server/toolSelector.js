@@ -35,23 +35,15 @@ class AdvancedToolSelector {
    */
   generateEmbedding(text) {
     const normalized = text.toLowerCase();
-    const keywords = new Set();
-    toolRegistry.tools.forEach((tool) => {
-      tool.keywords.forEach((kw) => {
-        if (normalized.includes(kw)) keywords.add(kw);
-      });
-    });
 
     // Create vector based on keyword matches
-    const vector = toolRegistry.tools.map((tool) => {
+    return toolRegistry.tools.map((tool) => {
       let score = 0;
       tool.keywords.forEach((kw) => {
         if (normalized.includes(kw)) score += 1;
       });
       return score;
     });
-
-    return vector;
   }
 
   /**

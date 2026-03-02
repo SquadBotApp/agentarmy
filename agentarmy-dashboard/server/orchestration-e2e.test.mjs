@@ -4,10 +4,10 @@
  * 
  * Run this after starting the Python service:
  *   python app.py
- *   node orchestration-e2e.test.js
+ *   node orchestration-e2e.test.mjs
  */
 
-const axios = require('axios');
+import axios from 'axios';
 
 // The orchestration service URL
 const ORCHESTRATION_URL = process.env.ORCHESTRATION_SERVICE_URL || 'http://localhost:5000';
@@ -18,7 +18,7 @@ const tests = [];
 let passed = 0;
 let failed = 0;
 
-async function test(name, fn) {
+function test(name, fn) {
   tests.push({ name, fn });
 }
 
@@ -56,7 +56,7 @@ test('Health check returns enabled providers', async () => {
     throw new Error(`Expected healthy status, got ${response.data.status}`);
   }
   if (!Array.isArray(response.data.enabled_providers)) {
-    throw new Error('enabled_providers should be an array');
+    throw new TypeError('enabled_providers should be an array');
   }
 });
 
@@ -98,14 +98,14 @@ test('POST /orchestrate with orchestrator payload format', async () => {
             id: 't1',
             name: 'Research',
             description: 'Gather data',
-            duration: 2.0,
+            duration: 2,
             depends_on: [],
           },
           {
             id: 't2',
             name: 'Analyze',
             description: 'Process findings',
-            duration: 3.0,
+            duration: 3,
             depends_on: ['t1'],
           },
         ],
@@ -123,7 +123,7 @@ test('POST /orchestrate with orchestrator payload format', async () => {
     throw new Error('Expected result.decision in response');
   }
 
-  const decision = response.data.result.decision;
+  const { decision } = response.data.result;
   if (decision.nextTaskId !== 't1') {
     throw new Error(`Expected nextTaskId=t1, got ${decision.nextTaskId}`);
   }
@@ -168,22 +168,20 @@ test('Job polling returns correct status', async () => {
 // ============ Run tests ============
 
 // Test if service is reachable first
-(async () => {
-  try {
-    console.log(`Attempting to connect to ${ORCHESTRATION_URL}...\n`);
-    await axios.get(`${ORCHESTRATION_URL}/health`, {
-      headers: { 'Authorization': `Bearer ${TEST_TOKEN}` },
-      timeout: 5000,
-    });
-    console.log('✓ Service is reachable.\n');
-  } catch (e) {
-    console.error(`✗ Cannot connect to ${ORCHESTRATION_URL}`);
-    console.error(`  Error: ${e.message}`);
-    console.error('\nMake sure the Python service is running:');
-    console.error('  cd orchestration');
-    console.error('  python app.py\n');
-    process.exit(1);
-  }
+try {
+  console.log(`Attempting to connect to ${ORCHESTRATION_URL}...\n`);
+  await axios.get(`${ORCHESTRATION_URL}/health`, {
+    headers: { 'Authorization': `Bearer ${TEST_TOKEN}` },
+    timeout: 5000,
+  });
+  console.log('✓ Service is reachable.\n');
+} catch (e) {
+  console.error(`✗ Cannot connect to ${ORCHESTRATION_URL}`);
+  console.error(`  Error: ${e.message}`);
+  console.error('\nMake sure the Python service is running:');
+  console.error('  cd orchestration');
+  console.error('  python app.py\n');
+  process.exit(1);
+}
 
-  await runTests();
-})();
+await runTests();

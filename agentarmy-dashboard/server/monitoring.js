@@ -3,8 +3,8 @@
  * Tracks routing accuracy, performance metrics, costs, and audit events
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
 class MonitoringSystem {
   constructor(logDir = './logs') {
@@ -89,7 +89,7 @@ class MonitoringSystem {
       errorType,
       message,
       context,
-      stack: new Error().stack,
+      stack: new Error('Logged error capture').stack,
     };
 
     this.metrics.errors.push(entry);
@@ -184,8 +184,8 @@ class MonitoringSystem {
       recommendations: [],
     };
 
-    const successRate = parseFloat(summary.summary.successRate) || 0;
-    const avgLatency = parseFloat(summary.summary.avgLatencyMs) || 0;
+    const successRate = Number.parseFloat(summary.summary.successRate) || 0;
+    const avgLatency = Number.parseFloat(summary.summary.avgLatencyMs) || 0;
 
     if (successRate < 95) {
       report.recommendations.push('Improve error handling: success rate below 95%');

@@ -43,6 +43,7 @@ export interface Usage {
   peakConcurrency: number;
   totalOrchestrations: number;
   timeSavedMinutes: number;
+  lastActiveDate: string;
 }
 
 export interface UpgradeSuggestion {
@@ -206,6 +207,7 @@ export const usePlanStore = create<PlanState>()(
         peakConcurrency: 0,
         totalOrchestrations: 0,
         timeSavedMinutes: 0,
+        lastActiveDate: new Date().toISOString().split('T')[0],
       },
       monthlySpend: 0,
       suggestions: [],
@@ -253,13 +255,27 @@ export const usePlanStore = create<PlanState>()(
       },
 
       recordTaskUsage: () => {
-        set((state) => ({
-          usage: {
-            ...state.usage,
-            tasksToday: state.usage.tasksToday + 1,
-            tasksThisMonth: state.usage.tasksThisMonth + 1,
-          },
-        }));
+        set((state) => {
+          const today = new Date().toISOString().split('T')[0];
+          const lastDate = state.usage.lastActiveDate || today;
+          let { tasksToday, tasksThisMonth } = state.usage;
+
+          if (lastDate !== today) {
+            tasksToday = 0;
+            if (lastDate.substring(0, 7) !== today.substring(0, 7)) {
+              tasksThisMonth = 0;
+            }
+          }
+
+          return {
+            usage: {
+              ...state.usage,
+              tasksToday: tasksToday + 1,
+              tasksThisMonth: tasksThisMonth + 1,
+              lastActiveDate: today,
+            },
+          };
+        });
         get().refreshSuggestions();
       },
 

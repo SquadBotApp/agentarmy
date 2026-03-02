@@ -1,56 +1,72 @@
-from __future__ import annotations
-
+import asyncio
 import time
-from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Dict, Any, Optional
 
-from agents.base_agent import BaseAgent
+from agents import PlannerAgent, ExecutorAgent, CriticAgent, SynthesizerAgent
 
+class AgentExecutor:
+    """
+    Executes decisions returned by the orchestrator by dispatching to specific agents.
+    Implements the execution layer defined in Phase 2 of the Platform Roadmap.
+    """
+    
+    def __init__(self):
+        self._agents = {}
+        self.register_agent("planner", PlannerAgent())
+        self.register_agent("executor", ExecutorAgent())
+        self.register_agent("critic", CriticAgent())
+        self.register_agent("synthesizer", SynthesizerAgent())
 
-class AgentExecutor(ABC):
-    """Execute decisions returned by orchestrator."""
+    def register_agent(self, agent_id: str, agent_instance: Any):
+        """Register an agent instance to handle tasks."""
+        self._agents[agent_id] = agent_instance
 
-    @abstractmethod
-    async def execute(self, task_id: str, agent_id: str, task_spec: Dict[str, Any], context: Dict[str, Any] | None = None) -> Dict[str, Any]:
-        raise NotImplementedError
+    def _load_agent(self, agent_id: str):
+        """Load agent by ID. Raises ValueError if not found."""
+        if agent_id not in self._agents:
+            raise ValueError(f"Agent '{agent_id}' not found in registry.")
+        return self._agents[agent_id]
 
+    async def execute(self, task_id: str, agent_id: str, task_spec: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Run agent on task and return outcome with metrics.
+        """
+        start_time = time.time()
+        status = "pending"
+        result = None
+        error = None
 
-class RegistryAgentExecutor(AgentExecutor):
-    def __init__(self, agent_registry: Dict[str, BaseAgent]):
-        self._agent_registry = agent_registry
-
-    def _load_agent(self, agent_id: str) -> BaseAgent:
-        if agent_id not in self._agent_registry:
-            raise ValueError(f"Unknown agent_id '{agent_id}'")
-        return self._agent_registry[agent_id]
-
-    async def execute(self, task_id: str, agent_id: str, task_spec: Dict[str, Any], context: Dict[str, Any] | None = None) -> Dict[str, Any]:
-        started = time.perf_counter()
-        context = context or {}
         try:
             agent = self._load_agent(agent_id)
-            output = await agent.execute(task_spec=task_spec, context=context)
-            content = str(output.get("content", ""))
-            latency_ms = (time.perf_counter() - started) * 1000.0
-            return {
-                "task_id": task_id,
-                "agent_id": agent_id,
-                "status": "completed",
-                "output": output,
-                "metrics": {
-                    "latency_ms": round(latency_ms, 2),
-                    "tokens_estimate": max(1, len(content) // 4),
-                },
+            # Merge context into task_spec if provided
+            spec = task_spec | {"context": context} if context else task_spec
+            # Support both async and sync agents
+            if asyncio.iscoroutinefunction(agent.execute):
+                result = await agent.execute(spec)
+            else:
+                result = agent.execute(spec)
+            status = "completed"
+        except Exception as e:
+            status = "failed"
+            error = str(e)
+            
+        latency_ms = (time.time() - start_time) * 1000
+
+        return {
+            "task_id": task_id,
+            "agent_id": agent_id,
+            "status": status,
+            "output": result,
+            "error": error,
+            "metrics": {
+                "latency_ms": latency_ms,
+                # Assuming result contains token usage if successful
+                "tokens": result.get("tokens", 0) if isinstance(result, dict) else 0
             }
-        except Exception as exc:
-            latency_ms = (time.perf_counter() - started) * 1000.0
-            return {
-                "task_id": task_id,
-                "agent_id": agent_id,
-                "status": "failed",
-                "output": {"content": "", "error": str(exc)},
-                "metrics": {
-                    "latency_ms": round(latency_ms, 2),
-                    "tokens_estimate": 0,
-                },
-            }
+        }
+
+class RegistryAgentExecutor(AgentExecutor):
+    """Executor initialized with a specific set of agents."""
+    def __init__(self, agents: Dict[str, Any]):
+        super().__init__()
+        self._agents.update(agents)

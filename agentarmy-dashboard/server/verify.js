@@ -4,8 +4,8 @@
  * Run this to verify all components are properly configured
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
 console.log('\n🔍 AgentArmy Claude Haiku 4.5 Integration Verification\n');
 

@@ -207,7 +207,21 @@ async function handleAIAction(actionType: string, content: string) {
 
 ---
 
+
 ## 7. **Key Features**
+## 7. **Ecosystem Integration (The "Invincible" Layer)**
+
+### New Capabilities
+- **Universal Tool Registry**: Added support for 100+ external tools via 5 core integration nodes:
+  - `n8n_workflow_trigger` - Connects to external automation pipelines
+  - `perplexity_research` - Deep web research integration
+  - `media_generation` - DALL-E, Midjourney, Sora, ElevenLabs wrapper
+  - `external_agent_handoff` - Orchestrates CrewAI, AutoGen, and Swarm agents
+  - `safety_scan` - GPTZero and constitutional compliance checks
+
+---
+
+ ## 8. **Key Features**
 
 ### ✅ What's Working
 1. **Semantic tool discovery** - Finds tools by keywords
@@ -242,6 +256,7 @@ async function handleAIAction(actionType: string, content: string) {
 ---
 
 ## 8. **Architecture Diagram**
+ ## 9. **Architecture Diagram**
 
 ```
 User Query

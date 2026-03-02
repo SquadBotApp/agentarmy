@@ -80,7 +80,7 @@ class JobRunner:
 
     def _evaluate(self, task_spec: Dict[str, Any], execution: Dict[str, Any]) -> Dict[str, Any]:
         status = execution.get("status")
-        output = execution.get("output", {})
+        output = execution.get("output") or {}
         content = str(output.get("content", ""))
 
         if status != "completed":

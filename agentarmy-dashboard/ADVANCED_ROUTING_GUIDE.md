@@ -273,7 +273,7 @@ await selector.hierarchicalRoute('complex query...');
 Monitor provider costs and filter providers per task:
 
 ```javascript
-const { costs } = router.monitor.getSummary();
+const { summary } = router.monitor.getSummary();
 // If Groq is fastest for simple queries, use it:
 await router.route(messages, 'groq');
 // For complex tasks, use Haiku for balance

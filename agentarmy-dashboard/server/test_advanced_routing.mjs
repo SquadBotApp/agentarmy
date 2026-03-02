@@ -4,10 +4,10 @@
  * Demonstrates hybrid routing (semantic + LLM), hierarchical routing, and monitoring
  */
 
-require('dotenv').config();
-const RouterAgent = require('./router_agent');
-const AdvancedToolSelector = require('./toolSelector');
-const toolRegistry = require('./tools');
+import 'dotenv/config';
+import RouterAgent from './router_agent.js';
+import AdvancedToolSelector from './toolSelector.js';
+import toolRegistry from './tools.js';
 
 const router = new RouterAgent();
 const selector = new AdvancedToolSelector();
@@ -92,7 +92,7 @@ function displayToolsByCategory() {
 async function testMonitoring() {
   console.log('\n\n=== MONITORING SYSTEM TEST ===\n');
 
-  const monitor = router.monitor;
+  const { monitor } = router;
 
   // Simulate some events
   monitor.logLLMCall('anthropic', 'claude-3-haiku', 450, 0.008, 100, true);
@@ -117,32 +117,25 @@ async function testRoutingStats() {
   console.log(JSON.stringify(stats, null, 2));
 }
 
-async function main() {
-  console.log('🚀 AgentArmy Advanced Tool Selection & Routing Test Suite\n');
+console.log('🚀 AgentArmy Advanced Tool Selection & Routing Test Suite\n');
 
-  displayToolRegistry();
-  displayToolsByCategory();
+displayToolRegistry();
+displayToolsByCategory();
 
-  // Run tests
-  testSemanticRouting();
+// Run tests
+await testSemanticRouting();
 
-  // Only run LLM tests if API key is available
-  if (process.env.ANTHROPIC_API_KEY) {
-    await testLLMRouting();
-    await testHierarchicalRouting();
-  } else {
-    console.log(
-      '\n⚠️  Skipping LLM-based tests (ANTHROPIC_API_KEY not configured). Run with API key to test full routing.'
-    );
-  }
-
-  await testMonitoring();
-  testRoutingStats();
-
-  console.log('\n✅ Test suite complete!\n');
+// Only run LLM tests if API key is available
+if (process.env.ANTHROPIC_API_KEY) {
+  await testLLMRouting();
+  await testHierarchicalRouting();
+} else {
+  console.log(
+    '\n⚠️  Skipping LLM-based tests (ANTHROPIC_API_KEY not configured). Run with API key to test full routing.'
+  );
 }
 
-main().catch((err) => {
-  console.error('Fatal error:', err);
-  process.exit(1);
-});
+await testMonitoring();
+await testRoutingStats();
+
+console.log('\n✅ Test suite complete!\n');

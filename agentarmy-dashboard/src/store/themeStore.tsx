@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useReducer } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useReducer } from "react";
 
 type Theme = "quantum" | "forest" | "architecture";
 type State = { theme: Theme; preset: string };
@@ -24,7 +24,7 @@ const ThemeContext = createContext<{
   dispatch: React.Dispatch<Action>;
 } | null>(null);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const [state, dispatch] = useReducer(reducer, defaultState, () => {
     try {
       const raw = localStorage.getItem(KEY);
@@ -40,7 +40,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [state]);
 
-  return <ThemeContext.Provider value={{ state, dispatch }}>{children}</ThemeContext.Provider>;
+  const value = useMemo(() => ({ state, dispatch }), [state, dispatch]);
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export function useThemeStore() {

@@ -8,6 +8,7 @@ import { useUnifiedAgentStore, ModuleType } from '../store/unifiedAgentStore';
 import { usePulseStore, startDemoPulse } from '../store/pulseStore';
 import { CoreHex } from './CoreHex';
 import { AgentModal } from './AgentModal';
+import { Spinner } from './Spinner';
 import styles from './Honeycomb.module.css';
 
 // Module configuration
@@ -58,11 +59,10 @@ export const HoneycombLayout: React.FC = () => {
 
   // Start demo pulse on mount for visual feedback
   useEffect(() => {
-    const cleanup = startDemoPulse();
-    return cleanup;
+    return startDemoPulse();
   }, []);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!inputValue.trim() || core.status === 'thinking' || core.status === 'executing') return;
     
@@ -104,7 +104,7 @@ export const HoneycombLayout: React.FC = () => {
             className={styles.submitButton}
             disabled={isProcessing || !inputValue.trim()}
           >
-            {isProcessing ? <div className={styles.spinner} /> : 'Execute'}
+            {isProcessing ? <Spinner size={24} thickness={2} variant="gold" /> : 'Execute'}
           </button>
         </form>
       </div>
@@ -168,7 +168,8 @@ export const HoneycombLayout: React.FC = () => {
 
             return (
               <div key={type} className={`${styles.moduleHex} ${styles[type]}`}>
-                <div 
+                <button 
+                  type="button"
                   className={`${styles.hexagon} ${
                     isActive ? styles.active : ''
                   } ${
@@ -179,9 +180,6 @@ export const HoneycombLayout: React.FC = () => {
                     '--pulse-intensity': combinedPulse,
                     '--hue-shift': `${pulse[type]?.hueShift || 0}deg`,
                   } as React.CSSProperties}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && setSelectedModule(type)}
                 >
                   <div className={styles.hexContent}>
                     <span className={styles.moduleIcon}>{icon}</span>
@@ -205,7 +203,7 @@ export const HoneycombLayout: React.FC = () => {
                       </div>
                     )}
                   </div>
-                </div>
+                </button>
               </div>
             );
           })}

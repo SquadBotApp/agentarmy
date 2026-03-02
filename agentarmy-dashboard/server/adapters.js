@@ -19,7 +19,7 @@ const providers = {
 
 async function callOpenAI(messages) {
   if (!OPENAI_API_KEY) {
-    const lastUserMsg = messages.filter(m => m.role === 'user').pop();
+    const lastUserMsg = messages.findLast(m => m.role === 'user');
     return { content: `[Mock OpenAI] ${lastUserMsg?.content?.slice(0, 50) || 'N/A'}...`, model: 'mock-openai' };
   }
   try {
@@ -37,7 +37,7 @@ async function callOpenAI(messages) {
       }),
     });
     if (!response.ok) {
-      const errData = await response.json();
+      await response.json();
       throw new Error(`OpenAI error: ${response.status}`);
     }
     const data = await response.json();
@@ -50,7 +50,7 @@ async function callOpenAI(messages) {
 
 async function callAnthropic(messages) {
   if (!ANTHROPIC_API_KEY) {
-    const lastUserMsg = messages.filter(m => m.role === 'user').pop();
+    const lastUserMsg = messages.findLast(m => m.role === 'user');
     return { content: `[Mock Anthropic/Claude Haiku] ${lastUserMsg?.content || ''}`, model: 'mock-anthropic' };
   }
   try {
@@ -81,7 +81,7 @@ async function callAnthropic(messages) {
 
 async function callGroq(messages) {
   if (!GROQ_API_KEY) {
-    const lastUserMsg = messages.filter(m => m.role === 'user').pop();
+    const lastUserMsg = messages.findLast(m => m.role === 'user');
     return { content: `[Mock Groq] ${lastUserMsg?.content?.slice(0, 50) || ''}`, model: 'mock-groq' };
   }
   try {
@@ -109,7 +109,7 @@ async function callGroq(messages) {
 
 async function callXAI(messages) {
   if (!XAI_API_KEY) {
-    const lastUserMsg = messages.filter(m => m.role === 'user').pop();
+    const lastUserMsg = messages.findLast(m => m.role === 'user');
     return { content: `[Mock xAI] ${lastUserMsg?.content?.slice(0, 50) || ''}`, model: 'mock-xai' };
   }
   try {
@@ -136,7 +136,7 @@ async function callXAI(messages) {
 
 async function callGemini(messages) {
   if (!GEMINI_API_KEY) {
-    const lastUserMsg = messages.filter(m => m.role === 'user').pop();
+    const lastUserMsg = messages.findLast(m => m.role === 'user');
     return { content: `[Mock Gemini] ${lastUserMsg?.content?.slice(0, 50) || ''}`, model: 'mock-gemini' };
   }
   try {
@@ -144,7 +144,7 @@ async function callGemini(messages) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: messages.filter(m => m.role === 'user').pop().content }] }],
+        contents: [{ parts: [{ text: messages.findLast(m => m.role === 'user').content }] }],
       }),
     });
     if (!response.ok) throw new Error(`Gemini error: ${response.status}`);

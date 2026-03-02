@@ -13,7 +13,8 @@ class FakeAgent(BaseAgent):
     def __init__(self):
         super().__init__(agent_id="executor", name="Fake", role="executor")
 
-    async def execute(self, task_spec, context):
+    async def execute(self, task_spec):
+        await asyncio.sleep(0)
         return {"content": "execution output"}
 
 

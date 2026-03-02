@@ -375,7 +375,7 @@ function computeAgentWeights() {
   for (const agent of stats) {
     if (agent.total_runs < 3) {
       // Not enough data, use neutral weight
-      weights[agent.agent_id] = 1.0;
+      weights[agent.agent_id] = 1;
       continue;
     }
 

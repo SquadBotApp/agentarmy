@@ -6,8 +6,16 @@ from typing import Any, Dict, List
 
 import requests
 
+# Import tracing utilities
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from tracing_utils import trace_llm_call, set_span_attribute, add_span_event
+
 
 LLMMessage = Dict[str, str]
+
+_ATTR_RESPONSE_SOURCE = "gen_ai.response.source"
+_ATTR_COMPLETION_TOKENS = "gen_ai.usage.completion_tokens"
 
 
 class LLMClientError(RuntimeError):
@@ -77,8 +85,7 @@ def _call_anthropic_direct(messages: List[LLMMessage], model: str) -> str:
     body = response.json()
     content_blocks = body.get("content", [])
     text_parts = [b.get("text", "") for b in content_blocks if b.get("type") == "text"]
-    content = "\n".join(p for p in text_parts if p).strip()
-    if not content:
+    if not (content := "\n".join(p for p in text_parts if p).strip()):
         raise LLMClientError("Anthropic API returned no text content")
     return content
 
@@ -90,12 +97,30 @@ def call_llm(messages: List[LLMMessage], model: str = "claude-3-5-haiku-20241022
     2) Direct Anthropic API
     3) Deterministic fallback (for local/offline tests)
     """
-    try:
-        return _call_backend_llm(messages, model)
-    except Exception:
+    # Estimate prompt tokens (rough: 4 chars per token)
+    prompt_text = " ".join(m.get("content", "") for m in messages)
+    prompt_tokens = max(1, len(prompt_text) // 4)
+    
+    with trace_llm_call(model=model, provider="anthropic", prompt_tokens=prompt_tokens, max_tokens=800) as span:
         try:
-            return _call_anthropic_direct(messages, model)
-        except Exception:
-            # Deterministic fallback for tests/dev without secrets.
-            user_text = "\n".join(m.get("content", "") for m in messages if m.get("role") == "user").strip()
-            return f"[mock-llm] {user_text[:400]}"
+            result = _call_backend_llm(messages, model)
+            if span:
+                set_span_attribute(span, _ATTR_RESPONSE_SOURCE, "backend")
+                set_span_attribute(span, _ATTR_COMPLETION_TOKENS, len(result) // 4)
+            return result
+        except Exception as backend_err:
+            if span:
+                add_span_event(span, "backend_fallback", {"error": str(backend_err)[:100]})
+            try:
+                result = _call_anthropic_direct(messages, model)
+                if span:
+                    set_span_attribute(span, _ATTR_RESPONSE_SOURCE, "anthropic_direct")
+                    set_span_attribute(span, _ATTR_COMPLETION_TOKENS, len(result) // 4)
+                return result
+            except Exception as anthropic_err:
+                if span:
+                    add_span_event(span, "mock_fallback", {"error": str(anthropic_err)[:100]})
+                    set_span_attribute(span, _ATTR_RESPONSE_SOURCE, "mock")
+                # Deterministic fallback for tests/dev without secrets.
+                user_text = "\n".join(m.get("content", "") for m in messages if m.get("role") == "user").strip()
+                return f"[mock-llm] {user_text[:400]}"
