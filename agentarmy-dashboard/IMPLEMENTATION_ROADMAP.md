@@ -1,6 +1,6 @@
 # AgentArmy OS — Implementation Roadmap
 
-> Architecture is done. Every layer is defined. 67+ core TypeScript modules,
+> Architecture is done. Every layer is defined. 68+ core TypeScript modules,
 > 5 real LLM-backed agents, CPM scheduler, ZPE scorer, lifecycle manager,
 > deployment orchestrator, React dashboard, Node.js API, SQLite persistence —
 > all exist.  
@@ -508,6 +508,115 @@ docker/
 - Cross-wiring: civilization intelligence signals for tool usage and license events
 
 **Exit criteria:** Dashboard shows "62 subsystems — all healthy". Transformer extends ML layer with multi-head attention, residual connections, and FFN. Arsenal provides 200 searchable/filterable tools with licensing. 0 compile errors. 7 TS suites (32 tests) + 15 Python tests pass.
+
+---
+
+## Phase 12 — Defensive Intelligence Substructure & QubitCoin Economic Engine ✅
+> Goal: Create the DIS — AgentArmy's private strategic intelligence organ and
+> self-improvement pipeline — plus the QubitCoin full economic engine (dormant
+> by default). 63 subsystems total (62 → 63).
+
+### 12a. Defensive Intelligence Substructure ✅
+**File:** `src/core/defensiveIntelligenceSubstructure.ts` (~2000 lines, new)
+- **Subsystem #63** — root-owner-only, never exposed to tenants or public APIs
+- **Ecosystem monitoring:**
+  - 12 ecosystem domains: open-source-models, commercial-models, agent-frameworks, vector-databases, orchestration-systems, adversarial-techniques, safety-research, regulatory-changes, compute-scaling, competitor-platforms, research-papers, hardware-accelerators
+  - 15 sample signal templates for realistic scanning simulation
+  - `collectSignals()` — scans AI ecosystem, enriches via SearchIntelligenceEngine, classifies signals
+  - `classifySignal()` — maps domains to Threat/Opportunity/Neutral/Unknown
+- **Simulation engine:**
+  - `runSimulations()` — sandboxed threat/opportunity analysis for each signal
+  - `simulateThreat()` — compound risk = likelihood × impact, weighted by temporal phase and victory probability
+  - `simulateOpportunity()` — value/cost/safety/strategic advantage scoring
+  - `computeNetScore()` — −1 (pure threat) → +1 (pure opportunity)
+  - Integration with ContinuumEngine (epoch phase weighting), GodModeStrategy (victory probability), PredictiveAnalyticsLayer (strategic foresight mode)
+- **Proposal pipeline:**
+  - 10 `ProposalType` values: NewModel, NewDefense, NewHeuristic, NewAgent, NewTool, NewSafetyRule, NewReasoningPath, CounterMeasure, OptimizeExisting, RegulatoryAdaptation
+  - `generateProposals()` — auto-generates typed upgrade proposals from simulation results
+  - Priority derivation: composite of |netScore| + riskScore → critical/high/medium/low
+  - Each proposal: id, type, title, description, threatScore, opportunityScore, riskScore, effortScore, expectedGain, simulationSummary, recommendedPriority, status, reviewedBy
+- **Root-owner governance:**
+  - `approveProposal()`, `rejectProposal()`, `deferProposal()` — status transitions
+  - `rolloutVersion()` — batch-implement approved proposals as a new version record
+  - Version lineage tracking with rollback capability
+- **Full cycle:**
+  - `runCycle()` — Monitor → Simulate → Propose → Update risk → Feed ML → Alert
+  - Automatic ML adaptation: creates `dis_threat_landscape` dataset, trains predictive analytics
+  - Risk alerts when global level reaches 'elevated' or 'critical'
+- **Predictive threat anticipation:**
+  - `anticipateThreats()` — extrapolates top-5 threats with compound escalation (1.3× risk)
+  - Uses GodModeStrategy AIPredictive mode + ML time-series analysis
+- **Query methods:**
+  - `generateReport()` — full DefensiveIntelReport for root-owner console
+  - `getPendingProposals()`, `getApprovedProposals()`, `getAllProposals()`
+  - `getVersionHistory()`, `getGlobalRiskLevel()`, `getCurrentVersion()`
+  - `generateNotes()` — strategic advisory notes (critical proposals, risk posture, arsenal utilization)
+- Event system: scan, simulation, proposal, approval, rejection, rollout, alert events
+- `getSummary()` for TSU dashboard (sanitized — no secrets)
+
+### 12b. QubitCoin Full Economic Engine ✅
+**Engine:** `QubitCoinEngine` class within `defensiveIntelligenceSubstructure.ts`
+- **Platform-native crypto-economic asset** — usage = investment in platform's future
+- **DORMANT by default** — activated ONLY by root-owner password gate
+- **Tokenomics:**
+  - Fixed supply cap: 21 billion QC (21,000,000,000)
+  - Genesis allocation: 1% (210M QC) to treasury as bootstrap
+  - Transaction fee: 0.1% of amount → treasury
+  - Issuance split: 75% treasury / 25% users
+  - 100 actions per "block" (batch reward trigger)
+- **10-Year halving schedule (5 epochs, 2 years each):**
+  - Epoch 0 (Year 1-2): 1.0× base reward — 10,000 QC/block
+  - Epoch 1 (Year 3-4): 0.5× — 5,000 QC/block
+  - Epoch 2 (Year 5-6): 0.25× — 2,500 QC/block
+  - Epoch 3 (Year 7-8): 0.125× — 1,250 QC/block
+  - Epoch 4 (Year 9-10): 0.0625× — 625 QC/block
+  - After year 10: no more issuance — fully scarce
+- **Activation gate:**
+  - `activate(rootOwnerKey)` — seeds genesis allocation, initializes treasury wallet
+  - `freeze(rootOwnerKey)` / `unfreeze(rootOwnerKey)` — emergency kill-switch
+  - Key hashing for verification (same key required to freeze/unfreeze)
+- **Wallet management:**
+  - `QCWallet` — balance, earned, spent, transferred, received, vintageEpoch (rarity signal)
+  - `createWallet()`, `getWallet()`, `getWalletByOwner()`, `getAllWallets()`, `getTreasuryWallet()`
+- **Issuance & mining:**
+  - `recordAction()` — core "usage = investment" mechanism; every qualifying action earns QC
+  - Automatic epoch advancement based on elapsed time since activation
+  - Block completion tracking (actions per block counter)
+  - Supply cap enforcement — automatically caps at max supply
+- **Transfers & trades:**
+  - `transfer()` — wallet-to-wallet with fee deduction; tradeable like any crypto asset
+  - `trade()` — marketplace transaction variant with price-per-unit tracking
+  - All fees route to treasury
+- **Burn & buyback:**
+  - `burn()` — permanent supply reduction, increases scarcity
+  - `treasuryBuyback()` — treasury purchases QC from market to support price floor
+- **Treasury management:**
+  - `treasuryInvest()` — root-owner allocates treasury to compute, research, partnerships, marketing, security, reserves
+  - `getInvestments()`, `getTreasurySnapshot()`
+  - Reserve ratio tracking (treasury / circulating supply)
+- **Rewards:**
+  - `awardMilestone()` — bonus QC for hitting platform milestones
+  - `awardReferral()` — bonus QC for user referrals
+- **Spending:**
+  - `spendOnCompute()` — QC → premium compute; funds route to treasury
+  - `spendOnToolUnlock()` — QC → premium tool access; funds route to treasury
+- **Supply analytics:**
+  - `getSupplyMetrics()` — cap, issued, burned, circulating, treasury held, scarcity index, halving progress, next halving countdown
+  - `getHalvingSchedule()` — full 5-epoch schedule
+  - `getTransactions()` — filterable ledger (by wallet, kind, limit)
+- **13 transaction kinds:** issuance, usage-reward, referral-reward, milestone-reward, treasury-deposit, transfer, trade, buyback, burn, staking-reward, compute-spend, tool-unlock, fee, genesis
+- Event system: activation, issuance, transfer, trade, burn, buyback, treasury-invest, halving, freeze, milestone events
+- `getSummary()` — QC status, supply, treasury, wallet/tx counts, epoch, block reward, scarcity index, revenue/rewards
+
+### 12c. TSU Wiring ✅
+- Imported and wired as subsystem #63 with 6 dependencies:
+  `DefensiveIntelligenceSubstructure(predictiveAnalytics, machineLearning, searchIntelligence, godModeStrategy, continuum, arsenal)`
+- Cross-wiring:
+  - DIS events → Civilization intelligence (alerts as 'safety'/critical, proposals as 'governance'/advisory, rollouts as 'infrastructure'/advisory)
+  - QubitCoin events → Civilization intelligence (activation as 'economy'/advisory, halving as 'economy'/warning, burn as 'economy'/advisory)
+- Status entry in `getSubsystemStatuses()` with sanitized summary
+
+**Exit criteria:** Dashboard shows "63 subsystems — all healthy". DIS monitors AI ecosystem, proposes upgrades, and supports root-owner governance. QubitCoin engine dormant by default, activatable with password gate, full 10-year halving tokenomics, wallet/transfer/trade/burn/treasury system. 0 compile errors. 7 TS suites (32 tests) + 15 Python tests pass.
 
 ---
 

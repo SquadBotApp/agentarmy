@@ -68,6 +68,7 @@ import { SearchIntelligenceEngine } from './searchIntelligenceEngine';
 import { PredictiveAnalyticsLayer } from './predictiveAnalyticsLayer';
 import { MachineLearningLayer } from './machineLearningLayer';
 import { ArsenalToolkit } from './arsenalToolkit';
+import { DefensiveIntelligenceSubstructure } from './defensiveIntelligenceSubstructure';
 
 // ---------------------------------------------------------------------------
 // Subsystem Registry
@@ -158,6 +159,7 @@ export class TotalSystemUnification {
   readonly predictiveAnalytics: PredictiveAnalyticsLayer;
   readonly machineLearning: MachineLearningLayer;
   readonly arsenal: ArsenalToolkit;
+  readonly defensiveIntel: DefensiveIntelligenceSubstructure;
 
   private readonly initTime: string;
   private listeners: Array<(snapshot: UnifiedSystemSnapshot) => void> = [];
@@ -232,6 +234,10 @@ export class TotalSystemUnification {
       this.continuum, this.omniDomain,
     );
     this.arsenal = new ArsenalToolkit();
+    this.defensiveIntel = new DefensiveIntelligenceSubstructure(
+      this.predictiveAnalytics, this.machineLearning, this.searchIntelligence,
+      this.godModeStrategy, this.continuum, this.arsenal,
+    );
     // Wire cross‑subsystem integrations
     this.wireIntegrations();
   }
@@ -496,6 +502,74 @@ export class TotalSystemUnification {
       }
     });
 
+    // DefensiveIntelligenceSubstructure → Civilization intelligence (alerts + proposals)
+    this.defensiveIntel.on((event) => {
+      if (event.kind === 'alert') {
+        this.civilization.reportSignal({
+          domain: 'safety',
+          title: `DIS alert: ${event.detail}`,
+          description: event.detail,
+          severity: 'critical',
+          value: 0,
+          trend: 'degrading',
+        });
+      }
+      if (event.kind === 'proposal') {
+        this.civilization.reportSignal({
+          domain: 'governance',
+          title: `DIS upgrade proposal generated`,
+          description: event.detail,
+          severity: 'advisory',
+          value: 0,
+          trend: 'stable',
+        });
+      }
+      if (event.kind === 'rollout') {
+        this.civilization.reportSignal({
+          domain: 'infrastructure',
+          title: `DIS version rollout: ${event.payload.version}`,
+          description: event.detail,
+          severity: 'advisory',
+          value: 0,
+          trend: 'improving',
+        });
+      }
+    });
+
+    // QubitCoin engine → Civilization intelligence (economic signals)
+    this.defensiveIntel.getQubitCoinEngine().on((event) => {
+      if (event.kind === 'activation') {
+        this.civilization.reportSignal({
+          domain: 'economy',
+          title: `QubitCoin engine activated`,
+          description: event.detail,
+          severity: 'advisory',
+          value: 0,
+          trend: 'improving',
+        });
+      }
+      if (event.kind === 'halving') {
+        this.civilization.reportSignal({
+          domain: 'economy',
+          title: `QubitCoin halving event`,
+          description: event.detail,
+          severity: 'warning',
+          value: 0,
+          trend: 'stable',
+        });
+      }
+      if (event.kind === 'burn') {
+        this.civilization.reportSignal({
+          domain: 'economy',
+          title: `QubitCoin burn: supply reduction`,
+          description: event.detail,
+          severity: 'advisory',
+          value: 0,
+          trend: 'improving',
+        });
+      }
+    });
+
     // Constitutional rule: prevent symbolic data in empirical missions
     this.constitution.addRule({
       id: 'cultural-domain-gate',
@@ -598,6 +672,7 @@ export class TotalSystemUnification {
       { name: 'PredictiveAnalyticsLayer', initialized: true, healthy: true, summary: this.predictiveAnalytics.getSummary() as unknown as Record<string, unknown> },
       { name: 'MachineLearningLayer', initialized: true, healthy: true, summary: this.machineLearning.getSummary() as unknown as Record<string, unknown> },
       { name: 'ArsenalToolkit', initialized: true, healthy: true, summary: this.arsenal.getSummary() as unknown as Record<string, unknown> },
+      { name: 'DefensiveIntelligenceSubstructure', initialized: true, healthy: true, summary: this.defensiveIntel.getSummary() as unknown as Record<string, unknown> },
     ];
   }
 
