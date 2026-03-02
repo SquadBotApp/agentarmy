@@ -1,6 +1,6 @@
 # AgentArmy OS — Implementation Roadmap
 
-> Architecture is done. Every layer is defined. 68+ core TypeScript modules,
+> Architecture is done. Every layer is defined. 70+ core TypeScript modules,
 > 5 real LLM-backed agents, CPM scheduler, ZPE scorer, lifecycle manager,
 > deployment orchestrator, React dashboard, Node.js API, SQLite persistence —
 > all exist.  
@@ -617,6 +617,55 @@ docker/
 - Status entry in `getSubsystemStatuses()` with sanitized summary
 
 **Exit criteria:** Dashboard shows "63 subsystems — all healthy". DIS monitors AI ecosystem, proposes upgrades, and supports root-owner governance. QubitCoin engine dormant by default, activatable with password gate, full 10-year halving tokenomics, wallet/transfer/trade/burn/treasury system. 0 compile errors. 7 TS suites (32 tests) + 15 Python tests pass.
+
+---
+
+## Phase 13 — War Room Console & Internal Doctrine ✅
+
+> **Goal:** Give the root-owner a sealed cockpit layered on top of the standard UI —
+> a familiar interface that quietly adds deep governance, intelligence, economic, and
+> master-control surfaces. Accompanied by a one-page internal doctrine that anchors
+> every licensing, sale, or exclusivity negotiation.
+
+### 13a. War Room Console ✅
+
+New component: `src/components/WarRoom.tsx` + `WarRoom.module.css`
+
+**5-tab full-screen console gated to root-owner:**
+
+| Tab | Surface | Key Features |
+|-----|---------|--------------|
+| **§1 System Overview** | Mirrors public health but adds deeper ops metrics | Global integrity banner (risk level), all 63 subsystem chips with health/summary tooltips, version lineage timeline, quick metrics (cycle tick, signals, threats, opportunities, pending proposals, DIS events) |
+| **§2 Defensive Intel** | Private DIS view | Threat map with likelihood/impact/risk, opportunity map with value/cost/safety scoring, predicted capability jumps via `anticipateThreats()`, simulation results with net-scores, full proposal list with inline Approve/Reject/Defer controls, strategic notes, governance action log |
+| **§3 Upgrade Governance** | Version freeze/rollback/packaging | Pending → approved pipeline metrics, version release form (tag + changelog), rollback point list with availability badges, approved-proposals-awaiting-rollout queue |
+| **§4 Economic Engine** | QubitCoin treasury & issuance governance | Status banner (dormant/active/frozen), activation gate with password input, treasury metrics (balance, deposited, invested, buyback, reserve ratio, burned), issuance curve (issued, circulating, burned, scarcity, block reward, next halving), 10-year halving schedule table with current-epoch highlight, reward distribution (wallets, transactions, platform revenue, user rewards, blocks mined), treasury investments list |
+| **§5 Master Control** | Ultimate authority controls | 8 control buttons (subsystem freeze, subsystem isolation, full system freeze, safe shutdown, hard shutdown, recovery mode, ownership transfer, compliance export), dangerous actions require confirmation dialog, full control action log |
+
+**Design language:** Dark chrome (#0a0a0f), amber/gold accent (#d4af37), red danger zones, JetBrains Mono. z-index 9000 fullscreen overlay. Risk-level themed banners (calm=green, watch=yellow, elevated=orange, critical=red).
+
+**Wired into App.tsx:**
+- TSU singleton instantiated in `InnerApp` via `useState(() => new TotalSystemUnification())`
+- "War Room" button in header (gold-themed)
+- Conditional render of `<WarRoom tsu={tsu} onClose={...} />`
+
+### 13b. Internal Doctrine ✅
+
+New document: `INTERNAL_DOCTRINE.md`
+
+**8 sections defining the principled boundaries:**
+
+| Section | Content |
+|---------|---------|
+| §1 Purpose | Why this document exists — anchor for licensing, sale, negotiation |
+| §2 DIS Permitted | Monitor, classify, simulate, propose, queue, feed ML, anticipate, report, emit events |
+| §3 DIS Prohibited | Never self-approve, expose to tenants, communicate externally, modify running subsystems, override safety, access user data, operate when frozen |
+| §4 QC Permitted | Issue on usage, deposit to treasury, transfers, trades, burns, buybacks, milestones, referrals, spend, metrics, events |
+| §5 QC Prohibited | Never activate without key, self-activate, mint beyond cap, skip halving, transfer from frozen, bypass fees, expose treasury controls, operate when frozen |
+| §6 Activation Conditions | 6 mandatory conditions: root-owner decision, platform stability, sufficient users, legal clearance, key ceremony, no critical threats |
+| §7 Licensing/Transfer | Version packaging, compliance export, ownership transfer protocol, doctrine transfer |
+| §8 Amendment | Root-owner only, must accompany code commits |
+
+**Exit criteria:** War Room console renders from header button with all 5 tabs functional. DIS proposals interactive (approve/reject/defer). QubitCoin activation gate works. Master controls with confirmation dialogs. Internal doctrine anchors all governance boundaries. 0 compile errors. 7 TS suites (32 tests) + 15 Python tests pass.
 
 ---
 

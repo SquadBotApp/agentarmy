@@ -16,6 +16,8 @@ import { useAgentStore } from "./store/agentStore";
 import { HoneycombLayout } from "./components/HoneycombLayout";
 import { BackgroundLayer } from "./components/BackgroundLayer";
 import { useUnifiedAgentStore, BackgroundMode } from "./store/unifiedAgentStore";
+import { WarRoom } from "./components/WarRoom";
+import { TotalSystemUnification } from "./core/totalSystemUnification";
 
 type ViewMode = 'dashboard' | 'honeycomb';
 
@@ -142,6 +144,8 @@ function InnerApp() {
   const [promptManagerOpen, setPromptManagerOpen] = useState(false);
   const [orchestrationDecision, setOrchestrationDecision] = useState<any>(null);
   const [orchestrationLoading, setOrchestrationLoading] = useState(false);
+  const [warRoomOpen, setWarRoomOpen] = useState(false);
+  const [tsu] = useState(() => new TotalSystemUnification());
 
   async function handleSubmitTask(taskGoal: string) {
     setOrchestrationLoading(true);
@@ -236,6 +240,9 @@ function InnerApp() {
           </div>
           <div>
             <button className="btn" onClick={() => setPromptManagerOpen(true)}>Prompts</button>
+          </div>
+          <div>
+            <button className="btn" onClick={() => setWarRoomOpen(true)} style={{background:'#1a1420',borderColor:'#d4af37',color:'#d4af37'}}>🏛️ War Room</button>
           </div>
           <div>
             <button className="btn" onClick={evolveOnce}>Evolve</button>
@@ -339,6 +346,9 @@ function InnerApp() {
       )}
       {promptManagerOpen && (
         <PromptManager onClose={() => setPromptManagerOpen(false)} onApply={applyPrompt} />
+      )}
+      {warRoomOpen && (
+        <WarRoom tsu={tsu} onClose={() => setWarRoomOpen(false)} />
       )}
     </div>
   );

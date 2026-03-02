@@ -1,0 +1,768 @@
+/**
+ * WarRoom.module.css
+ * Root-owner console — sealed cockpit layered on the standard UI.
+ * Design language: dark chrome, amber/gold accent, red danger zones.
+ */
+
+/* ---------------------------------------------------------------------------
+   Layout
+   --------------------------------------------------------------------------- */
+
+.warRoom {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  background: #0a0a0f;
+  color: #e0e0e0;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Segoe UI', monospace;
+  overflow: hidden;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: linear-gradient(90deg, #111118 0%, #1a1420 100%);
+  border-bottom: 2px solid #d4af37;
+  flex-shrink: 0;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.headerIcon {
+  font-size: 24px;
+}
+
+.headerTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #d4af37;
+}
+
+.closeBtn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #888;
+  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.closeBtn:hover {
+  color: #ff4444;
+  border-color: #ff4444;
+  background: rgba(255, 68, 68, 0.1);
+}
+
+/* ---------------------------------------------------------------------------
+   Tab Bar
+   --------------------------------------------------------------------------- */
+
+.tabBar {
+  display: flex;
+  gap: 2px;
+  padding: 0 24px;
+  background: #111118;
+  border-bottom: 1px solid #222;
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #888;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.tab:hover {
+  color: #ccc;
+  background: rgba(212, 175, 55, 0.05);
+}
+.tabActive {
+  color: #d4af37;
+  border-bottom-color: #d4af37;
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.tabIcon {
+  font-size: 15px;
+}
+.tabLabel {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------------------
+   Panel Area
+   --------------------------------------------------------------------------- */
+
+.panelArea {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px 40px;
+}
+
+.panel {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ---------------------------------------------------------------------------
+   Integrity Banner
+   --------------------------------------------------------------------------- */
+
+.integrityBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  border: 1px solid #2a2a2a;
+}
+
+.integrityLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.integrityValue {
+  font-size: 18px;
+  font-weight: 700;
+}
+.integrityMeta {
+  font-size: 12px;
+  color: #888;
+  margin-left: auto;
+}
+
+/* Risk-level themes */
+.riskCalm      { background: rgba(0, 200, 100, 0.08); border-color: rgba(0, 200, 100, 0.3); }
+.riskWatch     { background: rgba(255, 200, 0, 0.08); border-color: rgba(255, 200, 0, 0.3); }
+.riskElevated  { background: rgba(255, 140, 0, 0.08); border-color: rgba(255, 140, 0, 0.3); }
+.riskCritical  { background: rgba(255, 50, 50, 0.1); border-color: rgba(255, 50, 50, 0.4); }
+
+/* QC status themes */
+.qcDormant     { background: rgba(100, 100, 120, 0.1); border-color: rgba(100, 100, 120, 0.3); }
+.qcActive      { background: rgba(212, 175, 55, 0.08); border-color: rgba(212, 175, 55, 0.3); }
+
+/* ---------------------------------------------------------------------------
+   Section title
+   --------------------------------------------------------------------------- */
+
+.sectionTitle {
+  margin: 24px 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #d4af37;
+  border-bottom: 1px solid #222;
+  padding-bottom: 6px;
+}
+
+/* ---------------------------------------------------------------------------
+   Subsystem Grid
+   --------------------------------------------------------------------------- */
+
+.subsystemGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.subsystemChip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  border: 1px solid #2a2a2a;
+  cursor: default;
+}
+.chipHealthy {
+  background: rgba(0, 200, 100, 0.06);
+  border-color: rgba(0, 200, 100, 0.15);
+}
+.chipUnhealthy {
+  background: rgba(255, 50, 50, 0.08);
+  border-color: rgba(255, 50, 50, 0.3);
+  color: #ff6666;
+}
+.chipDot {
+  font-size: 8px;
+}
+.chipName {
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   Metrics Row
+   --------------------------------------------------------------------------- */
+
+.metricsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.metricCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 18px;
+  background: #141418;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  min-width: 120px;
+  flex: 1;
+}
+
+.metricValue {
+  font-size: 20px;
+  font-weight: 700;
+  color: #d4af37;
+}
+.metricUnit {
+  font-size: 12px;
+  font-weight: 400;
+  color: #888;
+}
+.metricLabel {
+  font-size: 10px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+/* ---------------------------------------------------------------------------
+   Scroll list (threats, opps, proposals)
+   --------------------------------------------------------------------------- */
+
+.scrollList {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 4px 0;
+  margin-bottom: 8px;
+}
+
+.muted {
+  color: #666;
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Threat rows */
+.threatRow, .oppRow, .simRow {
+  display: flex;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #1a1a1a;
+  font-size: 12px;
+  align-items: flex-start;
+}
+
+.threatBullet, .oppBullet {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.threatBody, .oppBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.threatId, .oppId {
+  font-weight: 600;
+  color: #bbb;
+  font-size: 11px;
+}
+
+/* Simulation */
+.simPositive { color: #44dd88; font-weight: 700; width: 48px; text-align: right; flex-shrink: 0; }
+.simNegative { color: #ff6666; font-weight: 700; width: 48px; text-align: right; flex-shrink: 0; }
+.simSummary  { font-size: 12px; color: #aaa; }
+
+/* ---------------------------------------------------------------------------
+   Proposals
+   --------------------------------------------------------------------------- */
+
+.proposalRow {
+  padding: 10px 14px;
+  border: 1px solid #222;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  border-left: 3px solid #444;
+}
+.proposalRow:hover {
+  background: rgba(212, 175, 55, 0.04);
+}
+.proposalSelected {
+  background: rgba(212, 175, 55, 0.06);
+  border-color: #d4af37;
+}
+
+.proposalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.proposalPri {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Priority left-border colors */
+.priLow      { border-left-color: #4488ff; }
+.priMedium   { border-left-color: #d4af37; }
+.priHigh     { border-left-color: #ff8844; }
+.priCritical { border-left-color: #ff3344; }
+
+.proposalDetail {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #2a2a2a;
+  font-size: 12px;
+}
+.proposalDetail p {
+  margin: 0 0 8px;
+  color: #aaa;
+}
+
+.proposalMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+.proposalActions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ---------------------------------------------------------------------------
+   Buttons
+   --------------------------------------------------------------------------- */
+
+.btn {
+  padding: 6px 16px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #1a1a1a;
+  color: #ddd;
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn:hover:not(:disabled) {
+  background: #222;
+}
+
+.btnApprove    { color: #44dd88; border-color: rgba(0, 200, 100, 0.4); }
+.btnApprove:hover:not(:disabled) { background: rgba(0, 200, 100, 0.15); }
+
+.btnReject     { color: #ff5566; border-color: rgba(255, 50, 50, 0.4); }
+.btnReject:hover:not(:disabled) { background: rgba(255, 50, 50, 0.15); }
+
+.btnDefer      { color: #aaa; border-color: rgba(200, 200, 200, 0.2); }
+.btnDefer:hover:not(:disabled) { background: rgba(200, 200, 200, 0.08); }
+
+.btnActivate   { color: #d4af37; border-color: rgba(212, 175, 55, 0.5); font-weight: 700; }
+.btnActivate:hover:not(:disabled) { background: rgba(212, 175, 55, 0.15); }
+
+.btnFreeze     { color: #66bbff; border-color: rgba(100, 180, 255, 0.4); }
+.btnFreeze:hover:not(:disabled) { background: rgba(100, 180, 255, 0.12); }
+
+/* ---------------------------------------------------------------------------
+   Forms
+   --------------------------------------------------------------------------- */
+
+.input {
+  width: 100%;
+  padding: 8px 12px;
+  background: #141418;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  color: #ddd;
+  font-family: inherit;
+  font-size: 13px;
+  transition: border-color 0.2s;
+}
+.input:focus {
+  outline: none;
+  border-color: #d4af37;
+}
+
+.textarea {
+  width: 100%;
+  padding: 8px 12px;
+  background: #141418;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  color: #ddd;
+  font-family: inherit;
+  font-size: 13px;
+  resize: vertical;
+}
+.textarea:focus {
+  outline: none;
+  border-color: #d4af37;
+}
+
+/* Rollout form */
+.rolloutForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 500px;
+  margin-bottom: 16px;
+}
+
+.rolloutResult {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 4px 0 0;
+}
+
+/* Activation form */
+.activationForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 500px;
+  margin-bottom: 16px;
+}
+
+.activationButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.activationResult {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 4px 0 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Version lineage
+   --------------------------------------------------------------------------- */
+
+.versionList {
+  margin-bottom: 12px;
+}
+
+.versionRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  border-left: 2px solid #d4af37;
+  margin-left: 8px;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.versionTag {
+  font-weight: 700;
+  color: #d4af37;
+  min-width: 60px;
+}
+.versionDate {
+  color: #888;
+  min-width: 140px;
+}
+.versionChangelog {
+  color: #aaa;
+  flex: 1;
+}
+.versionBadge {
+  font-size: 10px;
+  color: #666;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   Halving table
+   --------------------------------------------------------------------------- */
+
+.halvingTable {
+  border: 1px solid #222;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.halvingHeader {
+  display: grid;
+  grid-template-columns: 60px 100px 100px 1fr 1fr;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #1a1a20;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.halvingRow {
+  display: grid;
+  grid-template-columns: 60px 100px 100px 1fr 1fr;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  border-top: 1px solid #1a1a1a;
+}
+
+.halvingCurrent {
+  background: rgba(212, 175, 55, 0.08);
+  border-left: 3px solid #d4af37;
+}
+
+/* ---------------------------------------------------------------------------
+   Rollback rows
+   --------------------------------------------------------------------------- */
+
+.rollbackRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+  font-size: 12px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.rollbackBadge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: rgba(0, 200, 100, 0.1);
+  color: #44dd88;
+  border: 1px solid rgba(0, 200, 100, 0.2);
+}
+
+/* ---------------------------------------------------------------------------
+   Investment rows
+   --------------------------------------------------------------------------- */
+
+.investmentRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  font-size: 12px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.investCat {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: rgba(212, 175, 55, 0.12);
+  color: #d4af37;
+  letter-spacing: 0.5px;
+}
+
+/* ---------------------------------------------------------------------------
+   Control Grid
+   --------------------------------------------------------------------------- */
+
+.controlGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.controlBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 16px;
+  border-radius: 8px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.controlNormal {
+  background: #141418;
+  border: 1px solid #2a2a2a;
+  color: #ddd;
+}
+.controlNormal:hover {
+  background: #1a1a22;
+  border-color: #d4af37;
+}
+
+.controlDanger {
+  background: rgba(255, 50, 50, 0.04);
+  border: 1px solid rgba(255, 50, 50, 0.2);
+  color: #ddd;
+}
+.controlDanger:hover {
+  background: rgba(255, 50, 50, 0.1);
+  border-color: #ff5566;
+}
+
+.controlIcon {
+  font-size: 24px;
+}
+.controlLabel {
+  font-size: 14px;
+  font-weight: 700;
+}
+.controlDesc {
+  font-size: 11px;
+  color: #888;
+}
+
+/* ---------------------------------------------------------------------------
+   Confirm dialog
+   --------------------------------------------------------------------------- */
+
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.confirmDialog {
+  background: #1a1a22;
+  border: 2px solid #ff5566;
+  border-radius: 12px;
+  padding: 24px 32px;
+  max-width: 440px;
+}
+
+.confirmDialog h4 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #ff5566;
+}
+
+.confirmDialog p {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* ---------------------------------------------------------------------------
+   Notes & logs
+   --------------------------------------------------------------------------- */
+
+.notesList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+}
+
+.noteItem {
+  padding: 6px 0;
+  font-size: 12px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.logBox {
+  background: #0a0a0f;
+  border: 1px solid #222;
+  border-radius: 6px;
+  padding: 10px 14px;
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 16px;
+}
+
+.logEntry {
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  color: #aaa;
+}
+
+/* ---------------------------------------------------------------------------
+   Scrollbar
+   --------------------------------------------------------------------------- */
+
+.panelArea::-webkit-scrollbar,
+.scrollList::-webkit-scrollbar,
+.logBox::-webkit-scrollbar {
+  width: 6px;
+}
+.panelArea::-webkit-scrollbar-track,
+.scrollList::-webkit-scrollbar-track,
+.logBox::-webkit-scrollbar-track {
+  background: transparent;
+}
+.panelArea::-webkit-scrollbar-thumb,
+.scrollList::-webkit-scrollbar-thumb,
+.logBox::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+.panelArea::-webkit-scrollbar-thumb:hover,
+.scrollList::-webkit-scrollbar-thumb:hover,
+.logBox::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
