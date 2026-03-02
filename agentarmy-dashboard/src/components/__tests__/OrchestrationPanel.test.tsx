@@ -1,7 +1,7 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { OrchestrationPanel } from './OrchestrationPanel';
+import { OrchestrationPanel } from '../OrchestrationPanel';
 
 describe('OrchestrationPanel', () => {
   const mockDecision = {
@@ -19,7 +19,7 @@ describe('OrchestrationPanel', () => {
       },
     },
     cpm: {
-      project_duration: 5.0,
+      project_duration: 5,
       critical_tasks: ['t1', 't2'],
     },
     rationale: 'Selected task for optimal routing',
@@ -40,21 +40,21 @@ describe('OrchestrationPanel', () => {
     expect(header).toBeInTheDocument();
   });
 
-  test('expands when toggle button is clicked', async () => {
+  test('expands when toggle button is clicked', () => {
     render(<OrchestrationPanel />);
     const toggleBtn = screen.getByRole('button', { name: /▶/ });
-    await userEvent.click(toggleBtn);
+    userEvent.click(toggleBtn);
     
     const submitBtn = screen.getByRole('button', { name: /Submit/ });
     expect(submitBtn).toBeInTheDocument();
   });
 
-  test('displays decision when provided', async () => {
+  test('displays decision when provided', () => {
     render(<OrchestrationPanel decision={mockDecision} />);
     
     // Click to expand
     const toggleBtn = screen.getByRole('button', { name: /▶/ });
-    await userEvent.click(toggleBtn);
+    userEvent.click(toggleBtn);
 
     // Check if decision elements are displayed
     expect(screen.getByText(/Next task/i)).toBeInTheDocument();
@@ -62,41 +62,42 @@ describe('OrchestrationPanel', () => {
     expect(screen.getByText(/0.780/i)).toBeInTheDocument();
   });
 
-  test('displays CPM information', async () => {
+  test('displays CPM information', () => {
     render(<OrchestrationPanel decision={mockDecision} />);
     
     const toggleBtn = screen.getByRole('button', { name: /▶/ });
-    await userEvent.click(toggleBtn);
+    userEvent.click(toggleBtn);
 
     expect(screen.getByText(/Critical Path Method/i)).toBeInTheDocument();
     expect(screen.getByText(/5.00 hours/i)).toBeInTheDocument();
-    expect(screen.getByText(/2/)).toBeInTheDocument(); // critical task count
+    expect(screen.getByText(/Critical Path:/i)).toBeInTheDocument();
+    expect(screen.getByText(/t1\s*→\s*t2/i)).toBeInTheDocument();
   });
 
-  test('allows task submission', async () => {
+  test('allows task submission', () => {
     const mockSubmit = jest.fn();
     render(<OrchestrationPanel onSubmitTask={mockSubmit} />);
 
     const toggleBtn = screen.getByRole('button', { name: /▶/ });
-    await userEvent.click(toggleBtn);
+    userEvent.click(toggleBtn);
 
-    const input = screen.getByPlaceholderText(/Enter task goal/i) as HTMLInputElement;
+    const input = screen.getByPlaceholderText(/Enter task goal/i);
     const submitBtn = screen.getByRole('button', { name: /Submit/ });
 
-    await userEvent.type(input, 'Test task');
-    await userEvent.click(submitBtn);
+    userEvent.type(input, 'Test task');
+    userEvent.click(submitBtn);
 
     expect(mockSubmit).toHaveBeenCalledWith('Test task');
   });
 
-  test('disables submit button when input is empty', async () => {
+  test('disables submit button when input is empty', () => {
     render(<OrchestrationPanel />);
 
     const toggleBtn = screen.getByRole('button', { name: /▶/ });
-    await userEvent.click(toggleBtn);
+    userEvent.click(toggleBtn);
 
-    const submitBtn = screen.getByRole('button', { name: /Submit/ }) as HTMLButtonElement;
-    expect(submitBtn.disabled).toBe(true);
+    const submitBtn = screen.getByRole('button', { name: /Submit/ });
+    expect((submitBtn as HTMLButtonElement).disabled).toBe(true);
   });
 
   test('shows loading state', () => {
@@ -108,7 +109,7 @@ describe('OrchestrationPanel', () => {
     expect(screen.getByText(/Orchestrating tasks/i)).toBeInTheDocument();
   });
 
-  test('displays completion message when no next task', async () => {
+  test('displays completion message when no next task', () => {
     const completionDecision = {
       ...mockDecision,
       nextTaskId: null,
@@ -119,16 +120,16 @@ describe('OrchestrationPanel', () => {
     render(<OrchestrationPanel decision={completionDecision} />);
 
     const toggleBtn = screen.getByRole('button', { name: /▶/ });
-    await userEvent.click(toggleBtn);
+    userEvent.click(toggleBtn);
 
-    expect(screen.getByText(/All tasks completed/i)).toBeInTheDocument();
+    expect(screen.getByText('✓ All tasks completed. Workflow finished.')).toBeInTheDocument();
   });
 
-  test('displays ZPE score breakdown', async () => {
+  test('displays ZPE score breakdown', () => {
     render(<OrchestrationPanel decision={mockDecision} />);
 
     const toggleBtn = screen.getByRole('button', { name: /▶/ });
-    await userEvent.click(toggleBtn);
+    userEvent.click(toggleBtn);
 
     expect(screen.getByText(/usefulness/i)).toBeInTheDocument();
     expect(screen.getByText(/coherence/i)).toBeInTheDocument();
@@ -136,45 +137,45 @@ describe('OrchestrationPanel', () => {
     expect(screen.getByText(/latency/i)).toBeInTheDocument();
   });
 
-  test('shows alternatives when toggle is clicked', async () => {
+  test('shows alternatives when toggle is clicked', () => {
     render(<OrchestrationPanel decision={mockDecision} />);
 
     const toggleBtn = screen.getByRole('button', { name: /▶/ });
-    await userEvent.click(toggleBtn);
+    userEvent.click(toggleBtn);
 
     const altToggle = screen.getByRole('button', { name: /View.*Alternatives/i });
-    await userEvent.click(altToggle);
+    userEvent.click(altToggle);
 
-    expect(screen.getByText(/executor/)).toBeInTheDocument();
+    expect(screen.getAllByText(/executor/).length).toBeGreaterThan(0);
     expect(screen.getByText(/★ Critical/)).toBeInTheDocument();
   });
 
-  test('clears input after submission', async () => {
+  test('clears input after submission', () => {
     const mockSubmit = jest.fn();
     render(<OrchestrationPanel onSubmitTask={mockSubmit} />);
 
     const toggleBtn = screen.getByRole('button', { name: /▶/ });
-    await userEvent.click(toggleBtn);
+    userEvent.click(toggleBtn);
 
-    const input = screen.getByPlaceholderText(/Enter task goal/i) as HTMLInputElement;
+    const input = screen.getByPlaceholderText(/Enter task goal/i);
     const submitBtn = screen.getByRole('button', { name: /Submit/ });
 
-    await userEvent.type(input, 'Test task');
-    await userEvent.click(submitBtn);
+    userEvent.type(input, 'Test task');
+    userEvent.click(submitBtn);
 
-    expect(input.value).toBe('');
+    expect((input as HTMLInputElement).value).toBe('');
   });
 
-  test('handles Enter key submission', async () => {
+  test('handles Enter key submission', () => {
     const mockSubmit = jest.fn();
     render(<OrchestrationPanel onSubmitTask={mockSubmit} />);
 
     const toggleBtn = screen.getByRole('button', { name: /▶/ });
-    await userEvent.click(toggleBtn);
+    userEvent.click(toggleBtn);
 
     const input = screen.getByPlaceholderText(/Enter task goal/i);
 
-    await userEvent.type(input, 'Test task{Enter}');
+    userEvent.type(input, 'Test task{Enter}');
 
     expect(mockSubmit).toHaveBeenCalledWith('Test task');
   });

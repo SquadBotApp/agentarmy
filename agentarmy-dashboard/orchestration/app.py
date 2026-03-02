@@ -4,15 +4,16 @@ Multi-agent coordination using CrewAI
 Exposes REST API for Node.js backend to trigger orchestration jobs
 """
 
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 # OpenTelemetry tracing
-from opentelemetry import trace
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, OTLPSpanExporter
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry import trace  # type: ignore[import]
+from opentelemetry.sdk.resources import Resource  # type: ignore[import]
+from opentelemetry.sdk.trace import TracerProvider  # type: ignore[import]
+from opentelemetry.sdk.trace.export import BatchSpanProcessor  # type: ignore[import]
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter  # type: ignore[import]
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # type: ignore[import]
 
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
@@ -32,8 +33,10 @@ if os.getenv('ENABLE_TRACING', 'false').lower() == 'true':
 else:
     print("[Tracing] disabled (set ENABLE_TRACING=true)")
 
-from crews.core_brain_crew import AgentArmyCoreCrew
-from adapters.llm_config import get_llm_config
+from orchestrator import orchestrate as run_orchestrator
+from executor import RegistryAgentExecutor
+from job_runner import JobRunner
+from agents import PlannerAgent, ExecutorAgent, CriticAgent, GovernorAgent
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -43,6 +46,9 @@ app = FastAPI(
     description="Multi-agent coordination and task orchestration",
     version="0.1.0"
 )
+
+AUTH_SCHEME = "Bearer "
+AUTH_ERROR = "Missing authorization token"
 
 # attach tracing instrumentation to FastAPI if enabled
 if os.getenv('ENABLE_TRACING', 'false').lower() == 'true':
@@ -62,11 +68,37 @@ app.add_middleware(
 # ============================================
 
 class TaskInput(BaseModel):
-    """Input for orchestration job"""
+    """Input for orchestration job (legacy format)"""
     task: str
     priority: str = "normal"  # normal, high, critical
     context: Optional[Dict[str, Any]] = None
     model_preferences: Optional[Dict[str, str]] = None  # e.g., {planner: anthropic, router: groq}
+
+class AdvancedTaskModel(BaseModel):
+    """Task definition in advanced format"""
+    id: str
+    name: str
+    description: str
+    duration: float
+    depends_on: List[str] = []
+
+class AdvancedJobModel(BaseModel):
+    """Job definition in advanced format"""
+    goal: str
+    constraints: Optional[Dict[str, Any]] = None
+    deadline_hours: Optional[float] = None
+    risk_tolerance: float = 0.5
+
+class AdvancedStateModel(BaseModel):
+    """State definition in advanced format"""
+    tasks: List[AdvancedTaskModel] = []
+    history: List[Dict[str, Any]] = []
+
+class AdvancedInput(BaseModel):
+    """Input for orchestration job (advanced format)"""
+    job: AdvancedJobModel
+    state: AdvancedStateModel
+    previous_zpe: float = 0.5
 
 class JobResult(BaseModel):
     """Result of orchestration job"""
@@ -90,6 +122,17 @@ class HealthResponse(BaseModel):
 
 jobs: Dict[str, JobResult] = {}
 job_counter = 0
+
+agent_registry = {
+    "planner": PlannerAgent(),
+    "executor": ExecutorAgent(),
+    "critic": CriticAgent(),
+    "governor": GovernorAgent(),
+}
+job_runner = JobRunner(
+    orchestrate_fn=run_orchestrator,
+    executor=RegistryAgentExecutor(agent_registry),
+)
 
 def create_job_id() -> str:
     global job_counter
@@ -127,56 +170,71 @@ async def health_check():
 
 @app.post("/orchestrate", response_model=JobResult)
 async def orchestrate_task(
-    task_input: TaskInput,
+    request: Request,
     authorization: Optional[str] = Header(None)
 ):
     """
     Trigger orchestration job
-    Accepts task and returns job ID (polling-based)
+    Accepts both legacy format (task, priority, context) 
+    and advanced format (job, state, previous_zpe)
     """
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing authorization token")
+    if not authorization or not authorization.startswith(AUTH_SCHEME):
+        raise HTTPException(status_code=401, detail=AUTH_ERROR)
     
-    # TODO: Validate JWT token from Node.js backend
+    body = await request.json()
     
     job_id = create_job_id()
     created_at = datetime.now().isoformat()
     
-    # Create result entry
-    jobs[job_id] = JobResult(
-        job_id=job_id,
-        status="pending",
-        task=task_input.task,
-        created_at=created_at
-    )
-    
-    # TODO: Async execution via Celery/RabbitMQ
-    # For now, synchronous (simple)
-    try:
-        logger.info(f"[Orchestration] Starting job {job_id}: {task_input.task}")
-
-        # build legacy-compatible payload for the new orchestrator
+    # Detect payload format and normalize
+    if "job" in body and "state" in body:
+        # Advanced format: {job, state, previous_zpe}
+        task_name = body["job"].get("goal", "Advanced orchestration task")
         payload: Dict[str, Any] = {
+            "job": body["job"],
+            "state": body["state"],
+            "previous_zpe": body.get("previous_zpe", 0.5),
+        }
+    elif "task" in body:
+        # Legacy format: {task, priority, context}
+        task_name = body["task"]
+        context = body.get("context") or {}
+        payload = {
             "job": {
-                "goal": task_input.task,
+                "goal": task_name,
                 "constraints": {},
                 "deadline_hours": None,
                 "budget": None,
                 "risk_tolerance": 0.5,
             },
-            # allow callers to pass more detailed state via context
-            "state": (task_input.context or {}).get("state", {"tasks": [], "history": []}),
-            "previous_zpe": (task_input.context or {}).get("previous_zpe", 0.5),
+            "state": context.get("state", {"tasks": [], "history": []}),
+            "previous_zpe": context.get("previous_zpe", 0.5),
         }
+    else:
+        raise HTTPException(status_code=422, detail="Invalid payload: expected 'task' or 'job'+'state'")
+    
+    # Create result entry
+    jobs[job_id] = JobResult(
+        job_id=job_id,
+        status="pending",
+        task=task_name,
+        created_at=created_at
+    )
+    
+    # Executed inline for now; can be externalized to a queue worker later.
+    try:
+        logger.info(f"[Orchestration] Starting job {job_id}: {task_name}")
 
-        # call the orchestration logic (new structure) rather than the CrewAI crew directly
-        from orchestrator import orchestrate as run_orchestrator
-        decision = run_orchestrator(payload)
+        workflow_result = await job_runner.run_workflow(payload)
+        decision = workflow_result.get("decision", {})
 
         # update job result with the orchestration decision
         jobs[job_id].status = "completed"
         jobs[job_id].result = {
             "decision": decision,
+            "execution": workflow_result.get("execution"),
+            "evaluation": workflow_result.get("evaluation"),
+            "metrics": workflow_result.get("metrics"),
         }
         jobs[job_id].completed_at = datetime.now().isoformat()
 
@@ -196,8 +254,8 @@ async def get_job_status(
     authorization: Optional[str] = Header(None)
 ):
     """Get status of a job"""
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing authorization token")
+    if not authorization or not authorization.startswith(AUTH_SCHEME):
+        raise HTTPException(status_code=401, detail=AUTH_ERROR)
     
     if job_id not in jobs:
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
@@ -210,8 +268,8 @@ async def list_jobs(
     authorization: Optional[str] = Header(None)
 ):
     """List all jobs (with optional status filter)"""
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing authorization token")
+    if not authorization or not authorization.startswith(AUTH_SCHEME):
+        raise HTTPException(status_code=401, detail=AUTH_ERROR)
     
     if status:
         return [j for j in jobs.values() if j.status == status]
@@ -224,8 +282,8 @@ async def list_jobs(
 @app.on_event("startup")
 async def startup_event():
     logger.info("🚀 AgentArmy Orchestration Service starting...")
-    logger.info(f"   Backend: CrewAI v0.27+")
-    logger.info(f"   Job storage: In-memory (TODO: Redis/Postgres)")
+    logger.info("   Backend: CrewAI v0.27+")
+    logger.info("   Job storage: In-memory (Redis/Postgres planned)")
 
 if __name__ == "__main__":
     import uvicorn

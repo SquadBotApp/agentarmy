@@ -40,7 +40,16 @@ export function savePrompts(prompts: Prompt[]) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(prompts));
     const backend = (process.env as any).REACT_APP_BACKEND_URL;
     if (backend) {
-      try { fetch(`${backend.replace(/\/$/, '')}/prompts`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(prompts) }); } catch {}
+      const token = localStorage.getItem('agent-token');
+      const headers: Record<string, string> = { 'content-type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      try {
+        fetch(`${backend.replace(/\/$/, '')}/prompts`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(prompts),
+        });
+      } catch {}
     }
   } catch {}
 }

@@ -1,13 +1,14 @@
-# Minimal requirements for orchestrator HTTP service
-# CrewAI with all its Rust-heavy dependencies can be added later
-fastapi==0.109.0
-uvicorn==0.27.0
-pydantic==2.6.0
-python-dotenv==1.0.0
-requests==2.31.0
-opentelemetry-api==1.18.0
-opentelemetry-sdk==1.18.0
-opentelemetry-instrumentation-fastapi==0.36b0
-opentelemetry-exporter-otlp-proto-http==1.18.0
-pytest>=7.0.0
+# Minimal requirements for orchestrator HTTP service.
+# Versions are intentionally Python 3.13-friendly (avoid source builds).
+fastapi>=0.135.0,<1.0.0
+uvicorn>=0.41.0,<1.0.0
+flask>=3.0.3,<4.0.0
+pydantic>=2.12.5,<3.0.0
+python-dotenv>=1.2.1,<2.0.0
+requests>=2.32.5,<3.0.0
+opentelemetry-api>=1.36.0,<2.0.0
+opentelemetry-sdk>=1.36.0,<2.0.0
+opentelemetry-instrumentation-fastapi>=0.57b0,<1.0.0
+opentelemetry-exporter-otlp-proto-http>=1.36.0,<2.0.0
+pytest>=9.0.0,<10.0.0
 

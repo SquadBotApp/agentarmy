@@ -17,6 +17,7 @@ Server Backend (Node.js)
 Orchestration Service (Python)
   ├─ orchestrator.py           [Core logic: CPM, ZPE, agent graph, routing]
   ├─ app.py                    [FastAPI HTTP wrapper]
+  ├─ server_lightweight.py     [No-dependency HTTP wrapper fallback]
   └─ /health, /orchestrate    [REST endpoints]
 ```
 
@@ -85,23 +86,40 @@ curl -H "Authorization: Bearer test-token" \
 
 ### 4. Connect React Frontend
 
-Import and use `OrchestrationPanel` in your dashboard:
+Import and use `OrchestrationPanel` in your dashboard. This example includes improved typing and error handling for a more robust implementation.
 
 ```tsx
 import { OrchestrationPanel } from './components/OrchestrationPanel';
 import { useState } from 'react';
 
+// Based on the response format documented in this guide
+type OrchestrationDecision = {
+  nextTaskId: string;
+  nextAgentId: string;
+  zpe: { total: number; components: Record<string, number> };
+  cpm: { project_duration: number; critical_tasks: string[] };
+  rationale: string;
+  alternatives: any[];
+};
+
 export function Dashboard() {
-  const [decision, setDecision] = useState(null);
+  const [decision, setDecision] = useState<OrchestrationDecision | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmitTask = async (taskGoal: string) => {
     setIsLoading(true);
+    setError(null);
     try {
+      const token = localStorage.getItem('authToken'); // Assumes 'authToken' key
+      if (!token) {
+        throw new Error('Authentication token not found. Please log in.');
+      }
+
       const response = await fetch('http://localhost:4000/orchestrate', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer YOUR_TOKEN`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -110,9 +128,21 @@ export function Dashboard() {
           context: {},
         }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred' }));
+        throw new Error(errorData.message || `Request failed: ${response.statusText}`);
+      }
+
       const result = await response.json();
-      // result.result.decision contains the orchestration response
-      setDecision(result.result.decision);
+      // The original guide mentioned `result.result.decision`. The response
+      // format section suggests the decision is the top-level object.
+      // Please verify the actual response from your Node.js backend.
+      // Assuming the response is the decision object itself:
+      setDecision(result);
+    } catch (e: any) {
+      setError(e.message);
+      console.error('Orchestration submission failed:', e);
     } finally {
       setIsLoading(false);
     }
@@ -125,6 +155,7 @@ export function Dashboard() {
         decision={decision}
         isLoading={isLoading}
         onSubmitTask={handleSubmitTask}
+        error={error} // Pass error to the panel for display
       />
     </div>
   );

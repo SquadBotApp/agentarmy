@@ -10,12 +10,15 @@ from typing import Dict, Any
 from uuid import uuid4
 
 try:
-    from flask import Flask, request, jsonify
+    from flask import Flask, request, jsonify  # type: ignore[import]
     FLASK_AVAILABLE = True
 except ImportError:
     FLASK_AVAILABLE = False
 
 from orchestrator import orchestrate as run_orchestrator
+from executor import RegistryAgentExecutor
+from job_runner import JobRunner
+from agents import PlannerAgent, ExecutorAgent, CriticAgent, GovernorAgent
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,6 +27,20 @@ app = Flask(__name__) if FLASK_AVAILABLE else None
 
 # In-memory job store (TODO: Redis/Postgres)
 jobs: Dict[str, Dict[str, Any]] = {}
+
+AUTH_SCHEME = 'Bearer '
+AUTH_ERROR = "Missing or invalid authorization"
+
+agent_registry = {
+    "planner": PlannerAgent(),
+    "executor": ExecutorAgent(),
+    "critic": CriticAgent(),
+    "governor": GovernorAgent(),
+}
+job_runner = JobRunner(
+    orchestrate_fn=run_orchestrator,
+    executor=RegistryAgentExecutor(agent_registry),
+)
 
 
 def create_job_id() -> str:
@@ -59,8 +76,8 @@ if FLASK_AVAILABLE:
             
             # Validate authorization (basic)
             auth = request.headers.get('Authorization', '')
-            if not auth.startswith('Bearer '):
-                return jsonify({"error": "Missing or invalid authorization"}), 401
+            if not auth.startswith(AUTH_SCHEME):
+                return jsonify({"error": AUTH_ERROR}), 401
 
             job_id = create_job_id()
             created_at = datetime.now().isoformat()
@@ -98,13 +115,20 @@ if FLASK_AVAILABLE:
                 else:
                     raise ValueError("Payload must contain 'job' or 'task' field")
 
-                # Call orchestrator
-                logger.info(f"[Job {job_id}] Running orchestration...")
-                decision = run_orchestrator(orch_payload)
+                # Call full workflow runner (orchestrate -> execute -> evaluate)
+                logger.info(f"[Job {job_id}] Running workflow...")
+                import asyncio
+                workflow_result = asyncio.run(job_runner.run_workflow(orch_payload))
+                decision = workflow_result.get("decision", {})
 
                 # Update job
                 jobs[job_id]["status"] = "completed"
-                jobs[job_id]["result"] = {"decision": decision}
+                jobs[job_id]["result"] = {
+                    "decision": decision,
+                    "execution": workflow_result.get("execution"),
+                    "evaluation": workflow_result.get("evaluation"),
+                    "metrics": workflow_result.get("metrics"),
+                }
                 jobs[job_id]["completed_at"] = datetime.now().isoformat()
 
                 logger.info(f"[Job {job_id}] Completed successfully")
@@ -130,8 +154,8 @@ if FLASK_AVAILABLE:
     def get_job(job_id: str):
         """Get job status"""
         auth = request.headers.get('Authorization', '')
-        if not auth.startswith('Bearer '):
-            return jsonify({"error": "Missing or invalid authorization"}), 401
+        if not auth.startswith(AUTH_SCHEME):
+            return jsonify({"error": AUTH_ERROR}), 401
 
         if job_id not in jobs:
             return jsonify({"error": f"Job {job_id} not found"}), 404
@@ -144,8 +168,8 @@ if FLASK_AVAILABLE:
     def list_jobs():
         """List all jobs (with optional status filter)"""
         auth = request.headers.get('Authorization', '')
-        if not auth.startswith('Bearer '):
-            return jsonify({"error": "Missing or invalid authorization"}), 401
+        if not auth.startswith(AUTH_SCHEME):
+            return jsonify({"error": AUTH_ERROR}), 401
 
         status = request.args.get('status')
         filtered = [j for j in jobs.values() if not status or j['status'] == status]
@@ -161,9 +185,9 @@ if __name__ == '__main__':
         exit(1)
 
     port = 5000
-    print(f"\n🚀 AgentArmy Orchestration Service (Lightweight)")
-    print(f"   Backend: Flask (no Rust dependencies)")
+    print("\n🚀 AgentArmy Orchestration Service (Lightweight)")
+    print("   Backend: Flask (no Rust dependencies)")
     print(f"   Running on http://127.0.0.1:{port}")
-    print(f"   Endpoints: /health, /orchestrate, /jobs\n")
+    print("   Endpoints: /health, /orchestrate, /jobs\n")
 
     app.run(host='127.0.0.1', port=port, debug=False)

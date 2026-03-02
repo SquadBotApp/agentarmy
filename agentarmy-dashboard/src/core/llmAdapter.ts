@@ -14,7 +14,7 @@ export type LLMResponse = {
  * Call the backend LLM endpoint.
  * The backend handles auth, model selection, and secrets.
  */
-export async function callLLM(messages: LLMMessage[], model?: string): Promise<LLMResponse> {
+export async function callLLM(messages: LLMMessage[], model: string = 'anthropic'): Promise<LLMResponse> {
   const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:4000";
   // try to include token from localStorage
   const token = localStorage.getItem('agent-token');
@@ -41,7 +41,7 @@ export async function callLLM(messages: LLMMessage[], model?: string): Promise<L
  */
 export async function callMultiModel(
   messages: LLMMessage[],
-  models: string[] = ["openai", "fallback"]
+  models: string[] = ["anthropic", "openai"]
 ): Promise<LLMResponse[]> {
   const promises = models.map((model) =>
     callLLM(messages, model).catch((err) => ({

@@ -13,9 +13,18 @@ import { PromptManager } from "./components/PromptManager";
 import { Prompt } from "./core/prompts";
 import { WorkspaceCard } from "./components/WorkspaceCard";
 import { useAgentStore } from "./store/agentStore";
+import { HoneycombLayout } from "./components/HoneycombLayout";
+import { BackgroundLayer } from "./components/BackgroundLayer";
+import { useUnifiedAgentStore, BackgroundMode } from "./store/unifiedAgentStore";
+
+type ViewMode = 'dashboard' | 'honeycomb';
 
 function InnerApp() {
   const { state: themeState, dispatch } = useThemeStore();
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const saved = localStorage.getItem('agentarmy_viewmode');
+    return (saved === 'honeycomb' ? 'honeycomb' : 'dashboard') as ViewMode;
+  });
   const [zpe, setZpe] = useState(1);
   const [lastTool, setLastTool] = useState("vision-model-x");
   const [useWebGL, setUseWebGL] = useState(false);
@@ -102,6 +111,10 @@ function InnerApp() {
   }, [selectedUniverse]);
 
   useEffect(() => {
+    try { localStorage.setItem('agentarmy_viewmode', viewMode); } catch {}
+  }, [viewMode]);
+
+  useEffect(() => {
     try { localStorage.setItem('agentarmy_state', JSON.stringify(coreState)); } catch {}
     // reflect coreState into UI metrics
     setZpe(coreState.metrics.zpe);
@@ -185,6 +198,34 @@ function InnerApp() {
       <header className="top-bar">
         <h1>AgentArmy Prototype</h1>
         <div style={{display:'flex',alignItems:'center',gap:12}}>
+          {/* View mode toggle */}
+          <div className="theme-select">
+            <label htmlFor="viewmode">View:</label>
+            <select 
+              id="viewmode" 
+              value={viewMode} 
+              onChange={(e) => setViewMode(e.target.value as ViewMode)}
+              style={{ background: viewMode === 'honeycomb' ? '#d4af37' : undefined, color: viewMode === 'honeycomb' ? '#0a0a0f' : undefined }}
+            >
+              <option value="dashboard">Dashboard</option>
+              <option value="honeycomb">🐝 Honeycomb</option>
+            </select>
+          </div>
+          {/* Background mode toggle - only shown in honeycomb view */}
+          {viewMode === 'honeycomb' && (
+            <div className="theme-select">
+              <label htmlFor="bgmode">Background:</label>
+              <select
+                id="bgmode"
+                value={useUnifiedAgentStore.getState().backgroundMode}
+                onChange={(e) => useUnifiedAgentStore.getState().setBackgroundMode(e.target.value as BackgroundMode)}
+                style={{ background: '#1a3a2a', borderColor: '#66ff66' }}
+              >
+                <option value="subtle">✨ Subtle</option>
+                <option value="high-energy">⚡ High-Energy</option>
+              </select>
+            </div>
+          )}
           <div className="theme-select">
             <label htmlFor="theme">Visual:</label>
             <select id="theme" value={theme} onChange={(e) => dispatch({ type: "setTheme", theme: e.target.value as any })}>
@@ -220,62 +261,69 @@ function InnerApp() {
         </div>
       </header>
 
-      <main className="dashboard-grid">
-        <ZPECard zpe={zpe} setZpe={setZpe} useWebGL={useWebGL} setUseWebGL={setUseWebGL} theme={theme} expanded={expanded} setExpanded={setExpanded} />
-        <WorkspaceCard />        <OrchestrationPanel decision={orchestrationDecision} isLoading={orchestrationLoading} onSubmitTask={handleSubmitTask} />
-        <button
-          className={`card ${expanded === "gov" ? "expanded" : ""}`}
-          type="button"
-          onClick={() => setExpanded("gov")}
-        >
-          <h2>Governance</h2>
-          <p>Blocked outputs: 3%</p>
-        </button>
-
-        <RoutingCard lastTool={lastTool} selectedTool={selectedTool} setSelectedTool={setSelectedTool} tools={tools} runTool={runTool} flowActive={flowActive} expanded={expanded} setExpanded={setExpanded} />
-
-        <button
-          className={`card ${expanded === "universes" ? "expanded" : ""}`}
-          type="button"
-          onClick={() => setExpanded("universes")}
-        >
-          <h2>Universes</h2>
-          <p>Winner: {selectedUniverse}</p>
-          <div style={{marginTop:8}}>
-            <label htmlFor="universe-select">Universe:</label>
-            <select id="universe-select" value={selectedUniverse} onChange={(e)=>setSelectedUniverse(e.target.value)}>
-              <option>Universe A</option>
-              <option>Universe B</option>
-              <option>Universe C</option>
-            </select>
-          </div>
-          <div className="wavefield" />
-        </button>
-
-        <button
-          className={`card ${expanded === "cost" ? "expanded" : ""}`}
-          type="button"
-          onClick={() => setExpanded("cost")}
-        >
-          <h2>Cost</h2>
-          <p>Avg cost per job: $0.27</p>
-        </button>
-
-        <div className="card">
-          <h2>Jobs</h2>
-          <p>Active jobs: <strong>{jobs}</strong></p>
-          <div className="controls">
-            <button className="btn" onClick={() => setJobs((j) => j + 1)}>
-              +
-            </button>
-            <button className="btn" onClick={() => setJobs((j) => Math.max(0, j - 1))}>
-              −
-            </button>
-          </div>
+      {viewMode === 'honeycomb' ? (
+        <div data-bg-mode={useUnifiedAgentStore.getState().backgroundMode}>
+          <BackgroundLayer />
+          <HoneycombLayout />
         </div>
+      ) : (
+        <main className="dashboard-grid">
+          <ZPECard zpe={zpe} setZpe={setZpe} useWebGL={useWebGL} setUseWebGL={setUseWebGL} theme={theme} expanded={expanded} setExpanded={setExpanded} />
+          <WorkspaceCard />        <OrchestrationPanel decision={orchestrationDecision} isLoading={orchestrationLoading} onSubmitTask={handleSubmitTask} />
+          <button
+            className={`card ${expanded === "gov" ? "expanded" : ""}`}
+            type="button"
+            onClick={() => setExpanded("gov")}
+          >
+            <h2>Governance</h2>
+            <p>Blocked outputs: 3%</p>
+          </button>
 
-        <EventsCard events={events} note={note} setNote={setNote} addNote={addNote} pastEvents={pastEvents} futureEvents={futureEvents} setPastEvents={setPastEvents} setFutureEvents={setFutureEvents} setEvents={setEvents} />
-      </main>
+          <RoutingCard lastTool={lastTool} selectedTool={selectedTool} setSelectedTool={setSelectedTool} tools={tools} runTool={runTool} flowActive={flowActive} expanded={expanded} setExpanded={setExpanded} />
+
+          <button
+            className={`card ${expanded === "universes" ? "expanded" : ""}`}
+            type="button"
+            onClick={() => setExpanded("universes")}
+          >
+            <h2>Universes</h2>
+            <p>Winner: {selectedUniverse}</p>
+            <div style={{marginTop:8}}>
+              <label htmlFor="universe-select">Universe:</label>
+              <select id="universe-select" value={selectedUniverse} onChange={(e)=>setSelectedUniverse(e.target.value)}>
+                <option>Universe A</option>
+                <option>Universe B</option>
+                <option>Universe C</option>
+              </select>
+            </div>
+            <div className="wavefield" />
+          </button>
+
+          <button
+            className={`card ${expanded === "cost" ? "expanded" : ""}`}
+            type="button"
+            onClick={() => setExpanded("cost")}
+          >
+            <h2>Cost</h2>
+            <p>Avg cost per job: $0.27</p>
+          </button>
+
+          <div className="card">
+            <h2>Jobs</h2>
+            <p>Active jobs: <strong>{jobs}</strong></p>
+            <div className="controls">
+              <button className="btn" onClick={() => setJobs((j) => j + 1)}>
+                +
+              </button>
+              <button className="btn" onClick={() => setJobs((j) => Math.max(0, j - 1))}>
+                −
+              </button>
+            </div>
+          </div>
+
+          <EventsCard events={events} note={note} setNote={setNote} addNote={addNote} pastEvents={pastEvents} futureEvents={futureEvents} setPastEvents={setPastEvents} setFutureEvents={setFutureEvents} setEvents={setEvents} />
+        </main>
+      )}
 
       {expanded && (
         <dialog className="modal" open onClick={() => setExpanded(null)} onKeyDown={(e) => { if (e.key === 'Escape') setExpanded(null); }}>

@@ -1,0 +1,10 @@
+{"timestamp":"2026-03-01T19:06:20.031Z","provider":"anthropic","model":"claude-3-haiku","latencyMs":450,"cost":0.008,"tokensUsed":100,"success":true}
+{"timestamp":"2026-03-01T19:06:20.037Z","provider":"openai","model":"gpt-4o-mini","latencyMs":550,"cost":0.015,"tokensUsed":150,"success":true}
+{"timestamp":"2026-03-01T19:06:39.477Z","provider":"anthropic","model":"claude-3-haiku","latencyMs":450,"cost":0.008,"tokensUsed":100,"success":true}
+{"timestamp":"2026-03-01T19:06:39.480Z","provider":"openai","model":"gpt-4o-mini","latencyMs":550,"cost":0.015,"tokensUsed":150,"success":true}
+{"timestamp":"2026-03-01T19:07:24.016Z","provider":"anthropic","model":"claude-3-haiku","latencyMs":450,"cost":0.008,"tokensUsed":100,"success":true}
+{"timestamp":"2026-03-01T19:07:24.018Z","provider":"openai","model":"gpt-4o-mini","latencyMs":550,"cost":0.015,"tokensUsed":150,"success":true}
+{"timestamp":"2026-03-01T19:08:15.386Z","provider":"anthropic","model":"claude-3-haiku","latencyMs":450,"cost":0.008,"tokensUsed":100,"success":true}
+{"timestamp":"2026-03-01T19:08:15.389Z","provider":"openai","model":"gpt-4o-mini","latencyMs":550,"cost":0.015,"tokensUsed":150,"success":true}
+{"timestamp":"2026-03-01T19:17:01.240Z","provider":"anthropic","model":"claude-3-haiku","latencyMs":450,"cost":0.008,"tokensUsed":100,"success":true}
+{"timestamp":"2026-03-01T19:17:01.248Z","provider":"openai","model":"gpt-4o-mini","latencyMs":550,"cost":0.015,"tokensUsed":150,"success":true}

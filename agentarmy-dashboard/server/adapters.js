@@ -2,6 +2,7 @@
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-3-5-haiku-20241022';
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
 const XAI_API_KEY = process.env.XAI_API_KEY || '';
@@ -10,7 +11,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 // Provider registry
 const providers = {
   openai: { name: 'openai', available: !!OPENAI_API_KEY, cost: 0.01, speed: 'fast' },
-  anthropic: { name: 'anthropic', available: !!ANTHROPIC_API_KEY, cost: 0.015, speed: 'medium' },
+  anthropic: { name: 'anthropic', available: !!ANTHROPIC_API_KEY, cost: 0.008, speed: 'fast' },
   groq: { name: 'groq', available: !!GROQ_API_KEY, cost: 0.005, speed: 'fastest' },
   xai: { name: 'xai', available: !!XAI_API_KEY, cost: 0.008, speed: 'fast' },
   gemini: { name: 'gemini', available: !!GEMINI_API_KEY, cost: 0.012, speed: 'medium' },
@@ -50,7 +51,7 @@ async function callOpenAI(messages) {
 async function callAnthropic(messages) {
   if (!ANTHROPIC_API_KEY) {
     const lastUserMsg = messages.filter(m => m.role === 'user').pop();
-    return { content: `[Mock Anthropic] ${lastUserMsg?.content || ''}`, model: 'mock-anthropic' };
+    return { content: `[Mock Anthropic/Claude Haiku] ${lastUserMsg?.content || ''}`, model: 'mock-anthropic' };
   }
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -61,16 +62,19 @@ async function callAnthropic(messages) {
         'anthropic-version': '2023-10-16',
       },
       body: JSON.stringify({
-        model: 'claude-3-sonnet-20240229',
+        model: ANTHROPIC_MODEL,
         max_tokens: 1000,
         messages: messages,
       }),
     });
-    if (!response.ok) throw new Error(`Anthropic error: ${response.status}`);
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(`Anthropic error: ${response.status} - ${errData.error?.message || 'Unknown error'}`);
+    }
     const data = await response.json();
-    return { content: data.content[0]?.text || '', model: 'anthropic' };
+    return { content: data.content[0]?.text || '', model: `anthropic:${ANTHROPIC_MODEL}` };
   } catch (err) {
-    console.error('Anthropic call failed:', err.message);
+    console.error('Anthropic/Claude Haiku call failed:', err.message);
     throw err;
   }
 }

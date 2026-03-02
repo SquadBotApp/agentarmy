@@ -1,4 +1,9 @@
 import uuid
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from orchestrator import (
     Task,
     Agent,
@@ -31,20 +36,20 @@ def test_simple_linear_tasks():
     job = JobSpec(goal="test", constraints={})
 
     decision1 = pick_next_task_and_agent(state, job)
-    assert decision1.nextTaskId == a.id
-    assert decision1.nextAgentId is not None
+    assert decision1.next_task_id == a.id
+    assert decision1.next_agent_id is not None
 
     # mark A as completed in history and re-run
     state.history.append({"task_id": a.id, "status": "completed"})
     decision2 = pick_next_task_and_agent(state, job)
-    assert decision2.nextTaskId == b.id
+    assert decision2.next_task_id == b.id
 
     # complete B
     state.history.append({"task_id": b.id, "status": "completed"})
     decision3 = pick_next_task_and_agent(state, job)
-    assert decision3.nextTaskId == c.id
+    assert decision3.next_task_id == c.id
 
     # complete C
     state.history.append({"task_id": c.id, "status": "completed"})
     decision4 = pick_next_task_and_agent(state, job)
-    assert decision4.nextTaskId is None
+    assert decision4.next_task_id is None

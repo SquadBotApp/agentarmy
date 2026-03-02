@@ -1,0 +1,477 @@
+/**
+ * Honeycomb Layout CSS Module
+ * Styles for the unified agent cognitive map visualization
+ */
+
+/* Base layout */
+.honeycombContainer {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%);
+}
+
+.backgroundLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.3;
+  z-index: 0;
+}
+
+.gridOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(rgba(212, 175, 55, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212, 175, 55, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  z-index: 1;
+}
+
+.honeycombLayout {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+/* Input area */
+.inputArea {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  width: 400px;
+  z-index: 10;
+}
+
+.inputWrapper {
+  display: flex;
+  gap: 8px;
+  background: rgba(10, 10, 15, 0.9);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.inputField {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #e0e0e0;
+  font-size: 14px;
+  outline: none;
+}
+
+.inputField::placeholder {
+  color: rgba(212, 175, 55, 0.5);
+}
+
+.submitButton {
+  background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  color: #0a0a0f;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submitButton:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+}
+
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Hexagon grid positioning */
+.hexGrid {
+  position: relative;
+  width: 700px;
+  height: 700px;
+}
+
+/* Connection lines */
+.connections {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.connectionLine {
+  stroke: rgba(212, 175, 55, 0.2);
+  stroke-width: 2;
+  fill: none;
+  transition: all 0.3s ease;
+}
+
+.connectionLine.active {
+  stroke: rgba(212, 175, 55, 0.8);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
+}
+
+.connectionLine.pulse {
+  animation: linePulse 1s ease-in-out infinite;
+}
+
+@keyframes linePulse {
+  0%, 100% { stroke-opacity: 0.3; }
+  50% { stroke-opacity: 1; }
+}
+
+/* Core hexagon */
+.coreHex {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.hexagon {
+  width: 180px;
+  height: 180px;
+  background: linear-gradient(135deg, rgba(20, 20, 30, 0.95) 0%, rgba(10, 10, 15, 0.98) 100%);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(212, 175, 55, 0.4);
+  position: relative;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.hexagon::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, transparent 50%, rgba(212, 175, 55, 0.3) 100%);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  z-index: -1;
+}
+
+.hexagon.core {
+  width: 220px;
+  height: 220px;
+}
+
+.hexagon.core::before {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.5) 0%, transparent 50%, rgba(212, 175, 55, 0.5) 100%);
+}
+
+.hexagon:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+}
+
+.hexagon.active {
+  box-shadow: 0 0 40px rgba(212, 175, 55, 0.5);
+}
+
+.hexagon.pulse {
+  animation: hexPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes hexPulse {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+  }
+  50% { 
+    box-shadow: 0 0 50px rgba(212, 175, 55, 0.6);
+  }
+}
+
+/* Status colors */
+.hexagon.thinking::before {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.5) 0%, transparent 50%, rgba(59, 130, 246, 0.5) 100%);
+}
+
+.hexagon.executing::before {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.5) 0%, transparent 50%, rgba(234, 179, 8, 0.5) 100%);
+}
+
+.hexagon.evaluating::before {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.5) 0%, transparent 50%, rgba(168, 85, 247, 0.5) 100%);
+}
+
+.hexagon.complete::before {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.5) 0%, transparent 50%, rgba(34, 197, 94, 0.5) 100%);
+}
+
+.hexagon.error::before {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.5) 0%, transparent 50%, rgba(239, 68, 68, 0.5) 100%);
+}
+
+/* Hexagon content */
+.hexContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.logo {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(212, 175, 55, 0.5);
+}
+
+.coreLogo {
+  width: 80px;
+  height: 80px;
+}
+
+.hexTitle {
+  color: #d4af37;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.hexStatus {
+  color: rgba(224, 224, 224, 0.8);
+  font-size: 11px;
+}
+
+.hexValue {
+  color: #e0e0e0;
+  font-size: 12px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zpeScore {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #d4af37;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.thinking {
+  color: rgba(212, 175, 55, 0.7);
+  font-size: 10px;
+  font-style: italic;
+  animation: thinkingDots 1.5s infinite;
+}
+
+@keyframes thinkingDots {
+  0%, 20% { content: '.'; }
+  40% { content: '..'; }
+  60%, 100% { content: '...'; }
+}
+
+/* Module hexagons positioning */
+.moduleHex {
+  position: absolute;
+  z-index: 5;
+}
+
+.moduleHex.planner { top: 5%; left: 50%; transform: translateX(-50%); }
+.moduleHex.executor { top: 22%; right: 8%; }
+.moduleHex.critic { bottom: 22%; right: 8%; }
+.moduleHex.governor { bottom: 5%; left: 50%; transform: translateX(-50%); }
+.moduleHex.memory { bottom: 22%; left: 8%; }
+.moduleHex.learning { top: 22%; left: 8%; }
+.moduleHex.tools { top: 50%; right: 0%; transform: translateY(-50%); }
+
+/* Module icons */
+.moduleIcon {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+/* Output panel */
+.outputPanel {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  right: 24px;
+  max-height: 200px;
+  background: rgba(10, 10, 15, 0.95);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-y: auto;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+}
+
+.outputHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.outputTitle {
+  color: #d4af37;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.outputJobId {
+  color: rgba(212, 175, 55, 0.6);
+  font-size: 10px;
+  font-family: monospace;
+}
+
+.outputContent {
+  color: #e0e0e0;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.outputError {
+  color: #ef4444;
+}
+
+/* Metrics panel */
+.metricsPanel {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 280px;
+  background: rgba(10, 10, 15, 0.95);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+}
+
+.metricRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+.metricRow:last-child {
+  border-bottom: none;
+}
+
+.metricLabel {
+  color: rgba(224, 224, 224, 0.7);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metricValue {
+  color: #d4af37;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.metricBar {
+  width: 100%;
+  height: 4px;
+  background: rgba(212, 175, 55, 0.2);
+  border-radius: 2px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.metricBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #d4af37 0%, #f0d060 100%);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* Loading spinner */
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  border-top-color: #d4af37;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .hexGrid {
+    width: 600px;
+    height: 600px;
+  }
+  
+  .hexagon {
+    width: 140px;
+    height: 140px;
+  }
+  
+  .hexagon.core {
+    width: 180px;
+    height: 180px;
+  }
+}
+
+@media (max-width: 800px) {
+  .inputArea {
+    width: calc(100% - 48px);
+  }
+  
+  .hexGrid {
+    width: 500px;
+    height: 500px;
+  }
+  
+  .hexagon {
+    width: 110px;
+    height: 110px;
+  }
+  
+  .hexagon.core {
+    width: 140px;
+    height: 140px;
+  }
+  
+  .metricsPanel {
+    display: none;
+  }
+}
