@@ -2,13 +2,22 @@
 // This file should be imported before other modules (e.g., in index.js)
 
 const process = require('node:process');
-const { NodeTracerProvider } = require('@opentelemetry/sdk-trace-node');
-const { registerInstrumentations } = require('@opentelemetry/instrumentation');
-const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http');
-const { ExpressInstrumentation } = require('@opentelemetry/instrumentation-express');
-const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
-const { BatchSpanProcessor, SimpleSpanProcessor } = require('@opentelemetry/sdk-trace-base');
-const api = require('@opentelemetry/api');
+
+function optionalRequire(moduleName) {
+  try {
+    return require(moduleName);
+  } catch (_err) {
+    return null;
+  }
+}
+
+const otelTraceNode = optionalRequire('@opentelemetry/sdk-trace-node');
+const otelInstrumentation = optionalRequire('@opentelemetry/instrumentation');
+const otelHttpInstr = optionalRequire('@opentelemetry/instrumentation-http');
+const otelExpressInstr = optionalRequire('@opentelemetry/instrumentation-express');
+const otelExporter = optionalRequire('@opentelemetry/exporter-trace-otlp-http');
+const otelTraceBase = optionalRequire('@opentelemetry/sdk-trace-base');
+const api = optionalRequire('@opentelemetry/api') || { SpanStatusCode: { OK: 1, ERROR: 2 }, trace: { getTracer: () => null } };
 
 // only enable if OTLP endpoint is reachable
 const enableTracing = process.env.ENABLE_TRACING === 'true' || process.env.NODE_ENV === 'development';
@@ -16,24 +25,43 @@ const enableTracing = process.env.ENABLE_TRACING === 'true' || process.env.NODE_
 let tracer = null;
 
 if (enableTracing) {
-  const provider = new NodeTracerProvider();
-  const exporter = new OTLPTraceExporter({
-    url: process.env.OTLP_ENDPOINT || 'http://localhost:4318/v1/traces',
-  });
-  // NodeTracerProvider no longer exposes addSpanProcessor publicly; tack the span
-  // processor onto the private field so it will be used when registering.
-  provider._activeSpanProcessor = new BatchSpanProcessor(exporter);
-  provider.register();
+  const NodeTracerProvider = otelTraceNode?.NodeTracerProvider;
+  const registerInstrumentations = otelInstrumentation?.registerInstrumentations;
+  const HttpInstrumentation = otelHttpInstr?.HttpInstrumentation;
+  const ExpressInstrumentation = otelExpressInstr?.ExpressInstrumentation;
+  const OTLPTraceExporter = otelExporter?.OTLPTraceExporter;
+  const BatchSpanProcessor = otelTraceBase?.BatchSpanProcessor;
 
-  registerInstrumentations({
-    instrumentations: [
-      new HttpInstrumentation(),
-      new ExpressInstrumentation(),
-    ],
-  });
+  if (
+    NodeTracerProvider &&
+    registerInstrumentations &&
+    HttpInstrumentation &&
+    ExpressInstrumentation &&
+    OTLPTraceExporter &&
+    BatchSpanProcessor &&
+    api?.trace?.getTracer
+  ) {
+    const provider = new NodeTracerProvider();
+    const exporter = new OTLPTraceExporter({
+      url: process.env.OTLP_ENDPOINT || 'http://localhost:4318/v1/traces',
+    });
+    // NodeTracerProvider no longer exposes addSpanProcessor publicly; tack the span
+    // processor onto the private field so it will be used when registering.
+    provider._activeSpanProcessor = new BatchSpanProcessor(exporter);
+    provider.register();
 
-  tracer = api.trace.getTracer('agentarmy.server', '1.0.0');
-  console.log('[Tracing] OTLP exporter configured to', exporter.url);
+    registerInstrumentations({
+      instrumentations: [
+        new HttpInstrumentation(),
+        new ExpressInstrumentation(),
+      ],
+    });
+
+    tracer = api.trace.getTracer('agentarmy.server', '1.0.0');
+    console.log('[Tracing] OTLP exporter configured to', exporter.url);
+  } else {
+    console.warn('[Tracing] enabled but OpenTelemetry dependencies are incomplete; tracing disabled');
+  }
 } else {
   console.log('[Tracing] disabled (set ENABLE_TRACING=true)');
 }

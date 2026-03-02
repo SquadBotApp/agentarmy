@@ -239,10 +239,6 @@ export class MultiAIAwakeningEngine {
   private readonly events: AwakeningEvent[] = [];
   private listeners: Array<(e: AwakeningEvent) => void> = [];
 
-  constructor() {
-    // Engine starts dormant — awakening is triggered by forming a team
-  }
-
   // ========================================================================
   // EVENT SYSTEM
   // ========================================================================

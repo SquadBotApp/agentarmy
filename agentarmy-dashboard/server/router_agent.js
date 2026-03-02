@@ -42,9 +42,6 @@ class RouterAgent {
   pickBestProvider(enabledProviders, stats) {
     if (!enabledProviders || enabledProviders.length === 0) return 'openai';
 
-    // Claude Haiku first when available (explicit product decision)
-    if (enabledProviders.includes('anthropic')) return 'anthropic';
-
     const scored = enabledProviders.map((p) => ({ provider: p, score: this.scoreProvider(p, stats) }));
     scored.sort((a, b) => a.score - b.score);
 
@@ -254,8 +251,10 @@ class RouterAgent {
 
   // Get current routing metrics
   getMetrics() {
+    const cacheStats = this.cache.getStats();
+    cacheStats.keys = this.cache.keys();
     return {
-      cache: this.cache.getStats(),
+      cache: cacheStats,
       stats: this.stats,
       toolSelector: this.toolSelector.getStats(),
       monitoring: this.monitor.getSummary(),
@@ -275,7 +274,6 @@ class RouterAgent {
   selectProvider(messages, options = {}, enabledProviders = []) {
     const { model } = options;
     if (model && enabledProviders.includes(model)) return model;
-    if (enabledProviders.includes('anthropic')) return 'anthropic';
     if (enabledProviders.length > 0) return this.pickBestProvider(enabledProviders, this.stats);
     return 'openai';
   }

@@ -9,8 +9,8 @@
  */
 
 import type { TelemetryEvent, ExecutionTelemetry } from './executionTelemetry';
-import type { MissionHealthReport, CorrectionAction } from './missionHealth';
-import type { SwarmRunnerFabric, RunnerProfile } from './swarmRunnerFabric';
+import type { MissionHealthReport } from './missionHealth';
+import type { SwarmRunnerFabric } from './swarmRunnerFabric';
 
 // ---------------------------------------------------------------------------
 // Types

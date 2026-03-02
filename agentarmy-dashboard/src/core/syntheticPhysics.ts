@@ -267,7 +267,6 @@ export class SyntheticPhysicsEngine {
       const dx = body.position.x - field.origin.x;
       const dy = body.position.y - field.origin.y;
       const dist2 = dx * dx + dy * dy + 0.01;
-      const dist = Math.sqrt(dist2);
       return {
         x: (field.strength * dx) / dist2,
         y: (field.strength * dy) / dist2,

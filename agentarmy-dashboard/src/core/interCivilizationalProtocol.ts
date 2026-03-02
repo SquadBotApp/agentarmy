@@ -107,7 +107,7 @@ export class InterCivilizationalProtocol {
 
   activateTreaty(treatyId: string): boolean {
     const idx = this.treaties.findIndex((t) => t.id === treatyId);
-    if (idx < 0 || this.treaties[idx].status !== 'proposed' && this.treaties[idx].status !== 'negotiating') return false;
+    if (idx < 0 || (this.treaties[idx].status !== 'proposed' && this.treaties[idx].status !== 'negotiating')) return false;
     this.treaties[idx] = { ...this.treaties[idx], status: 'active', activatedAt: new Date().toISOString() };
     return true;
   }

@@ -8,6 +8,15 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
 const XAI_API_KEY = process.env.XAI_API_KEY || '';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
+function getLastUserMessage(messages) {
+  if (!Array.isArray(messages)) return null;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg && msg.role === 'user') return msg;
+  }
+  return null;
+}
+
 // Provider registry
 const providers = {
   openai: { name: 'openai', available: !!OPENAI_API_KEY, cost: 0.01, speed: 'fast' },
@@ -18,8 +27,9 @@ const providers = {
 };
 
 async function callOpenAI(messages) {
+  const safeMessages = Array.isArray(messages) ? messages : [];
   if (!OPENAI_API_KEY) {
-    const lastUserMsg = messages.findLast(m => m.role === 'user');
+    const lastUserMsg = getLastUserMessage(safeMessages);
     return { content: `[Mock OpenAI] ${lastUserMsg?.content?.slice(0, 50) || 'N/A'}...`, model: 'mock-openai' };
   }
   try {
@@ -31,7 +41,7 @@ async function callOpenAI(messages) {
       },
       body: JSON.stringify({
         model: OPENAI_MODEL,
-        messages: messages,
+        messages: safeMessages,
         temperature: 0.7,
         max_tokens: 1000,
       }),
@@ -49,8 +59,9 @@ async function callOpenAI(messages) {
 }
 
 async function callAnthropic(messages) {
+  const safeMessages = Array.isArray(messages) ? messages : [];
   if (!ANTHROPIC_API_KEY) {
-    const lastUserMsg = messages.findLast(m => m.role === 'user');
+    const lastUserMsg = getLastUserMessage(safeMessages);
     return { content: `[Mock Anthropic/Claude Haiku] ${lastUserMsg?.content || ''}`, model: 'mock-anthropic' };
   }
   try {
@@ -64,7 +75,7 @@ async function callAnthropic(messages) {
       body: JSON.stringify({
         model: ANTHROPIC_MODEL,
         max_tokens: 1000,
-        messages: messages,
+        messages: safeMessages,
       }),
     });
     if (!response.ok) {
@@ -80,8 +91,9 @@ async function callAnthropic(messages) {
 }
 
 async function callGroq(messages) {
+  const safeMessages = Array.isArray(messages) ? messages : [];
   if (!GROQ_API_KEY) {
-    const lastUserMsg = messages.findLast(m => m.role === 'user');
+    const lastUserMsg = getLastUserMessage(safeMessages);
     return { content: `[Mock Groq] ${lastUserMsg?.content?.slice(0, 50) || ''}`, model: 'mock-groq' };
   }
   try {
@@ -93,7 +105,7 @@ async function callGroq(messages) {
       },
       body: JSON.stringify({
         model: 'mixtral-8x7b-32768',
-        messages: messages,
+        messages: safeMessages,
         temperature: 0.7,
         max_tokens: 1000,
       }),
@@ -108,8 +120,9 @@ async function callGroq(messages) {
 }
 
 async function callXAI(messages) {
+  const safeMessages = Array.isArray(messages) ? messages : [];
   if (!XAI_API_KEY) {
-    const lastUserMsg = messages.findLast(m => m.role === 'user');
+    const lastUserMsg = getLastUserMessage(safeMessages);
     return { content: `[Mock xAI] ${lastUserMsg?.content?.slice(0, 50) || ''}`, model: 'mock-xai' };
   }
   try {
@@ -121,7 +134,7 @@ async function callXAI(messages) {
       },
       body: JSON.stringify({
         model: 'grok-1',
-        messages: messages,
+        messages: safeMessages,
         max_tokens: 1000,
       }),
     });
@@ -135,16 +148,18 @@ async function callXAI(messages) {
 }
 
 async function callGemini(messages) {
+  const safeMessages = Array.isArray(messages) ? messages : [];
   if (!GEMINI_API_KEY) {
-    const lastUserMsg = messages.findLast(m => m.role === 'user');
+    const lastUserMsg = getLastUserMessage(safeMessages);
     return { content: `[Mock Gemini] ${lastUserMsg?.content?.slice(0, 50) || ''}`, model: 'mock-gemini' };
   }
   try {
+    const userText = getLastUserMessage(safeMessages)?.content || '';
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: messages.findLast(m => m.role === 'user').content }] }],
+        contents: [{ parts: [{ text: userText }] }],
       }),
     });
     if (!response.ok) throw new Error(`Gemini error: ${response.status}`);

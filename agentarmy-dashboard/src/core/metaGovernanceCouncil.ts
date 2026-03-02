@@ -114,7 +114,7 @@ export class MetaGovernanceCouncil {
 
   vote(directiveId: string, memberId: string, approve: boolean, reason = ''): Directive | null {
     const d = this.directives.get(directiveId);
-    if (!d || d.status !== 'proposed' && d.status !== 'deliberating') return null;
+    if (!d || (d.status !== 'proposed' && d.status !== 'deliberating')) return null;
 
     const member = this.members.get(memberId);
     if (!member?.active) return null;

@@ -250,13 +250,6 @@ function derivePriority(netScore: number, riskScore: number): ProposalPriority {
 // Ecosystem signal generators (simulated scanning)
 // ---------------------------------------------------------------------------
 
-const ECOSYSTEM_DOMAINS: EcosystemDomain[] = [
-  'open-source-models', 'commercial-models', 'agent-frameworks',
-  'vector-databases', 'orchestration-systems', 'adversarial-techniques',
-  'safety-research', 'regulatory-changes', 'compute-scaling',
-  'competitor-platforms', 'research-papers', 'hardware-accelerators',
-];
-
 const SAMPLE_SIGNALS: Array<{ name: string; domain: EcosystemDomain; desc: string }> = [
   { name: 'GPT-5 Rumored Architecture', domain: 'commercial-models', desc: 'Reports of next-gen architecture with 10x reasoning' },
   { name: 'Open-Source MoE Model Release', domain: 'open-source-models', desc: 'New mixture-of-experts model with strong benchmarks' },
