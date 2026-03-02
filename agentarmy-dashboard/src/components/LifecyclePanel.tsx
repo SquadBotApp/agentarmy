@@ -65,7 +65,7 @@ export const LifecyclePanel: React.FC = () => {
         type="button"
         className={styles.panelHeader}
         onClick={() => setExpanded(!expanded)}
-        aria-expanded={expanded}
+        aria-expanded={expanded ? 'true' : 'false'}
       >
         <h3>🛡️ Lifecycle Manager</h3>
         <span className={styles.toggleBtn}>{expanded ? '▼' : '▶'}</span>
@@ -73,7 +73,7 @@ export const LifecyclePanel: React.FC = () => {
 
       {expanded && (
         <div className={styles.panelContent}>
-          {error && <p style={{ color: '#ff4444', fontSize: 12 }}>⚠ {error}</p>}
+          {error && <p className={styles.errorText}>⚠ {error}</p>}
 
           {/* Constitutional Status */}
           {constitutionalStatus && (
@@ -134,7 +134,7 @@ export const LifecyclePanel: React.FC = () => {
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
               />
-              <select value={newRole} onChange={(e) => setNewRole(e.target.value)}>
+              <select value={newRole} onChange={(e) => setNewRole(e.target.value)} aria-label="Agent role">
                 <option value="planner">Planner</option>
                 <option value="executor">Executor</option>
                 <option value="critic">Critic</option>
@@ -210,8 +210,8 @@ const AgentRow: React.FC<AgentRowProps> = ({
           {v && <span>ZPE {v.zpe_baseline.toFixed(2)}</span>}
           <span>perf {(agent.performance_score * 100).toFixed(0)}%</span>
           <span>{agent.total_missions} missions</span>
-          {agent.tools_locked && <span style={{ color: '#ff6644' }}>🔒 tools</span>}
-          {agent.governance_required && <span style={{ color: '#ffaa44' }}>⚖️ gov</span>}
+          {agent.tools_locked && <span className={styles.toolsLocked}>🔒 tools</span>}
+          {agent.governance_required && <span className={styles.govRequired}>⚖️ gov</span>}
         </div>
       </div>
       <div className={styles.agentActions}>

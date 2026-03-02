@@ -201,7 +201,7 @@ function InnerApp() {
     <div className="app">
       <header className="top-bar">
         <h1>AgentArmy Prototype</h1>
-        <div style={{display:'flex',alignItems:'center',gap:12}}>
+        <div className="header-flex">
           {/* View mode toggle */}
           <div className="theme-select">
             <label htmlFor="viewmode">View:</label>
@@ -209,7 +209,7 @@ function InnerApp() {
               id="viewmode" 
               value={viewMode} 
               onChange={(e) => setViewMode(e.target.value as ViewMode)}
-              style={{ background: viewMode === 'honeycomb' ? '#d4af37' : undefined, color: viewMode === 'honeycomb' ? '#0a0a0f' : undefined }}
+              className={viewMode === 'honeycomb' ? 'select-honeycomb' : undefined}
             >
               <option value="dashboard">Dashboard</option>
               <option value="honeycomb">🐝 Honeycomb</option>
@@ -223,7 +223,7 @@ function InnerApp() {
                 id="bgmode"
                 value={useUnifiedAgentStore.getState().backgroundMode}
                 onChange={(e) => useUnifiedAgentStore.getState().setBackgroundMode(e.target.value as BackgroundMode)}
-                style={{ background: '#1a3a2a', borderColor: '#66ff66' }}
+                className="select-bg"
               >
                 <option value="subtle">✨ Subtle</option>
                 <option value="high-energy">⚡ High-Energy</option>
@@ -242,13 +242,13 @@ function InnerApp() {
             <button className="btn" onClick={() => setPromptManagerOpen(true)}>Prompts</button>
           </div>
           <div>
-            <button className="btn" onClick={() => setWarRoomOpen(true)} style={{background:'#1a1420',borderColor:'#d4af37',color:'#d4af37'}}>🏛️ War Room</button>
+            <button className="btn btn-warroom" onClick={() => setWarRoomOpen(true)}>🏛️ War Room</button>
           </div>
           <div>
             <button className="btn" onClick={evolveOnce}>Evolve</button>
-            <button className="btn" onClick={revertLastEvolution} style={{marginLeft:8}}>Revert</button>
+            <button className="btn btn-ml8" onClick={revertLastEvolution}>Revert</button>
           </div>
-          <div style={{marginLeft:'auto'}}> 
+          <div className="header-right"> 
             {useAgentStore.getState().token ? (
               <button className="btn" onClick={() => {
                 useAgentStore.getState().logout();
@@ -295,7 +295,7 @@ function InnerApp() {
           >
             <h2>Universes</h2>
             <p>Winner: {selectedUniverse}</p>
-            <div style={{marginTop:8}}>
+            <div className="mt8">
               <label htmlFor="universe-select">Universe:</label>
               <select id="universe-select" value={selectedUniverse} onChange={(e)=>setSelectedUniverse(e.target.value)}>
                 <option>Universe A</option>
@@ -337,7 +337,7 @@ function InnerApp() {
           <div className="modal-content" role="none" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
             <h2>{expanded.toUpperCase()} Details</h2>
             <p>More detailed metrics will go here.</p>
-            <button type="button" onClick={() => setExpanded(null)} style={{ marginTop: '1rem' }}>Close</button>
+            <button type="button" onClick={() => setExpanded(null)} className="mt-1rem">Close</button>
           </div>
         </dialog>
       )}

@@ -133,6 +133,16 @@
 
 .btn:hover { filter: brightness(0.95); }
 
+/* Utility classes to replace inline styles */
+.header-flex { display: flex; align-items: center; gap: 12px; }
+.header-right { margin-left: auto; }
+.select-honeycomb { background: #d4af37; color: #0a0a0f; }
+.select-bg { background: #1a3a2a; border-color: #66ff66; }
+.btn-warroom { background: #1a1420; border-color: #d4af37; color: #d4af37; }
+.btn-ml8 { margin-left: 8px; }
+.mt8 { margin-top: 8px; }
+.mt-1rem { margin-top: 1rem; }
+
 .input {
   flex: 1;
   padding: 8px;
@@ -169,6 +179,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
 

@@ -282,3 +282,17 @@
   text-align: center;
   padding: 20px;
 }
+
+/* Utility classes to replace inline styles */
+.errorText {
+  color: #ff4444;
+  font-size: 12px;
+}
+
+.toolsLocked {
+  color: #ff6644;
+}
+
+.govRequired {
+  color: #ffaa44;
+}

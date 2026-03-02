@@ -93,7 +93,7 @@ export const DeploymentPanel: React.FC = () => {
         type="button"
         className={styles.panelHeader}
         onClick={() => setExpanded(!expanded)}
-        aria-expanded={expanded}
+        aria-expanded={expanded ? 'true' : 'false'}
       >
         <h3>🚀 Deployment Orchestrator</h3>
         <span className={styles.toggleBtn}>{expanded ? '▼' : '▶'}</span>
@@ -101,7 +101,7 @@ export const DeploymentPanel: React.FC = () => {
 
       {expanded && (
         <div className={styles.panelContent}>
-          {error && <p style={{ color: '#ff4444', fontSize: 12 }}>⚠ {error}</p>}
+          {error && <p className={styles.errorText}>⚠ {error}</p>}
 
           {/* Stats Banner */}
           {stats && (
@@ -151,9 +151,9 @@ export const DeploymentPanel: React.FC = () => {
                 placeholder="Domain"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
-                style={{ flex: 1, minWidth: 90 }}
+                className={styles.domainInput}
               />
-              <select value={risk} onChange={(e) => setRisk(e.target.value)}>
+              <select value={risk} onChange={(e) => setRisk(e.target.value)} aria-label="Risk level">
                 <option value="0.2">Low Risk</option>
                 <option value="0.5">Standard</option>
                 <option value="0.8">High Risk</option>
@@ -253,7 +253,7 @@ const RunnerCard: React.FC<{ runner: RunnerInfo }> = ({ runner }) => (
       <span>💰 {runner.cost_per_call} Qb/call</span>
       <span>🔧 {runner.tools.join(', ')}</span>
       <span>📊 {runner.load}/{runner.max_concurrent} load</span>
-      {!runner.safety_cleared && <span style={{ color: '#ff4444' }}>⚠ not safety-cleared</span>}
+      {!runner.safety_cleared && <span className={styles.safetyWarning}>⚠ not safety-cleared</span>}
     </div>
   </div>
 );

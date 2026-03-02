@@ -16,12 +16,11 @@ function makeAxios(token) {
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
-  const instance = (a.default || a).create({
+  return (a.default || a).create({
     baseURL: ORCHESTRATION_SERVICE_URL,
     headers,
     timeout: 30000,
   });
-  return instance;
 }
 
 class OrchestrationClient {

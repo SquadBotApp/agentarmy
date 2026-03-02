@@ -269,3 +269,18 @@
   text-align: center;
   padding: 20px;
 }
+
+/* Utility classes to replace inline styles */
+.errorText {
+  color: #ff4444;
+  font-size: 12px;
+}
+
+.domainInput {
+  flex: 1;
+  min-width: 90px;
+}
+
+.safetyWarning {
+  color: #ff4444;
+}
