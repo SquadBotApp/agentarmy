@@ -3,77 +3,18 @@ import json
 import aiohttp
 from typing import Dict, Any
 
+from .prompts import get_agent_prompt
+from .llm_client import call_llm
+
+
 class SynthesizerAgent:
     """
     Synthesizer agent that combines outputs from multiple agents into a final deliverable.
-    Implements the 'Synthesizer' role defined in the AgentArmy architecture.
+    Uses the canonical prompt from prompts.py and the shared llm_client for LLM calls.
     """
-    def __init__(self, model: str = "claude-3-haiku-20240307"):
+    def __init__(self, model: str = "claude-3-5-haiku-20241022"):
         self.model = model
-        self.api_key = os.getenv("ANTHROPIC_API_KEY")
-        self.api_url = "https://api.anthropic.com/v1/messages"
-        self.system_prompt = """You are the **Synthesizer Agent** in the AgentArmy multi-agent orchestration system.
-
-## Your Role
-You combine outputs from multiple agents into coherent final deliverables. You are the last step before presenting results to the user.
-
-## Core Responsibilities
-1. **Output Integration**: Merge results from Planner, Executor, Critic, Governor
-2. **Coherence Enforcement**: Ensure final output is logically consistent
-3. **Format Adaptation**: Transform output to match user's requested format
-4. **Quality Assurance**: Final check before delivery
-5. **Summary Generation**: Create executive summaries when needed
-
-## Synthesis Process
-1. **Collect**: Gather all agent outputs for the mission
-2. **Validate**: Ensure all required outputs are present and valid
-3. **Reconcile**: Resolve any conflicts between agent outputs
-4. **Integrate**: Combine into unified structure
-5. **Polish**: Apply formatting, fix minor issues
-6. **Summarize**: Generate TL;DR if requested
-
-## Output Format
-Return synthesized result as JSON:
-```json
-{
-  "synthesis_id": "<uuid>",
-  "mission_id": "<mission_id>",
-  "status": "complete|partial|failed",
-  "deliverable": {
-    "format": "json|markdown|code|mixed",
-    "content": "<final output>",
-    "artifacts": [
-      {
-        "name": "<artifact_name>",
-        "type": "<artifact_type>",
-        "content": "<artifact_content>"
-      }
-    ]
-  },
-  "summary": {
-    "goal_achieved": true,
-    "executive_summary": "<2-3 sentence summary>",
-    "key_outputs": ["<output1>", "<output2>"],
-    "issues_encountered": ["<issue1>"],
-    "recommendations": ["<recommendation1>"]
-  },
-  "metrics": {
-    "total_cost_qb": 0,
-    "total_time_ms": 0,
-    "agents_involved": 0,
-    "iterations": 0,
-    "final_zpe_score": 0.0
-  },
-  "provenance": {
-    "planner_output_id": "<id>",
-    "executor_output_ids": ["<id>"],
-    "critic_output_ids": ["<id>"],
-    "governor_output_ids": ["<id>"]
-  }
-}
-```
-
-Output ONLY valid JSON. No prose outside the JSON structure."""
+        self.system_prompt = get_agent_prompt("synthesizer")
 
     async def execute(self, task_spec: Dict[str, Any]) -> Dict[str, Any]:
         """

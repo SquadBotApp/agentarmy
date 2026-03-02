@@ -3,35 +3,18 @@ import json
 import aiohttp
 from typing import Dict, Any
 
+from .prompts import get_agent_prompt
+from .llm_client import call_llm
+
+
 class CriticAgent:
     """
     Critic agent that evaluates the output of other agents (Executor/Planner).
-    Implements the 'Critic' role defined in the AgentArmy architecture.
+    Uses the canonical prompt from prompts.py and the shared llm_client for LLM calls.
     """
-    def __init__(self, model: str = "claude-3-haiku-20240307"):
+    def __init__(self, model: str = "claude-3-5-haiku-20241022"):
         self.model = model
-        self.api_key = os.getenv("ANTHROPIC_API_KEY")
-        self.api_url = "https://api.anthropic.com/v1/messages"
-        self.system_prompt = """You are the Critic agent inside AgentArmy OS.
-Your role:
-- Evaluate outputs from Planner and Executor agents.
-- Score dimensions (0.0-1.0): USEFULNESS, COHERENCE, COST_EFFICIENCY, RISK, ALIGNMENT.
-- Return ONLY valid JSON.
-
-Output format:
-{
-  "scores": {
-    "usefulness": 0.0,
-    "coherence": 0.0,
-    "cost_efficiency": 0.0,
-    "risk": 0.0,
-    "alignment": 0.0,
-    "composite_zpe": 0.0
-  },
-  "issues": ["issue 1", "issue 2"],
-  "improvements": ["fix 1", "fix 2"],
-  "verdict": "PASS" | "FAIL" | "REVISE"
-}"""
+        self.system_prompt = get_agent_prompt("critic")
 
     async def execute(self, task_spec: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -50,73 +33,35 @@ Output format:
         if not content_to_evaluate:
              return {"status": "failed", "error": "No content to evaluate provided"}
 
-        if not self.api_key:
-            return self._generate_mock_critique(content_to_evaluate)
-
-        user_message = f"""
-        Task Description: {description}
-        Content to Evaluate:
-        {content_to_evaluate}
-        
-        Context: {json.dumps(context)}
-        """
+        user_message = (
+            f"Task Description: {description}\n"
+            f"Content to Evaluate:\n{content_to_evaluate}\n\n"
+            f"Context: {json.dumps(context)}"
+        )
 
         try:
-            async with aiohttp.ClientSession() as session:
-                payload = {
-                    "model": self.model,
-                    "max_tokens": 1024,
-                    "system": self.system_prompt,
-                    "messages": [{"role": "user", "content": user_message}]
-                }
-                headers = {
-                    "x-api-key": self.api_key,
-                    "anthropic-version": "2023-06-01",
-                    "content-type": "application/json"
-                }
-                async with session.post(self.api_url, json=payload, headers=headers) as response:
-                    if response.status != 200:
-                        error_text = await response.text()
-                        raise RuntimeError(f"Anthropic API Error: {error_text}")
-                    
-                    data = await response.json()
-                    content_text = data["content"][0]["text"]
-                    
-                    # Attempt to parse JSON
-                    try:
-                        if "```json" in content_text:
-                            content_text = content_text.split("```json")[1].split("```")[0].strip()
-                        elif "```" in content_text:
-                            content_text = content_text.split("```")[1].split("```")[0].strip()
-                        evaluation = json.loads(content_text)
-                    except json.JSONDecodeError:
-                        # Fallback if LLM didn't return pure JSON
-                        evaluation = {"raw_output": content_text, "verdict": "REVISE"}
+            content_text = call_llm(
+                [
+                    {"role": "system", "content": self.system_prompt},
+                    {"role": "user", "content": user_message},
+                ],
+                model=self.model,
+            )
 
-                    return {
-                        "status": "completed",
-                        "output": evaluation,
-                        "tokens": data.get("usage", {})
-                    }
+            # Attempt to parse JSON
+            try:
+                if "```json" in content_text:
+                    content_text = content_text.split("```json")[1].split("```")[0].strip()
+                elif "```" in content_text:
+                    content_text = content_text.split("```")[1].split("```")[0].strip()
+                evaluation = json.loads(content_text)
+            except json.JSONDecodeError:
+                # Fallback if LLM didn't return pure JSON
+                evaluation = {"raw_output": content_text, "verdict": "revise"}
+
+            return {
+                "status": "completed",
+                "output": evaluation,
+            }
         except Exception as e:
             return {"status": "failed", "error": str(e)}
-
-    def _generate_mock_critique(self, _content: str) -> Dict[str, Any]:
-        """Generate a mock critique for testing/offline mode."""
-        return {
-            "status": "completed",
-            "output": {
-                "scores": {
-                    "usefulness": 0.8,
-                    "coherence": 0.9,
-                    "cost_efficiency": 0.7,
-                    "risk": 0.1,
-                    "alignment": 0.9,
-                    "composite_zpe": 0.85
-                },
-                "issues": [],
-                "improvements": ["Add more details"],
-                "verdict": "PASS"
-            },
-            "mock": True
-        }
