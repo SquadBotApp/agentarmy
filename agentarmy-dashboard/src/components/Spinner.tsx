@@ -69,7 +69,7 @@ export const Spinner: React.FC<SpinnerProps> = ({
   className,
   style: customStyle,
 }) => {
-  const activeColor = color ?? VARIANT_COLORS[variant];
+  const activeColor = color ?? VARIANT_COLORS[variant as SpinnerVariant];
 
   const spinnerStyle: React.CSSProperties = {
     width: `${size}px`,
@@ -80,13 +80,13 @@ export const Spinner: React.FC<SpinnerProps> = ({
   };
 
   const spinner = (
-    <output
+    <div
       className={`${styles.spinner} ${className ?? ''}`}
       style={spinnerStyle}
       aria-label={label}
     >
       <span className={styles.visuallyHidden}>{label}</span>
-    </output>
+    </div>
   );
 
   if (overlay) {
