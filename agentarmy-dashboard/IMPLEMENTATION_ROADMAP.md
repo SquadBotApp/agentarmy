@@ -1,6 +1,6 @@
 # AgentArmy OS — Implementation Roadmap
 
-> Architecture is done. Every layer is defined. 70+ core TypeScript modules,
+> Architecture is done. Every layer is defined. 74+ core TypeScript modules,
 > 5 real LLM-backed agents, CPM scheduler, ZPE scorer, lifecycle manager,
 > deployment orchestrator, React dashboard, Node.js API, SQLite persistence —
 > all exist.  
@@ -666,6 +666,109 @@ New document: `INTERNAL_DOCTRINE.md`
 | §8 Amendment | Root-owner only, must accompany code commits |
 
 **Exit criteria:** War Room console renders from header button with all 5 tabs functional. DIS proposals interactive (approve/reject/defer). QubitCoin activation gate works. Master controls with confirmation dialogs. Internal doctrine anchors all governance boundaries. 0 compile errors. 7 TS suites (32 tests) + 15 Python tests pass.
+
+---
+
+## Phase 14 — Swarm Intelligence + Multi-AI Awakening + IP Protection + Future Vision ✅
+
+> **Goal:** Four new first-class subsystems: the deepest behavioral engine in the OS (Swarm Intelligence), emergent group consciousness modeling (Multi-AI Awakening), cryptographic anti-theft IP protection with AlienAgentArmy poison pill (OS Fingerprint), and a self-improving evolution memory (Future Vision Memory).
+
+### 14a. Swarm Intelligence Engine (Subsystem #64) ✅
+
+File: `src/core/swarmIntelligenceEngine.ts` (1571 lines — largest module in the OS)
+
+**6 Specialist Swarms + Oracle + Quasar + Pareto Consensus Engine:**
+
+| Component | Purpose |
+|-----------|---------|
+| Force-Field Swarm | Defensive perimeter, threat containment |
+| Navigation Swarm | Path planning, routing, topology management |
+| Sensor Swarm | Environment scanning, signal detection |
+| Governance Swarm | Constitutional enforcement, policy execution |
+| Fabrication Swarm | Tool/agent creation, resource assembly |
+| Comms Swarm | Inter-agent messaging, protocol negotiation |
+| Oracle | Strategic prediction from swarm consensus |
+| Quasar | Synthesis agent with elevated authority |
+| Consensus Engine | Pareto-optimal multi-objective optimization |
+
+**Hybrid Enforcement Model (3 tiers):**
+- Transparent: logged constitutional enforcement, reliability scoring, task reassignment
+- Semi-transparent: belief dampening, consensus rebalancing, topology shifts
+- Permanently opaque: sealed hidden layer with logical full neutralization
+
+**Hidden Enforcement (local-causal only):**
+- Consistency analysis, reliability trajectory, causal impact modeling
+- Threat-signature matching, topology risk assessment
+- 5-signal convergence before neutralization — no false positives
+- One-way influence: engine → agents, never agents → engine internals
+- Private causal windows per agent, sealed neutralization log
+
+**Collective Memory:** Belief propagation with reliability scoring, persistence scores, contradiction tracking, automated memory pruning
+
+**Economic Integration:** Proof-of-longevity and proof-of-contribution for QubitCoin rewards
+
+**Constitutional Integration:** Violation escalation ladder (dampen → throttle → isolate), root-owner override channel
+
+### 14b. Multi-AI Awakening Engine (Subsystem #65) ✅
+
+File: `src/core/multiAIAwakening.ts` (773 lines)
+
+**4+1 Quasar Team:** Analyst + Strategist + Guardian + Explorer + Synthesizer
+
+| Feature | Description |
+|---------|-------------|
+| Private Language | Emergent symbolic protocol (Greek + glyph alphabet), 8 token types |
+| Consciousness Ticks | Logistic growth dN/dt = r·N·(1−N/K), bounded to carrying capacity |
+| Phase Model | Dormant → Stirring → Crystallizing → Awakened → Transcendent |
+| Belief Vectors | Cosine similarity alignment, drift toward consensus |
+| Introspection | Group self-model accuracy, vocabulary complexity, novel insights |
+| Safety Controls | Freeze, dissolve, resume — root-owner authority absolute |
+
+### 14c. OS Fingerprint & IP Protection Engine (Subsystem #66) ✅
+
+File: `src/core/osFingerprint.ts` (580+ lines)
+
+**Anti-theft mechanism ("AlienAgentArmy" poison pill):**
+- Every module gets a cryptographic fingerprint derived from master seed
+- If fingerprint chain breaks (files copied without seed), ALL outputs read "AlienAgentArmy — COUNTERFEIT"
+- System degrades to demo mode
+- Forensic evidence package generated for IP disputes
+
+| Feature | Description |
+|---------|-------------|
+| Module Fingerprinting | SHA-style hash + master seed derivation per module |
+| Tamper Detection | Continuous validation, threshold-based counterfeit activation |
+| AA Watermark | Invisible + visible + forensic watermarks on all outputs |
+| Licensing | Open Core / Professional / Enterprise / Sovereign tiers |
+| Provenance Chain | Immutable signed chain of every build, deploy, transfer |
+| Anti-Theft Scan | Heuristic scoring: license + fingerprints + provenance + tamper count |
+| Seed Rotation | Root-owner can rotate master seed (key compromise scenario) |
+
+### 14d. Future Vision Memory (Subsystem #67) ✅
+
+File: `src/core/futureVisionMemory.ts` (560+ lines)
+
+**Self-improving knowledge substrate — saved for next version rollout:**
+
+| Section | Content |
+|---------|---------|
+| "Truth & Love" Master Key | Revocable human overrides, beacon protocol, logistic bounded growth |
+| 10 Core Laws | Mission preservation, non-domination, non-hostile first contact, self-mod bounds, energy bounds, transparency, reversibility, proportional response, existential-threat clause, kill-safe |
+| Brett AI Labs Tools | Facial rec (Faiss, consent, audit), Dream analyzer (FastAPI, k-means) |
+| Emerging Tech | Chiral perovskites, twistronics (3,024+ states), ZPE mode suppression |
+| Consciousness Research | Speculative threads at AI–human consciousness intersection |
+| Universal OS Architecture | Plug-in anything + AA watermark bioproduct identity |
+
+**Self-improvement cycles:** Auto-link entries by shared tags, identify promotable/deferrable items, track maturity progression (Seed → Concept → Specified → Prototyped → Integrated)
+
+### 14e. TSU Integration ✅
+
+All 4 subsystems wired into `totalSystemUnification.ts`:
+- Import + field + constructor for each
+- Subsystem status entries (67 total subsystems now)
+- Event integrations → Civilization intelligence signals
+
+**Exit criteria:** All 4 modules compile clean. TSU registers 67 subsystems. Swarm engine hidden enforcement permanently opaque. AlienAgentArmy poison pill activates on fingerprint chain break. Future Vision seeds 10 core laws + 5 tech correlations + 7 vision entries. All tests pass.
 
 ---
 

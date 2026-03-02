@@ -10,12 +10,15 @@ const ORCHESTRATION_SERVICE_URL = process.env.ORCHESTRATION_SERVICE_URL || 'http
 function makeAxios(token) {
   // require inside function so tests can stub client without loading axios
   const a = require('axios');
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   const instance = (a.default || a).create({
     baseURL: ORCHESTRATION_SERVICE_URL,
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+    headers,
     timeout: 30000,
   });
   return instance;
@@ -32,6 +35,10 @@ class OrchestrationClient {
    * Returns immediately with job ID for polling
    */
   async submitTask(taskOrPayload, options = {}) {
+    if (taskOrPayload == null) {
+      throw new Error('submitTask requires task or payload');
+    }
+
     // taskOrPayload may be a simple string (legacy) or a full orchestrator payload object
     let payload;
     if (typeof taskOrPayload === 'object' && taskOrPayload !== null && taskOrPayload.job) {
@@ -51,7 +58,8 @@ class OrchestrationClient {
       const response = await this.client.post('/orchestrate', payload);
       return response.data;
     } catch (err) {
-      console.error('[OrchestrationClient] Submit failed:', err.message);
+      const message = err?.message || String(err);
+      console.error('[OrchestrationClient] Submit failed:', message);
       throw err;
     }
   }
@@ -60,11 +68,13 @@ class OrchestrationClient {
    * Poll job status
    */
   async getJobStatus(jobId) {
+    if (!jobId) throw new Error('getJobStatus requires jobId');
     try {
       const response = await this.client.get(`/jobs/${jobId}`);
       return response.data;
     } catch (err) {
-      console.error('[OrchestrationClient] Get status failed:', err.message);
+      const message = err?.message || String(err);
+      console.error('[OrchestrationClient] Get status failed:', message);
       throw err;
     }
   }
@@ -74,11 +84,12 @@ class OrchestrationClient {
    */
   async listJobs(status = null) {
     try {
-      const url = status ? `/jobs?status=${status}` : '/jobs';
+      const url = status ? `/jobs?status=${encodeURIComponent(status)}` : '/jobs';
       const response = await this.client.get(url);
       return response.data;
     } catch (err) {
-      console.error('[OrchestrationClient] List failed:', err.message);
+      const message = err?.message || String(err);
+      console.error('[OrchestrationClient] List failed:', message);
       throw err;
     }
   }
@@ -91,8 +102,9 @@ class OrchestrationClient {
       const response = await this.client.get('/health');
       return response.data;
     } catch (err) {
-      console.error('[OrchestrationClient] Health check failed:', err.message);
-      return { status: 'unhealthy', error: err.message };
+      const message = err?.message || String(err);
+      console.error('[OrchestrationClient] Health check failed:', message);
+      return { status: 'unhealthy', error: message };
     }
   }
 
@@ -100,11 +112,19 @@ class OrchestrationClient {
    * Poll job until completion (with timeout)
    */
   async waitForCompletion(jobId, maxWaitMs = 300000, pollIntervalMs = 2000) {
+    if (!jobId) throw new Error('waitForCompletion requires jobId');
+    if (!Number.isFinite(maxWaitMs) || maxWaitMs <= 0) throw new Error('maxWaitMs must be a positive finite number');
+    if (!Number.isFinite(pollIntervalMs) || pollIntervalMs <= 0) throw new Error('pollIntervalMs must be a positive finite number');
+
     const startTime = Date.now();
     
     while (Date.now() - startTime < maxWaitMs) {
       const job = await this.getJobStatus(jobId);
       
+      if (!job || !job.status) {
+        throw new Error(`Job ${jobId} returned invalid status payload`);
+      }
+
       if (job.status === 'completed' || job.status === 'failed') {
         return job;
       }

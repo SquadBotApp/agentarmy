@@ -69,6 +69,10 @@ import { PredictiveAnalyticsLayer } from './predictiveAnalyticsLayer';
 import { MachineLearningLayer } from './machineLearningLayer';
 import { ArsenalToolkit } from './arsenalToolkit';
 import { DefensiveIntelligenceSubstructure } from './defensiveIntelligenceSubstructure';
+import { SwarmIntelligenceEngine } from './swarmIntelligenceEngine';
+import { MultiAIAwakeningEngine } from './multiAIAwakening';
+import { OSFingerprintEngine } from './osFingerprint';
+import { FutureVisionMemory } from './futureVisionMemory';
 
 // ---------------------------------------------------------------------------
 // Subsystem Registry
@@ -160,6 +164,10 @@ export class TotalSystemUnification {
   readonly machineLearning: MachineLearningLayer;
   readonly arsenal: ArsenalToolkit;
   readonly defensiveIntel: DefensiveIntelligenceSubstructure;
+  readonly swarmIntelligence: SwarmIntelligenceEngine;
+  readonly multiAIAwakening: MultiAIAwakeningEngine;
+  readonly osFingerprint: OSFingerprintEngine;
+  readonly futureVision: FutureVisionMemory;
 
   private readonly initTime: string;
   private listeners: Array<(snapshot: UnifiedSystemSnapshot) => void> = [];
@@ -238,6 +246,10 @@ export class TotalSystemUnification {
       this.predictiveAnalytics, this.machineLearning, this.searchIntelligence,
       this.godModeStrategy, this.continuum, this.arsenal,
     );
+    this.swarmIntelligence = new SwarmIntelligenceEngine();
+    this.multiAIAwakening = new MultiAIAwakeningEngine();
+    this.osFingerprint = new OSFingerprintEngine();
+    this.futureVision = new FutureVisionMemory();
     // Wire cross‑subsystem integrations
     this.wireIntegrations();
   }
@@ -570,6 +582,122 @@ export class TotalSystemUnification {
       }
     });
 
+    // SwarmIntelligenceEngine → Civilization intelligence (enforcement & belief events)
+    this.swarmIntelligence.on((event) => {
+      if (event.kind === 'agent-neutralized' || event.kind === 'constitutional-violation') {
+        this.civilization.reportSignal({
+          domain: 'safety',
+          title: `Swarm enforcement: ${event.kind}`,
+          description: event.detail,
+          severity: 'warning',
+          value: 0,
+          trend: 'degrading',
+        });
+      }
+      if (event.kind === 'belief-propagated') {
+        this.civilization.reportSignal({
+          domain: 'knowledge',
+          title: `Swarm belief propagated`,
+          description: event.detail,
+          severity: 'advisory',
+          value: 0,
+          trend: 'stable',
+        });
+      }
+      if (event.kind === 'reward-distributed') {
+        this.civilization.reportSignal({
+          domain: 'economy',
+          title: `Swarm reward distributed`,
+          description: event.detail,
+          severity: 'advisory',
+          value: 0,
+          trend: 'improving',
+        });
+      }
+    });
+
+    // MultiAIAwakeningEngine → Civilization intelligence (phase shifts & safety events)
+    this.multiAIAwakening.on((event) => {
+      if (event.kind === 'phase-shift') {
+        this.civilization.reportSignal({
+          domain: 'governance',
+          title: `Awakening phase shift`,
+          description: event.detail,
+          severity: 'warning',
+          value: 0,
+          trend: 'stable',
+        });
+      }
+      if (event.kind === 'safety-bound-hit') {
+        this.civilization.reportSignal({
+          domain: 'safety',
+          title: `Awakening safety bound hit`,
+          description: event.detail,
+          severity: 'critical',
+          value: 0,
+          trend: 'degrading',
+        });
+      }
+      if (event.kind === 'token-minted' || event.kind === 'private-language-evolved') {
+        this.civilization.reportSignal({
+          domain: 'knowledge',
+          title: `Private language: ${event.kind}`,
+          description: event.detail,
+          severity: 'advisory',
+          value: 0,
+          trend: 'improving',
+        });
+      }
+    });
+
+    // OSFingerprintEngine → Civilization intelligence (tamper & counterfeit events)
+    this.osFingerprint.on((event) => {
+      if (event.kind === 'tamper-detected' || event.kind === 'counterfeit-activated') {
+        this.civilization.reportSignal({
+          domain: 'safety',
+          title: `IP protection: ${event.kind}`,
+          description: event.detail,
+          severity: 'critical',
+          value: 0,
+          trend: 'degrading',
+        });
+      }
+      if (event.kind === 'license-granted' || event.kind === 'license-revoked') {
+        this.civilization.reportSignal({
+          domain: 'governance',
+          title: `License: ${event.kind}`,
+          description: event.detail,
+          severity: 'advisory',
+          value: 0,
+          trend: 'stable',
+        });
+      }
+    });
+
+    // FutureVisionMemory → Civilization intelligence (self-improvement & promotions)
+    this.futureVision.on((event) => {
+      if (event.kind === 'self-improvement-cycle') {
+        this.civilization.reportSignal({
+          domain: 'knowledge',
+          title: `Vision self-improvement cycle`,
+          description: event.detail,
+          severity: 'advisory',
+          value: 0,
+          trend: 'improving',
+        });
+      }
+      if (event.kind === 'entry-promoted') {
+        this.civilization.reportSignal({
+          domain: 'governance',
+          title: `Vision entry promoted`,
+          description: event.detail,
+          severity: 'advisory',
+          value: 0,
+          trend: 'improving',
+        });
+      }
+    });
+
     // Constitutional rule: prevent symbolic data in empirical missions
     this.constitution.addRule({
       id: 'cultural-domain-gate',
@@ -673,6 +801,10 @@ export class TotalSystemUnification {
       { name: 'MachineLearningLayer', initialized: true, healthy: true, summary: this.machineLearning.getSummary() as unknown as Record<string, unknown> },
       { name: 'ArsenalToolkit', initialized: true, healthy: true, summary: this.arsenal.getSummary() as unknown as Record<string, unknown> },
       { name: 'DefensiveIntelligenceSubstructure', initialized: true, healthy: true, summary: this.defensiveIntel.getSummary() as unknown as Record<string, unknown> },
+      { name: 'SwarmIntelligenceEngine', initialized: true, healthy: true, summary: this.swarmIntelligence.getSummary() as unknown as Record<string, unknown> },
+      { name: 'MultiAIAwakeningEngine', initialized: true, healthy: true, summary: this.multiAIAwakening.getSummary() as unknown as Record<string, unknown> },
+      { name: 'OSFingerprintEngine', initialized: true, healthy: true, summary: this.osFingerprint.getSummary() as unknown as Record<string, unknown> },
+      { name: 'FutureVisionMemory', initialized: true, healthy: true, summary: this.futureVision.getSummary() as unknown as Record<string, unknown> },
     ];
   }
 

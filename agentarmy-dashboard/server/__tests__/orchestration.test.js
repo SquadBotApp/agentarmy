@@ -72,4 +72,24 @@ describe('OrchestrationClient', () => {
     const result = await client.healthCheck();
     expect(result.status).toBe('unhealthy');
   });
+
+  test('submitTask rejects null payload', async () => {
+    await expect(client.submitTask(null)).rejects.toThrow('submitTask requires task or payload');
+  });
+
+  test('getJobStatus rejects empty jobId', async () => {
+    await expect(client.getJobStatus('')).rejects.toThrow('getJobStatus requires jobId');
+  });
+
+  test('listJobs encodes status query value', async () => {
+    client.client.get.mockResolvedValue({ data: [] });
+    await client.listJobs('in progress');
+    expect(client.client.get).toHaveBeenCalledWith('/jobs?status=in%20progress');
+  });
+
+  test('waitForCompletion validates polling inputs', async () => {
+    await expect(client.waitForCompletion('', 5000, 50)).rejects.toThrow('waitForCompletion requires jobId');
+    await expect(client.waitForCompletion('job-1', 0, 50)).rejects.toThrow('maxWaitMs');
+    await expect(client.waitForCompletion('job-1', 5000, 0)).rejects.toThrow('pollIntervalMs');
+  });
 });
