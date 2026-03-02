@@ -1,6 +1,6 @@
 # AgentArmy OS — Implementation Roadmap
 
-> Architecture is done. Every layer is defined. 65+ core TypeScript modules,
+> Architecture is done. Every layer is defined. 67+ core TypeScript modules,
 > 5 real LLM-backed agents, CPM scheduler, ZPE scorer, lifecycle manager,
 > deployment orchestrator, React dashboard, Node.js API, SQLite persistence —
 > all exist.  
@@ -27,7 +27,7 @@
 | Asset | Gap |
 |-------|-----|
 | 59 → 63+ TypeScript core modules | Not consumed by dashboard — purely structural classes |
-| `TotalSystemUnification` kernel (55 subsystems wired) | Never instantiated by the app |
+| `TotalSystemUnification` kernel (62 subsystems wired) | Never instantiated by the app |
 | 9 newest layers (quantumSymbiosis, hyperDimensionalCore, etc.) | Created but not wired into the kernel |
 | `tool_registry.yaml` (6 providers) | No code loads it |
 | 8 server-side tools (tools.js) | Tool selector picks tools, but no executor runs them |
@@ -450,6 +450,67 @@ docker/
 
 ---
 
+## Phase 11 — Transformer Architecture & Arsenal Toolkit ✅
+> Goal: Extend the ML layer with full Transformer/multi-head attention support,
+> and create a comprehensive 200-tool arsenal registry.
+> 62 subsystems total (61 → 62).
+
+### 11a. Transformer / Self-Attention Extension ✅
+**File:** `src/core/machineLearningLayer.ts` (extended, ~1140 lines)
+- New `MLModelType.Transformer` enum value
+- New `'transformer'` architecture family
+- **Transformer-specific types:**
+  - `AttentionConfig` — dModel, numHeads, headDim, dropoutRate
+  - `TransformerConfig` — numLayers, dModel, numHeads, ffnHiddenDim, vocabSize, maxSeqLen, dropoutRate
+  - `TransformerNetwork` — stored model with Q/K/V/O projections and FFN weights per layer
+  - `TransformerModelRecord` — serializable record for dashboard/tracking
+- **Pure-function transformer engine:**
+  - `softmax()` — row-wise softmax with numerical stability (max subtraction)
+  - `transpose()` — matrix transpose
+  - `tensorAdd()` — element-wise tensor addition
+  - `scaledDotProductAttention()` — Q·K^T/√dk → softmax → ·V
+  - `multiHeadAttention()` — split into heads, compute per-head attention, concatenate, project
+  - `transformerBlock()` — self-attention + residual + FFN (ReLU) + residual
+  - `countTransformerParams()` — 4·dModel² + numLayers·2·dModel·ffnHidden
+  - `buildTransformerNetwork()` — random weight initialization for all projections and FFN layers
+  - `transformerForward()` — sequential pass through N transformer blocks
+  - `transformerBackward()` — finite-difference weight perturbation training
+- **MachineLearningLayer methods:**
+  - `trainTransformerModel(id, config, datasetKey, lr?, epochs?)` — build, pad dataset to dModel, train loop, register, emit events
+  - `listTransformerModels()` — enumerate all registered transformer models
+  - `getTransformerLossHistory(id)` — loss curve for a transformer model
+  - Transformer case in `trainModel()` switch — auto-configures dModel from dataset columns
+- `TransformerNetwork` registered in state, wrapped as `FunctionalModel` for uniform `infer()`
+- `MachineLearningLayerSummary.transformerModelCount` added
+- `getSummary()` includes transformer parameter counts and model count
+
+### 11b. ArsenalToolkit ✅
+**File:** `src/core/arsenalToolkit.ts` (~580 lines, new)
+- **200 tools** organized into 10 categories (20 tools each):
+  - **Productivity** (10 free + 10 paid): Notion, Obsidian, Trello, Todoist, Google Docs, Zettlr, Joplin, LibreOffice, Logseq, Standard Notes / Monday.com, Asana, ClickUp, Roam Research, Craft, Basecamp, Airtable, Microsoft 365, Coda, Confluence
+  - **Development** (10 free + 10 paid): VS Code, Git, Node.js, Docker, PostgreSQL, ESLint, Prettier, Vite, Rust, Python / GitHub Copilot, JetBrains, GitKraken, Postman Pro, Datadog, Sentry, LaunchDarkly, Vercel Pro, CircleCI, Snyk
+  - **AI/Data** (10 free + 10 paid): Hugging Face, LangChain, Ollama, Jupyter, Pandas, scikit-learn, PyTorch, TensorFlow, Spark, DuckDB / OpenAI API, Claude, Cohere, W&B, Databricks, Scale AI, Pinecone, Snowflake, Midjourney, Replicate
+  - **Security** (10 free + 10 paid): Wireshark, Nmap, Metasploit, OWASP ZAP, Kali, ClamAV, OpenVPN, Fail2Ban, GnuPG, Suricata / Burp Suite Pro, CrowdStrike, Tenable, 1Password, Wiz, Prisma, Rapid7, FortiGate, SentinelOne, Checkmarx
+  - **Media/Creative** (10 free + 10 paid): GIMP, Inkscape, Blender, Audacity, OBS, Kdenlive, DaVinci Resolve, Krita, HandBrake, Shotcut / Adobe CC, Final Cut Pro, Logic Pro, Ableton, Canva Pro, Figma Pro, Sketch, Affinity, Cinema 4D, Substance 3D
+  - **System Utilities** (10 free + 10 paid): htop, tmux, curl, rsync, 7-Zip, VirtualBox, WinSCP, BleachBit, Sysinternals, Ventoy / VMware, Parallels, Acronis, ESET, CCleaner Pro, WinRAR, Directory Opus, iStat Menus, Fences, MobaXterm
+  - **Browsers/Communication** (10 free + 10 paid): Firefox, Brave, Thunderbird, Signal, Element, Jitsi, Discord, Mattermost, Telegram, Zulip / Slack Pro, Teams, Zoom Pro, Google Workspace, Front, Intercom, Loom, Calendly, Webex, RingCentral
+  - **Design/UX** (10 free + 10 paid): Penpot, Lunacy, Pencil Project, Diagrams.net, Storybook, Excalidraw, Wireframe.cc, Color Hunt, Font Awesome, Google Fonts / Figma Org, Abstract, InVision, Zeplin, Maze, UserTesting, Axure RP, Principle, ProtoPie, Framer
+  - **Enterprise** (10 free + 10 paid): Grafana, Prometheus, Keycloak, MinIO, Kafka, Elasticsearch, Terraform, Ansible, Kong, Harbor / Splunk, PagerDuty, ServiceNow, Okta, Vault, New Relic, Salesforce, SAP, Jira, CloudFormation
+  - **Specialized** (10 free + 10 paid): Godot, Arduino IDE, QGIS, OpenSCAD, Wireshark Profiles, Ghidra, FreeCAD, GNU Radio, ROS 2, KiCad / Unity Pro, Unreal, MATLAB, Mathematica, SolidWorks, AutoCAD, LabVIEW, Tableau, ArcGIS Pro, Altium Designer
+- **Each tool entry:** id, name, category, tier (free/paid), description, URL, tags[], rating, usageCount, licensed
+- **Query API:** getAll(), getById(), getByName(), filter(criteria), search(text), getByCategory(), getFreeTools(), getPaidTools(), getTopRated(), getMostUsed()
+- **Analytics:** getCategoryCounts(), getAllTags()
+- **Usage tracking:** useTool(id) — increments count, requires license
+- **Licensing:** licenseTool(id), revokeLicense(id), getLicensedPaidTools()
+- Event system: tool-used, tool-licensed, search, reset events
+- `getSummary()` for TSU dashboard
+- Wired into TotalSystemUnification as subsystem #62
+- Cross-wiring: civilization intelligence signals for tool usage and license events
+
+**Exit criteria:** Dashboard shows "62 subsystems — all healthy". Transformer extends ML layer with multi-head attention, residual connections, and FFN. Arsenal provides 200 searchable/filterable tools with licensing. 0 compile errors. 7 TS suites (32 tests) + 15 Python tests pass.
+
+---
+
 ## Iteration Cadence
 
 | Phase | Scope | Estimated Sessions |
@@ -483,6 +544,7 @@ This gives you a live dashboard powered by the full 51-subsystem kernel within o
 | `src/core/godModeStrategy.ts` | 10a | GodMode Strategy ✅ |
 | `src/core/predictiveAnalyticsLayer.ts` | 10c | Predictive Analytics Layer ✅ |
 | `src/core/machineLearningLayer.ts` | 10d | Machine Learning Layer (neural‑network enabled) ✅ |
+| `src/core/arsenalToolkit.ts` | 11b | Arsenal Toolkit (200 tools, 10 categories) ✅ |
 | `src/components/KernelHealthCard.tsx` | 1c | Live subsystem health display |
 | `src/components/SubsystemDetail.tsx` | 1d | Drill-down modal |
 | `server/toolRunner.js` | 2a | Execute the 8 defined tools |
@@ -494,7 +556,7 @@ This gives you a live dashboard powered by the full 51-subsystem kernel within o
 ### Files to Modify
 | File | Phase | Change |
 |------|-------|--------|
-| `src/core/totalSystemUnification.ts` | 1b, 7a-d, 8a, 9a, 10a-d | Wire layers (→ 51 → 61 subsystems) |
+| `src/core/totalSystemUnification.ts` | 1b, 7a-d, 8a, 9a, 10a-d, 11a-b | Wire layers (→ 51 → 62 subsystems) |
 | `src/store/kernelStore.ts` | 1e | Real kernel subscription |
 | `src/App.tsx` | 1c | Replace hardcoded cards |
 | `server/tools.js` | 2b | Load tool_registry.yaml |

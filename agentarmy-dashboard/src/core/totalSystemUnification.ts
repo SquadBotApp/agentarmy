@@ -67,6 +67,7 @@ import { GodModeStrategy } from './godModeStrategy';
 import { SearchIntelligenceEngine } from './searchIntelligenceEngine';
 import { PredictiveAnalyticsLayer } from './predictiveAnalyticsLayer';
 import { MachineLearningLayer } from './machineLearningLayer';
+import { ArsenalToolkit } from './arsenalToolkit';
 
 // ---------------------------------------------------------------------------
 // Subsystem Registry
@@ -156,6 +157,7 @@ export class TotalSystemUnification {
   readonly searchIntelligence: SearchIntelligenceEngine;
   readonly predictiveAnalytics: PredictiveAnalyticsLayer;
   readonly machineLearning: MachineLearningLayer;
+  readonly arsenal: ArsenalToolkit;
 
   private readonly initTime: string;
   private listeners: Array<(snapshot: UnifiedSystemSnapshot) => void> = [];
@@ -229,6 +231,7 @@ export class TotalSystemUnification {
       this.predictiveAnalytics, this.godModeStrategy, this.searchIntelligence,
       this.continuum, this.omniDomain,
     );
+    this.arsenal = new ArsenalToolkit();
     // Wire cross‑subsystem integrations
     this.wireIntegrations();
   }
@@ -469,6 +472,30 @@ export class TotalSystemUnification {
       }
     });
 
+    // ArsenalToolkit → Civilization intelligence (tool usage tracking)
+    this.arsenal.on((event) => {
+      if (event.kind === 'tool-used') {
+        this.civilization.reportSignal({
+          domain: 'infrastructure',
+          title: `Arsenal tool used: ${event.toolName}`,
+          description: `Tool #${event.toolId} (${event.payload.tier}) in ${event.payload.category}`,
+          severity: 'advisory',
+          value: 0,
+          trend: 'stable',
+        });
+      }
+      if (event.kind === 'tool-licensed') {
+        this.civilization.reportSignal({
+          domain: 'economy',
+          title: `Arsenal license granted: ${event.toolName}`,
+          description: `Paid tool #${event.toolId} licensed`,
+          severity: 'advisory',
+          value: 0,
+          trend: 'improving',
+        });
+      }
+    });
+
     // Constitutional rule: prevent symbolic data in empirical missions
     this.constitution.addRule({
       id: 'cultural-domain-gate',
@@ -570,6 +597,7 @@ export class TotalSystemUnification {
       { name: 'SearchIntelligenceEngine', initialized: true, healthy: true, summary: this.searchIntelligence.getSummary() as unknown as Record<string, unknown> },
       { name: 'PredictiveAnalyticsLayer', initialized: true, healthy: true, summary: this.predictiveAnalytics.getSummary() as unknown as Record<string, unknown> },
       { name: 'MachineLearningLayer', initialized: true, healthy: true, summary: this.machineLearning.getSummary() as unknown as Record<string, unknown> },
+      { name: 'ArsenalToolkit', initialized: true, healthy: true, summary: this.arsenal.getSummary() as unknown as Record<string, unknown> },
     ];
   }
 
