@@ -1,8 +1,10 @@
 import os
+import dotenv
 from agentarmy.providers.openai_provider import OpenAIProvider
 from agentarmy.providers.anthropic_provider import AnthropicProvider
 from agentarmy.providers.simai_provider import SimAiProvider
 from agentarmy.core.router import ModelRouter
+from task import Task
 
 # Load API keys
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
@@ -29,3 +31,8 @@ router = ModelRouter(providers)
 # Temporary test run
 if __name__ == "__main__":
     print("Router initialized successfully.")
+
+    # Test Sim Ai integration
+    sim_task = Task(type="simulation", messages=[{"role": "user", "content": "Run a test simulation."}])
+    result = router.execute(sim_task)
+    print("Sim Ai result:", result)
