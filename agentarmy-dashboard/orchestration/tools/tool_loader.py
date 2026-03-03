@@ -1,66 +1,104 @@
 """
-Tool registry and loader for CrewAI agents
-Provides tools for research, coding, synthesis, etc.
+YAML-backed tool registry loader.
+
+Reads tool_registry.yaml (workspace root) and exposes lightweight
+lookup helpers used by Executor and Planner agents at runtime.
+No heavy third-party deps — just PyYAML + stdlib.
 """
 
-from crewai_tools import SerperDevTool, ScrapeWebsiteTool, FileReadTool, FileWriteTool
-from typing import List, Optional
+from __future__ import annotations
 
-def get_tools(tool_names: Optional[List[str]] = None) -> List:
-    """
-    Load and return tools for agents
-    
-    Args:
-        tool_names: List of tool names to load (e.g., ["research", "code"])
-                   If None, returns all available tools
-    
-    Returns:
-        List of tool instances
-    """
-    
-    all_tools = {}
-    
-    # Research tools
-    try:
-        all_tools["research"] = SerperDevTool()
-    except Exception as e:
-        print(f"[Tools] SerperDev unavailable: {e}")
-    
-    try:
-        all_tools["web_scrape"] = ScrapeWebsiteTool()
-    except Exception as e:
-        print(f"[Tools] Web scraper unavailable: {e}")
-    
-    # File tools
-    try:
-        all_tools["read_file"] = FileReadTool()
-        all_tools["write_file"] = FileWriteTool()
-    except Exception as e:
-        print(f"[Tools] File tools unavailable: {e}")
-    
-    # If none specified, return all available
-    if tool_names is None:
-        return list(all_tools.values())
-    
-    # Otherwise, return requested tools that exist
-    loaded = []
-    for name in tool_names:
-        if name in all_tools:
-            loaded.append(all_tools[name])
-        else:
-            print(f"[Tools] Tool '{name}' not found")
-    
-    return loaded
+import os
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-# Tool categories for easy selection
-TOOL_CATEGORIES = {
-    "research": ["research", "web_scrape"],
-    "file_ops": ["read_file", "write_file"],
-    "all": ["research", "web_scrape", "read_file", "write_file"],
-    "none": [],
-}
+import yaml
 
-def get_tools_by_category(category: str) -> List:
-    """Get tools by category"""
-    tool_names = TOOL_CATEGORIES.get(category, [])
-    return get_tools(tool_names)
+ToolEntry = Dict[str, Any]
+
+_REGISTRY_FILENAME = "tool_registry.yaml"
+
+_SEARCH_DIRS = [
+    Path(__file__).resolve().parents[3],
+    Path(__file__).resolve().parents[2],
+    Path(__file__).resolve().parents[1],
+    Path.cwd(),
+]
+
+_cache: Optional[List[ToolEntry]] = None
+
+
+def _find_registry() -> Path:
+    for d in _SEARCH_DIRS:
+        candidate = d / _REGISTRY_FILENAME
+        if candidate.is_file():
+            return candidate
+    raise FileNotFoundError(
+        f"{_REGISTRY_FILENAME} not found. Searched: {[str(d) for d in _SEARCH_DIRS]}"
+    )
+
+
+def load_registry(*, force: bool = False) -> List[ToolEntry]:
+    global _cache
+    if _cache is not None and not force:
+        return _cache
+    path = _find_registry()
+    with open(path, "r", encoding="utf-8") as fh:
+        data = yaml.safe_load(fh)
+    if not isinstance(data, list):
+        raise ValueError(f"Expected a YAML list in {path}, got {type(data).__name__}")
+    _cache = data
+    return _cache
+
+
+def get_tool(tool_id: str) -> Optional[ToolEntry]:
+    for entry in load_registry():
+        if entry.get("id") == tool_id:
+            return entry
+    return None
+
+
+def get_tools_by_type(tool_type: str) -> List[ToolEntry]:
+    return [t for t in load_registry() if t.get("type") == tool_type]
+
+
+def get_tools_by_capability(capability: str) -> List[ToolEntry]:
+    return [
+        t for t in load_registry()
+        if capability in (t.get("capabilities") or [])
+    ]
+
+
+def match_tool_hints(hints: List[str]) -> List[ToolEntry]:
+    registry = load_registry()
+    matched: List[ToolEntry] = []
+    for hint in hints:
+        for entry in registry:
+            if entry.get("id") == hint or hint in (entry.get("capabilities") or []):
+                if entry not in matched:
+                    matched.append(entry)
+    return matched
+
+
+def registry_summary() -> str:
+    lines = []
+    for t in load_registry():
+        caps = ", ".join(t.get("capabilities", []))
+        cost_key = next(
+            (k for k in t if k.startswith("cost_per_")), None
+        )
+        cost = t.get(cost_key, "n/a") if cost_key else "n/a"
+        lines.append(
+            f"- {t['id']} ({t.get('type','?')}): caps=[{caps}] "
+            f"cost={cost} latency≈{t.get('latency_ms_estimate','?')}ms "
+            f"reliability={t.get('reliability','?')}"
+        )
+    return "\n".join(lines)
+
+
+def tool_available(tool_id: str) -> bool:
+    entry = get_tool(tool_id)
+    if entry is None:
+        return False
+    env_var = entry.get("api_env_var", "")
+    return bool(os.getenv(env_var, "")) if env_var else True

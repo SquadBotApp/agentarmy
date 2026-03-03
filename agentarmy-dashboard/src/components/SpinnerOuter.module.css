@@ -1,0 +1,25 @@
+.spinner-outer {
+  display: inline-block;
+  /* CSS variables for size, thickness, color will be set inline */
+}
+
+/* Utility classes for dynamic CSS variables */
+/* Size classes */
+.size-24 { --spinner-size: 24px; }
+.size-32 { --spinner-size: 32px; }
+.size-48 { --spinner-size: 48px; }
+.size-64 { --spinner-size: 64px; }
+.size-96 { --spinner-size: 96px; }
+
+/* Thickness classes */
+.thickness-2 { --spinner-thickness: 2px; }
+.thickness-4 { --spinner-thickness: 4px; }
+.thickness-6 { --spinner-thickness: 6px; }
+.thickness-8 { --spinner-thickness: 8px; }
+
+/* Color classes (add more as needed) */
+.color-primary { --spinner-color: #007aff; }
+.color-gold { --spinner-color: #ffd700; }
+.color-white { --spinner-color: #fff; }
+.color-danger { --spinner-color: #ff3b30; }
+.color-success { --spinner-color: #4cd964; }

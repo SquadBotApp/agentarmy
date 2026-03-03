@@ -1,0 +1,42 @@
+.kernelLivePanel {
+  border: 2px solid #2e3b4e;
+  background: #181f2a;
+  color: #e0e6f0;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  border-radius: 10px;
+}
+.kernelLivePanel h3 {
+  margin-top: 0;
+  color: #7fffd4;
+}
+.kernelLivePanel section {
+  margin-bottom: 1.2rem;
+}
+.kernelLivePanel pre {
+  background: #232b3a;
+  color: #b8e1ff;
+  padding: 0.75rem;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+.kernelLivePanel input, .kernelLivePanel select {
+  margin-right: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #232b3a;
+  color: #e0e6f0;
+}
+.kernelLivePanel button {
+  background: #7fffd4;
+  color: #181f2a;
+  border: none;
+  border-radius: 4px;
+  padding: 0.4rem 1.2rem;
+  cursor: pointer;
+  font-weight: bold;
+}
+.kernelLivePanel button:hover {
+  background: #5ee6c1;
+}

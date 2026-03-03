@@ -5,7 +5,8 @@ from .executor_agent import ExecutorAgent
 from .critic_agent import CriticAgent
 from .governor_agent import GovernorAgent
 from .synthesizer_agent import SynthesizerAgent
-from .prompts import get_agent_prompt, ZPE_WEIGHTS, SENSITIVE_MARKERS
+from .prompts import get_agent_prompt, get_agent_model, ZPE_WEIGHTS, SENSITIVE_MARKERS, MODEL_CONFIG
+from .enterprise_agent import EnterpriseAgent  # Export EnterpriseAgent for framework use
 
 __all__ = [
     "PlannerAgent",
@@ -14,6 +15,9 @@ __all__ = [
     "GovernorAgent",
     "SynthesizerAgent",
     "get_agent_prompt",
+    "get_agent_model",
     "ZPE_WEIGHTS",
     "SENSITIVE_MARKERS",
+    "MODEL_CONFIG",
+    "EnterpriseAgent",  # Include EnterpriseAgent in the exported members
 ]
