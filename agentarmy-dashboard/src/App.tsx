@@ -261,8 +261,6 @@ function InnerApp() {
               <option value="architecture">Architecture</option>
             </select>
           </div>
-          <div>
-            <button className="btn" onClick={() => setPromptManagerOpen(true)}>
               Prompts
             </button>
           </div>
