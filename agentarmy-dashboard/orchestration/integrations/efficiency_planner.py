@@ -40,6 +40,8 @@ def _choose_framework(intents: List[str], requested: str | None) -> str:
     req = normalize_framework_name(requested)
     if req != "native":
         return req
+    if "coding" in intents and "governance" in intents:
+        return "frabric"
     if "coding" in intents:
         return "langgraph"
     if "governance" in intents:

@@ -12,7 +12,7 @@ class AgentRegistry:
     def __init__(self):
         self._agents: Dict[str, UniversalAgentInterface] = {}
         # Auto-register core adapters
-        self.register("3cx", ThreeCXAdapter(config={}))
+        # self.register("3cx", ThreeCXAdapter(config={}))  # Disabled: abstract class, missing implementations
         self.register("claude", ClaudeCodeAdapter(config={}))
 
     def register(self, name: str, agent: UniversalAgentInterface):

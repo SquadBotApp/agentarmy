@@ -2,8 +2,8 @@ import unittest
 import json
 import asyncio
 from unittest.mock import patch
-from . import planner_agent as _mod
-from .planner_agent import PlannerAgent
+from orchestration.agents import planner_agent as _mod
+from orchestration.agents.planner_agent import PlannerAgent
 
 class TestPlannerAgent(unittest.TestCase):
     def setUp(self):
@@ -60,7 +60,7 @@ class TestPlannerAgent(unittest.TestCase):
 
     def test_uses_canonical_prompt(self):
         """Verify the agent imports its prompt from prompts.py."""
-        from .prompts import get_agent_prompt
+        from orchestration.agents.prompts import get_agent_prompt
         expected_prompt = get_agent_prompt("planner")
         self.assertEqual(self.agent.system_prompt, expected_prompt)
 

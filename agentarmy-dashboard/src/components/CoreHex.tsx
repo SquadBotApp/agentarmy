@@ -106,7 +106,6 @@ export const CoreHex: React.FC = () => {
     }
   };
 
-  return (
     <div 
       className={`${styles.coreHex} ${isActive ? styles.active : ''}`}
       style={cssVars}
@@ -153,7 +152,7 @@ export const CoreHex: React.FC = () => {
           <div className={styles.agentDisplay}>
             <span 
               className={styles.agentBadge}
-              style={{ backgroundColor: moduleColors[activeModule] }}
+              data-module={activeModule}
             >
               {activeModule.charAt(0).toUpperCase() + activeModule.slice(1)}
             </span>
@@ -174,9 +173,9 @@ export const CoreHex: React.FC = () => {
       {/* Pulse rings for active states */}
       {isActive && (
         <div className={styles.pulseRings}>
-          <div className={styles.pulseRing} style={{ animationDelay: '0s' }} />
-          <div className={styles.pulseRing} style={{ animationDelay: '0.5s' }} />
-          <div className={styles.pulseRing} style={{ animationDelay: '1s' }} />
+          <div className={`${styles.pulseRing} ${styles.pulseRing0}`} />
+          <div className={`${styles.pulseRing} ${styles.pulseRing1}`} />
+          <div className={`${styles.pulseRing} ${styles.pulseRing2}`} />
         </div>
       )}
 
@@ -188,23 +187,17 @@ export const CoreHex: React.FC = () => {
           const x = 50 + radius * Math.cos(angle);
           const y = 50 + radius * Math.sin(angle);
           const intensity = connections.pulseIntensity[module] || 0;
-          
           return (
             <div
               key={module}
-              className={`${styles.connectionDot} ${intensity > 0 ? styles.active : ''}`}
-              style={{
-                left: `${x}%`,
-                top: `${y}%`,
-                backgroundColor: moduleColors[module],
-                boxShadow: intensity > 0 
-                  ? `0 0 ${10 * intensity}px ${moduleColors[module]}`
-                  : 'none',
-              }}
+              className={`${styles.connectionDot} ${intensity > 0 ? styles.active : ''} ${styles['dot-' + module]}`}
+              data-intensity={intensity}
+              style={{ left: `${x}%`, top: `${y}%` }}
             />
           );
         })}
       </div>
+    </div>
     </div>
   );
 };

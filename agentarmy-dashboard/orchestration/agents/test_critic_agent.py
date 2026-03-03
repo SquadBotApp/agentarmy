@@ -2,8 +2,8 @@ import unittest
 import json
 import asyncio
 from unittest.mock import patch
-from . import critic_agent as _mod
-from .critic_agent import CriticAgent
+from orchestration.agents import critic_agent as _mod
+from orchestration.agents.critic_agent import CriticAgent
 
 class TestCriticAgent(unittest.TestCase):
     def setUp(self):
@@ -69,7 +69,7 @@ class TestCriticAgent(unittest.TestCase):
 
     def test_uses_canonical_prompt(self):
         """Verify the agent imports its prompt from prompts.py."""
-        from .prompts import get_agent_prompt
+        from orchestration.agents.prompts import get_agent_prompt
         expected_prompt = get_agent_prompt("critic")
         self.assertEqual(self.agent.system_prompt, expected_prompt)
 

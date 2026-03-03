@@ -1,6 +1,9 @@
 import unittest
 
-from integrations import build_efficiency_plan
+try:
+    from integrations import build_efficiency_plan
+except Exception:  # pragma: no cover
+    from orchestration.integrations import build_efficiency_plan
 
 
 class TestEfficiencyPlanner(unittest.TestCase):
@@ -22,6 +25,18 @@ class TestEfficiencyPlanner(unittest.TestCase):
             {"goal": "Analyze support logs", "framework": "crewai"}
         )
         self.assertEqual(plan["recommended_framework"], "crewai")
+
+    def test_recommends_frabric_for_coding_plus_governance(self):
+        plan = build_efficiency_plan(
+            {"goal": "Implement feature with policy approvals and governance audit"}
+        )
+        self.assertEqual(plan["recommended_framework"], "frabric")
+
+    def test_honors_fabric_alias(self):
+        plan = build_efficiency_plan(
+            {"goal": "Build governed automation", "framework": "fabric"}
+        )
+        self.assertEqual(plan["recommended_framework"], "frabric")
 
 
 if __name__ == "__main__":

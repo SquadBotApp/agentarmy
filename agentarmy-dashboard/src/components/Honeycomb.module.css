@@ -1,3 +1,11 @@
+.metricBarFill[data-width] {
+  width: attr(data-width percentage);
+}
+
+.hexagon[data-pulse-intensity][data-hue-shift] {
+  /* Example: use CSS variables or data attributes for advanced styling */
+  /* You can use these in JS or with a CSS preprocessor for dynamic effects */
+}
 /**
  * Honeycomb Layout CSS Module
  * Styles for the unified agent cognitive map visualization
@@ -63,6 +71,7 @@
   border: 1px solid rgba(212, 175, 55, 0.3);
   border-radius: 8px;
   padding: 12px;
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
 
@@ -329,6 +338,7 @@
   padding: 16px;
   overflow-y: auto;
   z-index: 10;
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
 
@@ -375,6 +385,7 @@
   border-radius: 8px;
   padding: 16px;
   z-index: 10;
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
 

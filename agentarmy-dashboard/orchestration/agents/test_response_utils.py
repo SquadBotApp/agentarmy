@@ -1,6 +1,6 @@
 import unittest
 
-from .response_utils import extract_json_payload
+from orchestration.agents.response_utils import extract_json_payload
 
 
 class TestResponseUtils(unittest.TestCase):

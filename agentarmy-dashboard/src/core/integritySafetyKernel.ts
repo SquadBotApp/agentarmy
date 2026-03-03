@@ -609,7 +609,7 @@ export class IntegritySafetyKernel {
     trace.push(`  Module 6 — Decision: ${decision} (risk=${scores.risk}, ethics=${scores.ethics})`);
 
     return {
-      id: `isk-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      id: `isk-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
       decision,
       flags,
       scores,

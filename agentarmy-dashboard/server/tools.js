@@ -172,8 +172,13 @@ const tools = [
       properties: {
         workflow: {
           type: 'string',
-          enum: ['aiRewrite', 'aiSummarize', 'aiPlan', 'consensus'],
+          enum: ['aiRewrite', 'aiSummarize', 'aiPlan', 'consensus', 'claudebot'],
           description: 'Which workflow to execute',
+        },
+        framework: {
+          type: 'string',
+          enum: ['native', 'langgraph', 'crewai', 'smolagents', 'autogen', 'frabric'],
+          description: 'Execution framework for agent coordination',
         },
         input: {
           type: 'string',
@@ -185,7 +190,110 @@ const tools = [
     complexity: 'medium',
     cost: 0.03,
     latency_ms: 3000,
-    keywords: ['run', 'workflow', 'execute', 'rewrite', 'summarize', 'plan'],
+    keywords: ['run', 'workflow', 'execute', 'rewrite', 'summarize', 'plan', 'claudebot', 'claude', 'langgraph', 'crewai', 'smolagents', 'autogen', 'frabric', 'fabric'],
+  },
+  {
+    id: 'n8n_workflow_trigger',
+    name: 'n8n_workflow_trigger',
+    category: 'workflow_execution',
+    description: 'Triggers an external n8n automation workflow via configured webhook. Used for post-execution automations, notifications, and integrations.',
+    examples: [
+      'Trigger n8n workflow for release notification',
+      'Send orchestration result to n8n for downstream processing',
+    ],
+    parameters: {
+      type: 'object',
+      properties: {
+        workflow: {
+          type: 'string',
+          description: 'n8n workflow name or routing key',
+        },
+        payload: {
+          type: 'object',
+          description: 'Structured payload to forward to n8n',
+          additionalProperties: true,
+        },
+      },
+      required: ['workflow', 'payload'],
+    },
+    complexity: 'medium',
+    cost: 0.01,
+    latency_ms: 1200,
+    keywords: ['n8n', 'webhook', 'automation', 'workflow', 'trigger'],
+  },
+  {
+    id: 'platform_agent_dispatch',
+    name: 'platform_agent_dispatch',
+    category: 'workflow_execution',
+    description: 'Dispatches workflow events to external agent platforms such as Agentforce 360, Copilot Studio, watsonx Assistant, Codex, Roo Code, Jules, Hashbrown, Astra, Yellow.ai, Moveworks, AWS Q Dev, and SAP Joule.',
+    examples: [
+      'Dispatch completed workflow to openai_codex and google_jules',
+      'Fan out to microsoft_copilot_studio and agentforce_360',
+    ],
+    parameters: {
+      type: 'object',
+      properties: {
+        targets: {
+          type: 'array',
+          items: {
+            type: 'string',
+            enum: [
+              'agentforce_360',
+              'microsoft_copilot_studio',
+              'ibm_watsonx_assistant',
+              'openai_codex',
+              'roo_code',
+              'google_jules',
+              'hashbrown',
+              'project_astra',
+              'yellow_ai',
+              'moveworks',
+              'aws_q_dev',
+              'sap_joule',
+              'apple_mobile',
+              'samsung_mobile',
+              'google_mobile',
+              'amazon_mobile',
+            ],
+          },
+          description: 'External agent platforms to receive the event',
+        },
+      },
+      required: ['targets'],
+    },
+    complexity: 'medium',
+    cost: 0.02,
+    latency_ms: 1800,
+    keywords: ['agentforce', 'copilot', 'watsonx', 'codex', 'roo', 'jules', 'hashbrown', 'astra', 'yellow', 'moveworks', 'aws q', 'joule', 'apple', 'samsung', 'google', 'amazon', 'mobile', 'download'],
+  },
+  {
+    id: 'mobile_plugin_deploy',
+    name: 'mobile_plugin_deploy',
+    category: 'workflow_execution',
+    description: 'Deploys mobile integrations and plugin routing for Apple, Samsung, Google, and Amazon ecosystems.',
+    examples: [
+      'Deploy mobile plugins for apple and google',
+      'Trigger mobile rollout to samsung and amazon',
+    ],
+    parameters: {
+      type: 'object',
+      properties: {
+        vendors: {
+          type: 'array',
+          items: { type: 'string', enum: ['apple', 'samsung', 'google', 'amazon'] },
+          description: 'Target mobile ecosystems',
+        },
+        goal: {
+          type: 'string',
+          description: 'Deployment objective',
+        },
+      },
+      required: ['vendors', 'goal'],
+    },
+    complexity: 'medium',
+    cost: 0.02,
+    latency_ms: 2000,
+    keywords: ['mobile', 'plugin', 'deploy', 'apple', 'samsung', 'google', 'amazon'],
   },
   {
     id: 'manage_prompts',

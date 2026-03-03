@@ -19,6 +19,18 @@ from orchestrator import orchestrate as run_orchestrator
 from executor import RegistryAgentExecutor
 from job_runner import JobRunner
 from agents import PlannerAgent, ExecutorAgent, CriticAgent, GovernorAgent
+from frameworks import SUPPORTED_FRAMEWORKS
+from integrations import (
+    SUPPORTED_PLATFORMS,
+    MOBILE_VENDOR_TARGETS,
+    SOCIAL_PROFILE_TEMPLATES,
+    SSH_PROFILE_TEMPLATES,
+    COMMS_ALIAS_TARGETS,
+    build_efficiency_plan,
+    build_social_intel,
+    build_ssh_plan,
+    broadcast_comms,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -59,6 +71,61 @@ if FLASK_AVAILABLE:
             "version": "0.1.0",
             "backend": "lightweight (Flask)",
         })
+
+
+if FLASK_AVAILABLE:
+    @app.route('/capabilities', methods=['GET'])
+    def capabilities():
+        auth = request.headers.get('Authorization', '')
+        if not auth.startswith(AUTH_SCHEME):
+            return jsonify({"error": AUTH_ERROR}), 401
+        return jsonify({
+            "frameworks": sorted(SUPPORTED_FRAMEWORKS),
+            "platforms": SUPPORTED_PLATFORMS,
+            "mobile_vendors": MOBILE_VENDOR_TARGETS,
+            "social_profiles": sorted(SOCIAL_PROFILE_TEMPLATES.keys()),
+            "ssh_profiles": sorted(SSH_PROFILE_TEMPLATES.keys()),
+            "comms_aliases": COMMS_ALIAS_TARGETS,
+        })
+
+if FLASK_AVAILABLE:
+    @app.route('/efficiency/plan', methods=['POST'])
+    def efficiency_plan():
+        auth = request.headers.get('Authorization', '')
+        if not auth.startswith(AUTH_SCHEME):
+            return jsonify({"error": AUTH_ERROR}), 401
+        payload = request.get_json() or {}
+        return jsonify(build_efficiency_plan(payload if isinstance(payload, dict) else {}))
+
+if FLASK_AVAILABLE:
+    @app.route('/social/intel/analyze', methods=['POST'])
+    def social_intel_analysis():
+        auth = request.headers.get('Authorization', '')
+        if not auth.startswith(AUTH_SCHEME):
+            return jsonify({"error": AUTH_ERROR}), 401
+        payload = request.get_json() or {}
+        return jsonify(build_social_intel(payload if isinstance(payload, dict) else {}))
+
+if FLASK_AVAILABLE:
+    @app.route('/ssh/plan', methods=['POST'])
+    def ssh_plan():
+        auth = request.headers.get('Authorization', '')
+        if not auth.startswith(AUTH_SCHEME):
+            return jsonify({"error": AUTH_ERROR}), 401
+        payload = request.get_json() or {}
+        return jsonify(build_ssh_plan(payload if isinstance(payload, dict) else {}))
+
+if FLASK_AVAILABLE:
+    @app.route('/comms/broadcast', methods=['POST'])
+    def comms_broadcast():
+        auth = request.headers.get('Authorization', '')
+        if not auth.startswith(AUTH_SCHEME):
+            return jsonify({"error": AUTH_ERROR}), 401
+        payload = request.get_json() or {}
+        result = broadcast_comms(payload if isinstance(payload, dict) else {})
+        if result.get("status") == "failed":
+            return jsonify(result), 400
+        return jsonify(result)
 
 
 # ============ Orchestration ============
@@ -111,6 +178,7 @@ if FLASK_AVAILABLE:
                         },
                         "state": payload.get('context', {}).get('state', {'tasks': [], 'history': []}),
                         "previous_zpe": float(payload.get('context', {}).get('previous_zpe', 0.5)),
+                        "framework": payload.get('framework', payload.get('context', {}).get('framework', 'native')),
                     }
                 else:
                     raise ValueError("Payload must contain 'job' or 'task' field")
@@ -127,6 +195,7 @@ if FLASK_AVAILABLE:
                     "decision": decision,
                     "execution": workflow_result.get("execution"),
                     "evaluation": workflow_result.get("evaluation"),
+                    "integrations": workflow_result.get("integrations"),
                     "metrics": workflow_result.get("metrics"),
                 }
                 jobs[job_id]["completed_at"] = datetime.now().isoformat()

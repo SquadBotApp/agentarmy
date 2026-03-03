@@ -1,8 +1,8 @@
 import unittest
 import asyncio
 from unittest.mock import patch
-from . import executor_agent as _mod
-from .executor_agent import ExecutorAgent
+from orchestration.agents import executor_agent as _mod
+from orchestration.agents.executor_agent import ExecutorAgent
 
 class TestExecutorAgent(unittest.TestCase):
     def setUp(self):
@@ -44,7 +44,7 @@ class TestExecutorAgent(unittest.TestCase):
 
     def test_uses_canonical_prompt(self):
         """Verify the agent imports its prompt from prompts.py."""
-        from .prompts import get_agent_prompt
+        from orchestration.agents.prompts import get_agent_prompt
         expected_prompt = get_agent_prompt("executor")
         self.assertEqual(self.agent.system_prompt, expected_prompt)
 

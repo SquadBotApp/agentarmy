@@ -1,6 +1,8 @@
+const crypto = require('node:crypto');
+
 const DEFAULT_POLICIES = {
   version: '1.0.0',
-  deny_by_default: false,
+  deny_by_default: true,
   rules: [
     {
       id: 'allow-read-metrics',
@@ -66,9 +68,83 @@ function normalizePolicies(input) {
 
   return {
     version: String(raw.version || DEFAULT_POLICIES.version),
-    deny_by_default: Boolean(raw.deny_by_default),
+    deny_by_default: raw.deny_by_default == null ? DEFAULT_POLICIES.deny_by_default : Boolean(raw.deny_by_default),
     rules,
   };
+}
+
+function base64urlEncode(value) {
+  return Buffer.from(value, 'utf8').toString('base64url');
+}
+
+function base64urlDecode(value) {
+  return Buffer.from(String(value || ''), 'base64url').toString('utf8');
+}
+
+function approvalSecret() {
+  return String(process.env.APPROVAL_TOKEN_SECRET || process.env.JWT_SECRET || '').trim();
+}
+
+function signApprovalPayload(payloadJson) {
+  const secret = approvalSecret();
+  if (!secret) {
+    throw new Error('approval signing secret is not configured');
+  }
+  return crypto.createHmac('sha256', secret).update(payloadJson).digest('base64url');
+}
+
+function issueApprovalToken(params = {}) {
+  const action = String(params.action || '').trim();
+  if (!action) throw new Error('action required');
+  const actor = String(params.actor || '').trim();
+  const role = String(params.role || '').trim();
+  const ttlSeconds = Math.max(30, Math.min(3600, Number(params.ttlSeconds) || 300));
+  const payload = {
+    action,
+    actor: actor || null,
+    role: role || null,
+    iat: Date.now(),
+    exp: Date.now() + ttlSeconds * 1000,
+    nonce: crypto.randomUUID(),
+  };
+  const payloadJson = JSON.stringify(payload);
+  const encoded = base64urlEncode(payloadJson);
+  const sig = signApprovalPayload(payloadJson);
+  return `${encoded}.${sig}`;
+}
+
+function verifyApprovalToken(token, expectedAction, expectedActor, expectedRole) {
+  const raw = String(token || '').trim();
+  if (!raw) return { valid: false, reason: 'missing approval token' };
+  const parts = raw.split('.');
+  if (parts.length !== 2) return { valid: false, reason: 'malformed approval token' };
+
+  let payload;
+  try {
+    payload = JSON.parse(base64urlDecode(parts[0]));
+  } catch (_err) {
+    return { valid: false, reason: 'invalid approval token payload' };
+  }
+
+  const payloadJson = JSON.stringify(payload);
+  const expectedSig = signApprovalPayload(payloadJson);
+  const provided = Buffer.from(parts[1], 'utf8');
+  const expected = Buffer.from(expectedSig, 'utf8');
+  if (provided.length !== expected.length) return { valid: false, reason: 'approval signature mismatch' };
+  const sigMatches = crypto.timingSafeEqual(provided, expected);
+  if (!sigMatches) return { valid: false, reason: 'approval signature mismatch' };
+
+  if (Number(payload.exp) <= Date.now()) return { valid: false, reason: 'approval token expired' };
+  if (String(payload.action || '') !== String(expectedAction || '')) {
+    return { valid: false, reason: 'approval action mismatch' };
+  }
+  if (payload.actor && String(payload.actor) !== String(expectedActor || '')) {
+    return { valid: false, reason: 'approval actor mismatch' };
+  }
+  if (payload.role && String(payload.role) !== String(expectedRole || '')) {
+    return { valid: false, reason: 'approval role mismatch' };
+  }
+  return { valid: true, payload };
 }
 
 function wildcardMatch(pattern, value) {
@@ -131,12 +207,16 @@ function authorizeAction(db, params) {
   let status = evaluation.allowed ? 'allowed' : 'blocked';
   let reason = evaluation.allowed ? 'policy allow' : 'policy deny';
 
-  if (rootOverride && role === 'admin') {
+  const rootOverrideEnabled = String(process.env.ALLOW_ROOT_OVERRIDE || '').toLowerCase() === 'true';
+  if (rootOverride && role === 'admin' && rootOverrideEnabled) {
     status = 'allowed';
     reason = 'root override';
-  } else if (status === 'allowed' && evaluation.requires_approval && !approvalToken) {
-    status = 'pending_approval';
-    reason = 'approval required';
+  } else if (status === 'allowed' && evaluation.requires_approval) {
+    const approval = verifyApprovalToken(approvalToken, action, actor, role);
+    if (!approval.valid) {
+      status = approvalToken ? 'blocked' : 'pending_approval';
+      reason = approvalToken ? approval.reason : 'approval required';
+    }
   }
 
   const decision = {
@@ -271,6 +351,8 @@ module.exports = {
   getPolicies,
   setPolicies,
   evaluatePolicy,
+  issueApprovalToken,
+  verifyApprovalToken,
   authorizeAction,
   executeCommand,
   getKernelState,

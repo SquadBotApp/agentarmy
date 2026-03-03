@@ -14,6 +14,7 @@ import { CommsBridgePanel } from './CommsBridgePanel';
 import { IntegrationHealthPanel } from './IntegrationHealthPanel';
 import { SuperpowersPanel } from './SuperpowersPanel';
 import { KernelControlPanel } from './KernelControlPanel';
+import { EducationCenterPanel } from './EducationCenterPanel';
 import { WorkflowPanel } from './WorkflowPanel';
 import { ToolMarketplacePanel } from './ToolMarketplacePanel';
 import { KernelLivePanel } from './KernelLivePanel';
@@ -73,6 +74,7 @@ export function AgentArmyDashboard() {
       <IntegrationHealthPanel />
       <SuperpowersPanel />
       <KernelControlPanel />
+      <EducationCenterPanel />
       <AgentArmyAdvancedControls />
       <AISuggestionPanel />
       <SelfHealingPanel />

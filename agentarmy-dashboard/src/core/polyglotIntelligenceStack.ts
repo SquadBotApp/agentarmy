@@ -829,11 +829,13 @@ export class PolyglotIntelligenceStack {
           alternates.push({ language: alt, confidence: Number(keywordResults[i].score.toFixed(4)) });
         }
       }
-    } else if (scriptLangs.length === 1) {
+    }
+    else if (scriptLangs.length === 1) {
       // Unique script → strong signal
       bestLang = scriptLangs[0];
       bestConfidence = Number((scriptResult.confidence * 0.8).toFixed(4));
-    } else if (scriptLangs.length > 1) {
+    }
+    else if (scriptLangs.length > 1) {
       // Ambiguous — pick the most common
       bestLang = scriptLangs[0];
       bestConfidence = Number((scriptResult.confidence * 0.5).toFixed(4));

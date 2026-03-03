@@ -86,6 +86,96 @@ export async function aiPlan(goal: string): Promise<Task[]> {
 }
 
 /**
+ * Claude-native assistant workflow ("CLaudebot") for high-quality drafting.
+ */
+export async function aiClaudebot(prompt: string, context?: string): Promise<string> {
+  const messages: LLMMessage[] = [
+    {
+      role: "system",
+      content:
+        "You are CLaudebot, the AgentArmy Claude specialist. Be precise, safe, and implementation-focused.",
+    },
+    {
+      role: "user",
+      content: context
+        ? `Context:\n${context}\n\nRequest:\n${prompt}`
+        : prompt,
+    },
+  ];
+  const result = await callLLM(messages, "anthropic");
+  return result.content.trim();
+}
+
+/**
+ * Execute a Claudebot-focused orchestration run with n8n integration enabled.
+ */
+export async function runClaudebotOrchestration(goal: string): Promise<any> {
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:4000";
+  const token = localStorage.getItem("agent-token");
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${backendUrl}/orchestrate`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      task: goal,
+      priority: "high",
+      integrations: {
+        n8n: {
+          enabled: true,
+          workflow: "claudebot",
+        },
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Claudebot orchestration failed: ${res.status} ${err}`);
+  }
+  return res.json();
+}
+
+/**
+ * Trigger a mobile deployment-oriented orchestration run with vendor routing.
+ */
+export async function runMobileDeployment(
+  goal: string,
+  vendors: Array<"apple" | "samsung" | "google" | "amazon">
+): Promise<any> {
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:4000";
+  const token = localStorage.getItem("agent-token");
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${backendUrl}/orchestrate`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      task: goal,
+      priority: "high",
+      integrations: {
+        mobile: {
+          enabled: true,
+          vendors,
+        },
+        platforms: {
+          enabled: true,
+          targets: [],
+        },
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Mobile deployment failed: ${res.status} ${err}`);
+  }
+  return res.json();
+}
+
+/**
  * Multi-model consensus: call multiple LLM providers and score by physics-inspired metric.
  * Each model's output becomes a "resonance sample" scored by the ZPE equation.
  */

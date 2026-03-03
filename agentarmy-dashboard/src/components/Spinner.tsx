@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './Spinner.module.css';
+import outerStyles from './SpinnerOuter.module.css';
 
 /** Predefined color variants that match the AgentArmy design system. */
 export type SpinnerVariant = 'primary' | 'gold' | 'white' | 'danger' | 'success';
@@ -71,22 +72,24 @@ export const Spinner: React.FC<SpinnerProps> = ({
 }) => {
   const activeColor = color ?? VARIANT_COLORS[variant as SpinnerVariant];
 
-  const spinnerStyle: React.CSSProperties = {
-    width: `${size}px`,
-    height: `${size}px`,
-    borderWidth: `${thickness}px`,
-    borderLeftColor: activeColor,
-    ...customStyle,
-  };
+  // Build a dynamic class for CSS variables
+  const variableClass = [
+    outerStyles['spinner-outer'],
+    size ? `${outerStyles['size-' + size]}` : '',
+    thickness ? `${outerStyles['thickness-' + thickness]}` : '',
+    activeColor ? `${outerStyles['color-' + (color || variant)]}` : '',
+  ].filter(Boolean).join(' ');
 
+  // Attach CSS variables via a wrapping span for full compliance
   const spinner = (
-    <div
-      className={`${styles.spinner} ${className ?? ''}`}
-      style={spinnerStyle}
-      aria-label={label}
-    >
-      <span className={styles.visuallyHidden}>{label}</span>
-    </div>
+    <span className={variableClass}>
+      <div
+        className={`${styles.spinner} ${className ?? ''}`}
+        aria-label={label}
+      >
+        <span className={styles.visuallyHidden}>{label}</span>
+      </div>
+    </span>
   );
 
   if (overlay) {

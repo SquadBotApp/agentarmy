@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './WorkspaceCard.module.css';
 import { Workspace } from '../core/types';
 import { aiRewrite, aiPlan, aiSummarize } from '../core/workflow';
 import { useAgentStore } from '../store/agentStore';
@@ -68,24 +69,29 @@ export function WorkspaceCard() {
   return (
     <div className="card">
       <h2>Workspace</h2>
-      {error && <div style={{ color: '#d32f2f', marginBottom: 8, padding: 8, background: '#ffebee', borderRadius: 4 }}>{error}</div>}
-      <div style={{display:'flex',gap:8}}>
-        <div style={{flex:1}}>
-          <select value={selectedDocId||''} onChange={(e)=>{ setSelectedDocId(e.target.value); const d = workspace.documents.find(x=>x.id===e.target.value); setEditing(d?.content||''); }}>
+      {error && <div className={styles.errorBox}>{error}</div>}
+      <div className={styles.flexRow}>
+        <div className={styles.flex1}>
+          <label htmlFor="docSelect" className="visually-hidden">Select document</label>
+          <select id="docSelect" title="Select document" value={selectedDocId||''} onChange={(e)=>{ setSelectedDocId(e.target.value); const d = workspace.documents.find(x=>x.id===e.target.value); setEditing(d?.content||''); }}>
             {workspace.documents.map(d=> <option key={d.id} value={d.id}>{d.title}</option>)}
           </select>
-          <textarea style={{width:'100%',height:160,marginTop:8}} value={editing} onChange={(e)=>setEditing(e.target.value)} />
-          <div style={{marginTop:8,display:'flex',gap:8}}>
+          <label htmlFor="docTextarea" className="visually-hidden">Document content</label>
+          <textarea id="docTextarea" className={styles.textarea} value={editing} onChange={(e)=>setEditing(e.target.value)} placeholder="Edit document content" title="Document content" />
+          <div className={styles.buttonRow}>
             <button className="btn" onClick={doRewrite} disabled={loading === 'rewrite'}>{loading === 'rewrite' ? '⏳ Rewriting...' : 'Rewrite'}</button>
             <button className="btn" onClick={doSummarize} disabled={loading === 'summarize'}>{loading === 'summarize' ? '⏳ Summarizing...' : 'Summarize'}</button>
             <button className="btn" onClick={doPlan} disabled={loading === 'plan'}>{loading === 'plan' ? '⏳ Planning...' : 'Make Plan'}</button>
           </div>
         </div>
-        <div style={{width:260}}>
+        <div className={styles.tasksCol}>
           <h4>Tasks</h4>
-          <ul style={{maxHeight:220,overflow:'auto'}}>
+          <ul className={styles.tasksList}>
             {workspace.tasks.map(t => (
-              <li key={t.id}><input type="checkbox" checked={!!t.done} readOnly /> {t.title}</li>
+              <li key={t.id}>
+                <label className="visually-hidden" htmlFor={`task-done-${t.id}`}>Task done: {t.title}</label>
+                <input id={`task-done-${t.id}`} type="checkbox" checked={!!t.done} readOnly title={`Task done: ${t.title}`} /> {t.title}
+              </li>
             ))}
           </ul>
         </div>

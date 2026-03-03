@@ -2,21 +2,31 @@
 Adapter for Devin AI agents
 Implements UniversalAgentInterface for Devin AI-based agents.
 """
-from ..universal_agent_interface import UniversalAgentInterface
-from ..event_bus import EventBus
+class DevinAIAgentAdapter:
+    """Concrete implementation for Devin AI agent (stubbed for startup)."""
 
-class DevinAIAgentAdapter(UniversalAgentInterface):
-    def __init__(self, config=None):
-        self.config = config or {}
-        self.event_bus = None
+    def __init__(self):
+        self.id = "devin-adapter-001"
+        self.state = "idle"
 
-    def attach_event_bus(self, event_bus: EventBus):
-        self.event_bus = event_bus
+    def execute(self, task):
+        print(f"[Devin stub] Would execute task: {task}")
+        return {"status": "executed", "result": "stub result"}
 
-    def step(self):
-        # Integrate Devin AI agent step logic here
-        pass
+    def get_capabilities(self):
+        return [
+            "code_generation",
+            "code_review",
+            "debugging",
+            "refactoring",
+            "testing"
+        ]
 
-    def shutdown(self):
-        # Clean up Devin AI agent resources
-        pass
+    def get_id(self):
+        return self.id
+
+    def get_state(self):
+        return self.state
+
+    def handle_event(self, event):
+        print(f"[Devin stub] Received event: {event}")

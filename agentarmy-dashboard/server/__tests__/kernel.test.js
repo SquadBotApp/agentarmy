@@ -20,6 +20,16 @@ function makeDbStub() {
 }
 
 describe('kernel policy engine', () => {
+  const originalSecret = process.env.APPROVAL_TOKEN_SECRET;
+
+  beforeEach(() => {
+    process.env.APPROVAL_TOKEN_SECRET = 'test-approval-secret';
+  });
+
+  afterEach(() => {
+    process.env.APPROVAL_TOKEN_SECRET = originalSecret;
+  });
+
   test('allows runtime action for user', () => {
     const db = makeDbStub();
     const decision = kernel.authorizeAction(db, {
@@ -52,5 +62,50 @@ describe('kernel policy engine', () => {
       },
     });
     expect(result.status).toBe('pending_approval');
+  });
+
+  test('blocks admin high-risk with invalid approval token', async () => {
+    const db = makeDbStub();
+    const result = await kernel.executeCommand(db, {
+      action: 'runtime.superpowers.autonomous_pr.high_risk',
+      user: { username: 'admin', role: 'admin' },
+      approvalToken: 'invalid.token',
+      payload: { goal: 'x' },
+      handlers: {
+        'runtime.superpowers.autonomous_pr.high_risk': async () => ({ ok: true }),
+      },
+    });
+    expect(result.status).toBe('blocked');
+  });
+
+  test('allows admin high-risk with valid approval token', async () => {
+    const db = makeDbStub();
+    const approvalToken = kernel.issueApprovalToken({
+      action: 'runtime.superpowers.autonomous_pr.high_risk',
+      actor: 'admin',
+      role: 'admin',
+      ttlSeconds: 300,
+    });
+    const result = await kernel.executeCommand(db, {
+      action: 'runtime.superpowers.autonomous_pr.high_risk',
+      user: { username: 'admin', role: 'admin' },
+      approvalToken,
+      payload: { goal: 'x' },
+      handlers: {
+        'runtime.superpowers.autonomous_pr.high_risk': async () => ({ ok: true }),
+      },
+    });
+    expect(result.status).toBe('completed');
+  });
+
+  test('denies unmatched action by default', () => {
+    const db = makeDbStub();
+    const decision = kernel.authorizeAction(db, {
+      action: 'unknown.surface.action',
+      user: { username: 'u1', role: 'user' },
+      context: {},
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.status).toBe('blocked');
   });
 });

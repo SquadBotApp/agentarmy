@@ -22,9 +22,15 @@ function loadMemory(db) {
   return readJsonConfig(db, 'superpower_memory', []);
 }
 
+function redact(db, value) {
+  const fn = db?._internals?.redactForAudit;
+  return typeof fn === 'function' ? fn(value) : value;
+}
+
 function appendMemory(db, entry) {
   const existing = loadMemory(db);
-  const next = [entry, ...existing].slice(0, 500);
+  const safeEntry = redact(db, entry);
+  const next = [safeEntry, ...existing].slice(0, 500);
   writeJsonConfig(db, 'superpower_memory', next);
   return next;
 }
@@ -117,7 +123,7 @@ function buildControlTower(db) {
   const decisions = db.decisions.getRecent(50);
   const jobs = db.jobs.list();
   const skills = loadInstalledSkills(db);
-  const memory = loadMemory(db).slice(0, 20);
+  const memory = loadMemory(db).slice(0, 20).map((item) => redact(db, item));
 
   const completed = jobs.filter((j) => j.status === 'completed').length;
   const failed = jobs.filter((j) => j.status === 'failed').length;
@@ -133,7 +139,7 @@ function buildControlTower(db) {
       memory_items: memory.length,
     },
     agent_stats: agentStats,
-    installed_skills: skills,
+    installed_skills: redact(db, skills),
     recent_memory: memory,
   };
 }

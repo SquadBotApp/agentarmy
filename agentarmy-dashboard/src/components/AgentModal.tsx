@@ -4,7 +4,7 @@
  * Features beautiful pulse-synced styling
  */
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ModuleType, useUnifiedAgentStore } from '../store/unifiedAgentStore';
 import { usePulseStore } from '../store/pulseStore';
 import styles from './AgentModal.module.css';
@@ -70,7 +70,7 @@ const AgentModal: React.FC<AgentModalProps> = ({ moduleType, onClose }) => {
   };
 
   const handleInjectPrompt = () => {
-    const prompt = window.prompt(`Enter prompt for ${moduleType}:`);
+    const prompt = globalThis.prompt(`Enter prompt for ${moduleType}:`);
     if (prompt) {
       console.log(`Injecting prompt into ${moduleType}:`, prompt);
       triggerPulse(moduleType, 0.8);
@@ -82,13 +82,25 @@ const AgentModal: React.FC<AgentModalProps> = ({ moduleType, onClose }) => {
     // In a real implementation, this would open a log viewer
   };
 
+  // Use native <dialog> for accessibility
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (dialogRef.current && !dialogRef.current.open) {
+      dialogRef.current.showModal();
+    }
+    const handleClose = (e: Event) => { onClose(); };
+    const dialog = dialogRef.current;
+    if (dialog) dialog.addEventListener('close', handleClose);
+    return () => { if (dialog) dialog.removeEventListener('close', handleClose); };
+  }, [onClose]);
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div 
-        className={styles.modal} 
-        onClick={e => e.stopPropagation()}
-        style={{ '--module-color': color } as React.CSSProperties}
-      >
+    <dialog
+      ref={dialogRef}
+      className={styles.modal}
+      aria-label={`${moduleType} agent modal`}
+      data-module-color={color}
+      onCancel={onClose}
+    >
         <button className={styles.closeBtn} onClick={onClose}>✕</button>
 
         {/* Header */}
@@ -124,18 +136,23 @@ const AgentModal: React.FC<AgentModalProps> = ({ moduleType, onClose }) => {
               {(pulseData.intensity * 100).toFixed(0)}%
             </span>
           </div>
-          <div className={styles.resonanceBar}>
-            <div
+          <div className={styles.resonanceBarWrapper}>
+            <label htmlFor="resonanceProgress" className="visually-hidden">Resonance Progress</label>
+            <progress
+              id="resonanceProgress"
               className={styles.resonanceFill}
-              style={{
-                width: `${pulseData.intensity * 100}%`,
-                background: `linear-gradient(90deg, ${color}, hsl(${(pulseData.hueShift + 200) % 360}, 100%, 70%))`,
-              }}
+              value={pulseData.intensity * 100}
+              max={100}
+              aria-valuenow={Math.round(pulseData.intensity * 100)}
+              aria-valuemin={0}
+              aria-valuemax={100}
             />
           </div>
           <div className={styles.resonanceStats}>
             <span>Hue Shift: {pulseData.hueShift}°</span>
             <span>ZPE: {(zpeTotal * 100).toFixed(0)}%</span>
+          </div>
+        </div>
           </div>
         </div>
 
@@ -147,7 +164,7 @@ const AgentModal: React.FC<AgentModalProps> = ({ moduleType, onClose }) => {
               {Object.entries(store.memory.agentWeights).slice(0, 4).map(([agent, weight]) => (
                 <div key={agent} className={styles.infoItem}>
                   <span className={styles.infoLabel}>{agent}</span>
-                  <span className={styles.infoValue}>{(weight as number).toFixed(2)}</span>
+                  <span className={styles.infoValue}>{Number(weight).toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -194,29 +211,26 @@ const AgentModal: React.FC<AgentModalProps> = ({ moduleType, onClose }) => {
         {/* Action Buttons */}
         <div className={styles.actions}>
           <button 
-            className={styles.actionBtn} 
+            className={styles.actionBtn}
             onClick={handleRunCycle}
-            style={{ borderColor: color }}
           >
             Run Full Cycle
           </button>
           <button 
-            className={styles.actionBtn} 
+            className={styles.actionBtn}
             onClick={handleInjectPrompt}
-            style={{ borderColor: color }}
           >
             Inject Prompt
           </button>
           <button 
-            className={styles.actionBtn} 
+            className={styles.actionBtn}
             onClick={handleViewLogs}
-            style={{ borderColor: color }}
           >
             View Logs
           </button>
         </div>
       </div>
-    </div>
+      </dialog>
   );
 };
 

@@ -1,3 +1,6 @@
+.resonanceFillDynamic {
+  /* This class will be dynamically set via style tag in AgentModal.tsx */
+}
 /**
  * AgentModal.module.css
  * Beautiful resonance-themed modal for agent details
@@ -249,9 +252,9 @@
 .actionBtn {
   width: 100%;
   padding: 0.9rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(20, 20, 30, 0.95);
   border: 1px solid var(--module-color, #4a9eff);
-  color: white;
+  color: #fff;
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.9rem;
@@ -259,6 +262,7 @@
   text-transform: uppercase;
   letter-spacing: 1px;
   transition: all 0.2s ease;
+  text-shadow: 0 1px 0 #000;
 }
 
 .actionBtn:hover {

@@ -1,10 +1,24 @@
 import React from "react";
 
-import { EfficiencyPlan, fetchEfficiencyPlan } from "../core/efficiencyPlannerApi";
+import {
+  EfficiencyFramework,
+  EfficiencyPlan,
+  fetchEfficiencyPlan,
+} from "../core/efficiencyPlannerApi";
+
+const FRAMEWORK_OPTIONS: ReadonlyArray<EfficiencyFramework> = [
+  "frabric",
+  "native",
+  "langgraph",
+  "crewai",
+  "smolagents",
+  "autogen",
+];
 
 export function EfficiencyLabPanel() {
   const [goal, setGoal] = React.useState("Ship mobile-ready orchestration with strong governance");
   const [vendors, setVendors] = React.useState<string[]>(["apple", "google"]);
+  const [framework, setFramework] = React.useState<EfficiencyFramework>("frabric");
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
   const [plan, setPlan] = React.useState<EfficiencyPlan | null>(null);
@@ -19,7 +33,7 @@ export function EfficiencyLabPanel() {
     setLoading(true);
     setError("");
     try {
-      const result = await fetchEfficiencyPlan(goal, vendors);
+      const result = await fetchEfficiencyPlan(goal, vendors, framework);
       setPlan(result);
     } catch (err) {
       setError(String(err));
@@ -41,6 +55,22 @@ export function EfficiencyLabPanel() {
         />
       </div>
       <div style={{ marginBottom: "0.5rem" }}>
+        <label style={{ marginRight: "0.5rem" }} htmlFor="eff-framework">
+          Framework:
+        </label>
+        <select
+          id="eff-framework"
+          value={framework}
+          onChange={(e) => setFramework(e.target.value as EfficiencyFramework)}
+        >
+          {FRAMEWORK_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div style={{ marginBottom: "0.5rem" }}>
         {["apple", "samsung", "google", "amazon"].map((vendor) => (
           <label key={vendor} style={{ marginRight: "1rem" }}>
             <input
@@ -58,6 +88,9 @@ export function EfficiencyLabPanel() {
       {error && <p>{error}</p>}
       {plan && (
         <div style={{ marginTop: "0.75rem" }}>
+          <div>
+            <strong>Requested Framework:</strong> {framework}
+          </div>
           <div>
             <strong>Framework:</strong> {plan.recommended_framework}
           </div>

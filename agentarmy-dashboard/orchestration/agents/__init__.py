@@ -6,7 +6,17 @@ from .critic_agent import CriticAgent
 from .governor_agent import GovernorAgent
 from .synthesizer_agent import SynthesizerAgent
 from .prompts import get_agent_prompt, get_agent_model, ZPE_WEIGHTS, SENSITIVE_MARKERS, MODEL_CONFIG
-from .enterprise_agent import EnterpriseAgent  # Export EnterpriseAgent for framework use
+
+# Optional agents may depend on in-progress modules; keep core imports stable.
+try:
+    from .enterprise_agent import EnterpriseAgent
+except ImportError:  # pragma: no cover - optional surface
+    EnterpriseAgent = None
+
+try:
+    from .antigravity_agent import AntigravityAgent
+except ImportError:  # pragma: no cover - optional surface
+    AntigravityAgent = None
 
 __all__ = [
     "PlannerAgent",
@@ -19,5 +29,9 @@ __all__ = [
     "ZPE_WEIGHTS",
     "SENSITIVE_MARKERS",
     "MODEL_CONFIG",
-    "EnterpriseAgent",  # Include EnterpriseAgent in the exported members
 ]
+
+if EnterpriseAgent is not None:
+    __all__.append("EnterpriseAgent")
+if AntigravityAgent is not None:
+    __all__.append("AntigravityAgent")

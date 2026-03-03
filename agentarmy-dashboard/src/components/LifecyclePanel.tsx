@@ -65,7 +65,7 @@ export const LifecyclePanel: React.FC = () => {
         type="button"
         className={styles.panelHeader}
         onClick={() => setExpanded(!expanded)}
-        aria-expanded={expanded}
+        aria-expanded={!!expanded}
       >
         <h3>🛡️ Lifecycle Manager</h3>
         <span className={styles.toggleBtn}>{expanded ? '▼' : '▶'}</span>

@@ -93,7 +93,7 @@ export const DeploymentPanel: React.FC = () => {
         type="button"
         className={styles.panelHeader}
         onClick={() => setExpanded(!expanded)}
-        aria-expanded={expanded}
+        aria-expanded={!!expanded}
       >
         <h3>🚀 Deployment Orchestrator</h3>
         <span className={styles.toggleBtn}>{expanded ? '▼' : '▶'}</span>

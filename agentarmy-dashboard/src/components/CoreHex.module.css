@@ -1,3 +1,27 @@
+.agentBadge[data-module="planner"] { background: #4a9eff; }
+.agentBadge[data-module="executor"] { background: #ffcc00; }
+.agentBadge[data-module="critic"] { background: #ff6666; }
+.agentBadge[data-module="governor"] { background: #66ff66; }
+.agentBadge[data-module="memory"] { background: #cc66ff; }
+.agentBadge[data-module="learning"] { background: #66ffcc; }
+.agentBadge[data-module="tools"] { background: #ff9966; }
+
+.pulseRing0 { animation-delay: 0s; }
+.pulseRing1 { animation-delay: 0.5s; }
+.pulseRing2 { animation-delay: 1s; }
+
+.connectionDot.dot-planner { background: #4a9eff; }
+.connectionDot.dot-executor { background: #ffcc00; }
+.connectionDot.dot-critic { background: #ff6666; }
+.connectionDot.dot-governor { background: #66ff66; }
+.connectionDot.dot-memory { background: #cc66ff; }
+.connectionDot.dot-learning { background: #66ffcc; }
+.connectionDot.active.dot-planner { box-shadow: 0 0 10px #4a9eff; }
+.connectionDot.active.dot-executor { box-shadow: 0 0 10px #ffcc00; }
+.connectionDot.active.dot-critic { box-shadow: 0 0 10px #ff6666; }
+.connectionDot.active.dot-governor { box-shadow: 0 0 10px #66ff66; }
+.connectionDot.active.dot-memory { box-shadow: 0 0 10px #cc66ff; }
+.connectionDot.active.dot-learning { box-shadow: 0 0 10px #66ffcc; }
 /**
  * CoreHex.module.css
  * Unified agent core with dynamic logo glow

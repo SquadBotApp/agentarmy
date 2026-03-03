@@ -25,6 +25,13 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
+from contextlib import suppress
+
+EducationCenter = None
+with suppress(ImportError):
+    from orchestration.education_center.education_center import EducationCenter
+with suppress(ImportError):
+    from education_center.education_center import EducationCenter
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -56,6 +63,8 @@ class LifecycleEventType(str, Enum):
     TOOL_LOCK   = "tool_lock"
     TOOL_UNLOCK = "tool_unlock"
     DOMAIN_RESTRICT = "domain_restrict"
+    CHAMPION_PROMOTION = "champion_promotion"
+    CHAMPION_DEMOTION = "champion_demotion"
     SAFETY_CHECK    = "safety_check"
     GOVERNANCE_OVERRIDE = "governance_override"
 
@@ -77,6 +86,11 @@ class RiskLevel(str, Enum):
     MEDIUM   = "medium"
     HIGH     = "high"
     CRITICAL = "critical"
+
+
+class AgentType(str, Enum):
+    STANDARD = "standard"
+    CHAMPION = "champion"
 
 
 # ---------------------------------------------------------------------------
@@ -106,6 +120,7 @@ class ManagedAgent:
     agent_id: str
     name: str
     role: str  # planner, executor, critic, governor, synthesizer, custom
+    agent_type: AgentType = AgentType.STANDARD
     stage: LifecycleStage = LifecycleStage.CANDIDATE
     current_version: Optional[AgentVersion] = None
     version_history: List[AgentVersion] = field(default_factory=list)
@@ -135,7 +150,7 @@ class LifecycleEvent:
     actor: str = "system"  # "system" | "user:<id>" | "governor"
     details: Dict[str, Any] = field(default_factory=dict)
     safety_check_passed: bool = True
-    governance_approval: Optional[str] = None  # None = not required
+    governance_approval: Optional[str] = None
     previous_state: Optional[Dict[str, Any]] = None
     new_state: Optional[Dict[str, Any]] = None
 
@@ -191,6 +206,23 @@ class LifecycleManager:
         self.audit_log: List[LifecycleEvent] = []
         self.constraints = list(CONSTITUTIONAL_RULES)
         self._evolution_counter: Dict[str, int] = {}  # loop prevention
+        # Register top-level domains
+        self.domains = {}
+        self._register_top_level_domains()
+
+    def _register_top_level_domains(self):
+        # Register EducationCenter as a top-level domain, but do not fail lifecycle boot if optional domain import/init breaks.
+        if EducationCenter:
+            try:
+                self.domains["education"] = EducationCenter(runtime=self)
+            except Exception:
+                self.domains["education"] = None
+        else:
+             self.domains["education"] = None
+        self.domains["swarm"] = None
+        self.domains["defensive"] = None
+        self.domains["governance"] = None
+        self.domains["economic"] = None
 
     # ------------------------------------------------------------------
     # Helpers
@@ -208,54 +240,38 @@ class LifecycleManager:
             "frozen": agent.frozen,
             "tools_locked": agent.tools_locked,
             "version": agent.current_version.version_number if agent.current_version else 0,
+            "agent_type": agent.agent_type.value,
             "safety_posture": agent.current_version.safety_posture.value if agent.current_version else "standard",
             "performance_score": agent.performance_score,
         }
 
-    # ------------------------------------------------------------------
-    # Constitutional safety checks
-    # ------------------------------------------------------------------
-
-    def _check_safety(
+    def _ensure_stage(
         self,
         agent: ManagedAgent,
-        proposed_version: Optional[AgentVersion] = None,
-        operation: str = "unknown",
-    ) -> GovernanceDecision:
-        violations: List[str] = []
-
-        # SAFE_STATE — agent cannot move to a worse safety posture without approval
-        if proposed_version and agent.current_version:
-            if proposed_version.safety_posture.level < agent.current_version.safety_posture.level:
-                violations.append(
-                    f"SAFETY_NO_WEAKEN: posture would drop from "
-                    f"{agent.current_version.safety_posture.value} → "
-                    f"{proposed_version.safety_posture.value}"
-                )
-
-        # TOOL_APPROVAL — proposed tools must be in the approved set
-        if proposed_version and agent.tools_locked:
-            unapproved = set(proposed_version.tools) - set(agent.approved_tools)
-            if unapproved:
-                violations.append(f"TOOL_APPROVAL: unapproved tools: {unapproved}")
-
-        # HIGH_RISK_OVERSIGHT — high-risk agents need governance gate
-        if proposed_version and proposed_version.risk_level in (RiskLevel.HIGH, RiskLevel.CRITICAL):
-            if not agent.governance_required:
-                violations.append("HIGH_RISK_OVERSIGHT: agent requires governance flag")
-
-        # ECONOMY_GUARD — efficiency floor
-        if proposed_version and proposed_version.qb_efficiency < 0.3:
-            violations.append(
-                f"ECONOMY_GUARD: Qb efficiency {proposed_version.qb_efficiency:.2f} below 0.30 threshold"
+        allowed: List[LifecycleStage],
+        operation: str,
+    ) -> None:
+        if agent.stage not in allowed:
+            allowed_str = ", ".join(a.value for a in allowed)
+            raise ValueError(
+                f"{operation} blocked: stage '{agent.stage.value}' not in allowed stages [{allowed_str}]"
             )
 
-        # LOOP_PREVENTION — max 10 evolutions in a 60-minute window
-        evo_count = self._evolution_counter.get(agent.agent_id, 0)
-        if operation == "evolution" and evo_count >= 10:
-            violations.append("LOOP_PREVENTION: evolution rate limit (10/window) exceeded")
+    # ------------------------------------------------------------------
+    def _check_safety(
+        self,
+        agent: 'ManagedAgent',
+        proposed_version: Optional['AgentVersion'] = None,
+        operation: str = "unknown",
+    ) -> 'GovernanceDecision':
+        violations: List[str] = []
+        violations.extend(self._check_safe_state(agent, proposed_version))
+        violations.extend(self._check_tool_approval(agent, proposed_version))
+        violations.extend(self._check_high_risk_oversight(agent, proposed_version))
+        violations.extend(self._check_economy_guard(proposed_version))
+        violations.extend(self._check_loop_prevention(agent, operation))
 
-        approved = len(violations) == 0
+        approved = not violations
         requires_approval = any(
             v.startswith("SAFETY_NO_WEAKEN") or v.startswith("HIGH_RISK_OVERSIGHT")
             for v in violations
@@ -268,6 +284,56 @@ class LifecycleManager:
             escalated=not approved and requires_approval,
             violations=violations,
         )
+
+    def _check_safe_state(self, agent, proposed_version):
+        violations = []
+        if (
+            proposed_version
+            and agent.current_version
+            and proposed_version.safety_posture.level < agent.current_version.safety_posture.level
+            and agent.agent_type != AgentType.CHAMPION
+        ):
+            violations.append(
+                f"SAFETY_NO_WEAKEN: posture would drop from "
+                f"{agent.current_version.safety_posture.value} → "
+                f"{proposed_version.safety_posture.value}"
+            )
+        return violations
+
+    def _check_tool_approval(self, agent, proposed_version):
+        violations = []
+        if proposed_version and getattr(agent, 'tools_locked', False):
+            if unapproved := set(proposed_version.tools) - set(getattr(agent, 'approved_tools', [])):
+                violations.append(f"TOOL_APPROVAL: unapproved tools: {unapproved}")
+        return violations
+
+    def _check_high_risk_oversight(self, agent, proposed_version):
+        violations = []
+        if (
+            proposed_version
+            and getattr(proposed_version, 'risk_level', None) in (RiskLevel.HIGH, RiskLevel.CRITICAL)
+            and not getattr(agent, 'governance_required', False)
+        ):
+            violations.append("HIGH_RISK_OVERSIGHT: agent requires governance flag")
+        return violations
+
+    def _check_economy_guard(self, proposed_version):
+        violations = []
+        if proposed_version and getattr(proposed_version, 'qb_efficiency', 1.0) < 0.3:
+            violations.append(
+                f"ECONOMY_GUARD: Qb efficiency {proposed_version.qb_efficiency:.2f} below 0.30 threshold"
+            )
+        return violations
+
+    def _check_loop_prevention(self, agent, operation):
+        violations = []
+        evo_count = self._evolution_counter.get(agent.agent_id, 0)
+        if operation == "evolution":
+            if agent.agent_type == AgentType.CHAMPION and evo_count >= 20:
+                violations.append("LOOP_PREVENTION: champion evolution rate limit (20/window) exceeded")
+            elif agent.agent_type != AgentType.CHAMPION and evo_count >= 10:
+                violations.append("LOOP_PREVENTION: evolution rate limit (10/window) exceeded")
+        return violations
 
     # ------------------------------------------------------------------
     # Lifecycle operations
@@ -297,6 +363,7 @@ class LifecycleManager:
             agent_id=agent_id,
             name=name,
             role=role,
+            agent_type=AgentType.STANDARD,
             stage=LifecycleStage.CANDIDATE,
             current_version=version,
             version_history=[version],
@@ -328,8 +395,11 @@ class LifecycleManager:
 
         if agent.frozen:
             raise ValueError(f"Agent {agent_id} is frozen — cannot deploy")
-        if agent.stage == LifecycleStage.RETIRED:
-            raise ValueError(f"Agent {agent_id} is retired — cannot deploy")
+        self._ensure_stage(
+            agent,
+            [LifecycleStage.CANDIDATE, LifecycleStage.STAGING],
+            "deploy",
+        )
 
         decision = self._check_safety(agent, agent.current_version, "deployment")
         if not decision.approved:
@@ -364,6 +434,8 @@ class LifecycleManager:
             raise ValueError(f"Agent {agent_id} is frozen — cannot evolve")
 
         decision = self._check_safety(agent, proposed_version, "evolution")
+        if human_approved and not self._is_privileged_actor(actor):
+            raise ValueError("human_approved override requires privileged actor")
 
         if not decision.approved and not human_approved:
             event = LifecycleEvent(
@@ -454,6 +526,10 @@ class LifecycleManager:
     ) -> Tuple[ManagedAgent, LifecycleEvent]:
         source = self.agents[source_id]
         target = self.agents[target_id]
+        if source_id == target_id:
+            raise ValueError("Cannot merge agent into itself")
+        self._ensure_stage(source, [LifecycleStage.ACTIVE, LifecycleStage.CANDIDATE], "merge-source")
+        self._ensure_stage(target, [LifecycleStage.ACTIVE, LifecycleStage.CANDIDATE], "merge-target")
         prev_target = self._snapshot(target)
 
         # Merge specializations from source into target
@@ -555,6 +631,11 @@ class LifecycleManager:
     ) -> Tuple[ManagedAgent, LifecycleEvent]:
         agent = self.agents[agent_id]
         prev = self._snapshot(agent)
+        self._ensure_stage(
+            agent,
+            [LifecycleStage.CANDIDATE, LifecycleStage.STAGING, LifecycleStage.ACTIVE, LifecycleStage.FROZEN],
+            "retire",
+        )
 
         agent.stage = LifecycleStage.RETIRED
         agent.updated_at = self._now()
@@ -578,6 +659,11 @@ class LifecycleManager:
     def freeze_agent(self, agent_id: str, actor: str = "user") -> LifecycleEvent:
         agent = self.agents[agent_id]
         prev = self._snapshot(agent)
+        self._ensure_stage(
+            agent,
+            [LifecycleStage.CANDIDATE, LifecycleStage.STAGING, LifecycleStage.ACTIVE],
+            "freeze",
+        )
         agent.frozen = True
         agent.stage = LifecycleStage.FROZEN
         agent.updated_at = self._now()
@@ -592,6 +678,9 @@ class LifecycleManager:
     def unfreeze_agent(self, agent_id: str, actor: str = "user") -> LifecycleEvent:
         agent = self.agents[agent_id]
         prev = self._snapshot(agent)
+        self._ensure_stage(agent, [LifecycleStage.FROZEN], "unfreeze")
+        if agent.governance_required:
+            self._require_privileged_actor(actor, "unfreeze")
         agent.frozen = False
         agent.stage = LifecycleStage.ACTIVE
         agent.updated_at = self._now()
@@ -622,6 +711,11 @@ class LifecycleManager:
     def demote_agent(self, agent_id: str, new_posture: SafetyPosture, actor: str = "user") -> LifecycleEvent:
         agent = self.agents[agent_id]
         prev = self._snapshot(agent)
+        current = agent.current_version.safety_posture if agent.current_version else SafetyPosture.STANDARD
+        if new_posture.level < current.level and actor not in ("governor", "user:root"):
+            raise ValueError(
+                "Demotion that weakens safety posture requires actor 'governor' or 'user:root'"
+            )
         if agent.current_version:
             agent.current_version.safety_posture = new_posture
         agent.updated_at = self._now()
@@ -650,6 +744,7 @@ class LifecycleManager:
     def unlock_tools(self, agent_id: str, actor: str = "user") -> LifecycleEvent:
         agent = self.agents[agent_id]
         prev = self._snapshot(agent)
+        self._require_privileged_actor(actor, "unlock_tools")
         agent.tools_locked = False
         agent.updated_at = self._now()
         event = LifecycleEvent(
@@ -678,6 +773,55 @@ class LifecycleManager:
         self._log(event)
         return event
 
+    def promote_to_champion(self, agent_id: str, actor: str = "system") -> LifecycleEvent:
+        """Promote an agent to Champion type, granting special privileges."""
+        agent = self.agents[agent_id]
+        prev = self._snapshot(agent)
+
+        # Only active agents can be promoted.
+        self._ensure_stage(agent, [LifecycleStage.ACTIVE], "promote_to_champion")
+        self._require_privileged_actor(actor, "promote_to_champion")
+
+        agent.agent_type = AgentType.CHAMPION
+        agent.updated_at = self._now()
+
+        event = LifecycleEvent(
+            event_type=LifecycleEventType.CHAMPION_PROMOTION,
+            agent_id=agent_id,
+            agent_name=agent.name,
+            actor=actor,
+            previous_state=prev,
+            new_state=self._snapshot(agent),
+            details={"new_type": "champion"},
+        )
+        self._log(event)
+        return event
+
+    def demote_from_champion(self, agent_id: str, actor: str = "system") -> LifecycleEvent:
+        """Demote a Champion agent back to Standard type."""
+        agent = self.agents[agent_id]
+        prev = self._snapshot(agent)
+
+        if agent.agent_type != AgentType.CHAMPION:
+            raise ValueError(f"Agent {agent.name} ({agent_id}) is not a Champion.")
+
+        self._require_privileged_actor(actor, "demote_from_champion")
+
+        agent.agent_type = AgentType.STANDARD
+        agent.updated_at = self._now()
+
+        event = LifecycleEvent(
+            event_type=LifecycleEventType.CHAMPION_DEMOTION,
+            agent_id=agent_id,
+            agent_name=agent.name,
+            actor=actor,
+            previous_state=prev,
+            new_state=self._snapshot(agent),
+            details={"new_type": "standard"},
+        )
+        self._log(event)
+        return event
+
     # ------------------------------------------------------------------
     # Performance tracking (Replay Engine / Swarm Runner integration)
     # ------------------------------------------------------------------
@@ -688,7 +832,6 @@ class LifecycleManager:
         success: bool,
         zpe_score: float = 0.5,
         qb_cost: float = 0.0,
-        latency_ms: float = 0.0,
     ) -> None:
         agent = self.agents[agent_id]
         agent.total_missions += 1
@@ -742,18 +885,18 @@ class LifecycleManager:
     def get_constitutional_status(self) -> Dict[str, Any]:
         """Summary of governance compliance across all agents."""
         total = len(self.agents)
-        frozen = sum(1 for a in self.agents.values() if a.frozen)
-        active = sum(1 for a in self.agents.values() if a.stage == LifecycleStage.ACTIVE)
+        frozen = sum(a.frozen for a in self.agents.values())
+        active = sum(a.stage == LifecycleStage.ACTIVE for a in self.agents.values())
         high_risk = sum(
-            1 for a in self.agents.values()
-            if a.current_version and a.current_version.risk_level in (RiskLevel.HIGH, RiskLevel.CRITICAL)
+            a.current_version is not None and a.current_version.risk_level in (RiskLevel.HIGH, RiskLevel.CRITICAL)
+            for a in self.agents.values()
         )
-        governance_enabled = sum(1 for a in self.agents.values() if a.governance_required)
+        governance_enabled = sum(a.governance_required for a in self.agents.values())
         avg_performance = (
             sum(a.performance_score for a in self.agents.values()) / max(total, 1)
         )
         violations_last_10 = sum(
-            1 for e in self.audit_log[-10:] if not e.safety_check_passed
+            not e.safety_check_passed for e in self.audit_log[-10:]
         )
 
         return {
@@ -781,6 +924,7 @@ class LifecycleManager:
                     "agent_id": a.agent_id,
                     "name": a.name,
                     "role": a.role,
+                    "agent_type": a.agent_type.value,
                     "stage": a.stage.value,
                     "frozen": a.frozen,
                     "tools_locked": a.tools_locked,

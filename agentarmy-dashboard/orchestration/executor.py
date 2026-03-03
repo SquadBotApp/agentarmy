@@ -1,8 +1,9 @@
-import asyncio
+import inspect
 import time
 from typing import Dict, Any, Optional
 
 from agents import PlannerAgent, ExecutorAgent, CriticAgent, SynthesizerAgent
+from frameworks import get_framework_adapter, normalize_framework_name
 
 class AgentExecutor:
     """
@@ -27,7 +28,20 @@ class AgentExecutor:
             raise ValueError(f"Agent '{agent_id}' not found in registry.")
         return self._agents[agent_id]
 
-    async def execute(self, task_id: str, agent_id: str, task_spec: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def _invoke(self, fn, spec):
+        value = fn(spec)
+        if inspect.isawaitable(value):
+            return await value
+        return value
+
+    async def execute(
+        self,
+        task_id: str,
+        agent_id: str,
+        task_spec: Dict[str, Any],
+        context: Optional[Dict[str, Any]] = None,
+        framework: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
         Run agent on task and return outcome with metrics.
         """
@@ -35,17 +49,41 @@ class AgentExecutor:
         status = "pending"
         result = None
         error = None
+        framework_name = normalize_framework_name(framework)
+        framework_adapter = get_framework_adapter(framework_name)
 
         try:
             agent = self._load_agent(agent_id)
-            # Merge context into task_spec if provided
-            spec = task_spec | {"context": context} if context else task_spec
-            # Support both async and sync agents
-            if asyncio.iscoroutinefunction(agent.execute):
-                result = await agent.execute(spec)
+            # Merge context into task_spec while preserving any existing context fields.
+            if context:
+                merged_context = {}
+                if isinstance(task_spec.get("context"), dict):
+                    merged_context.update(task_spec["context"])
+                merged_context.update(context)
+                spec = task_spec | {"context": merged_context}
             else:
-                result = agent.execute(spec)
-            status = "completed"
+                spec = task_spec
+            # Support both async and sync agents
+            if framework_name != "native":
+                result = await framework_adapter.run(
+                    role=agent_id,
+                    task_spec=spec,
+                    context=context or {},
+                    native_execute=agent.execute,
+                )
+            else:
+                result = await self._invoke(agent.execute, spec)
+
+            # Normalize wrapper status to reflect the agent-level outcome.
+            if isinstance(result, dict):
+                agent_status = str(result.get("status", "")).lower()
+                if agent_status in {"failed", "blocked"}:
+                    status = agent_status
+                    error = result.get("error")
+                else:
+                    status = "completed"
+            else:
+                status = "completed"
         except Exception as e:
             status = "failed"
             error = str(e)
@@ -60,8 +98,13 @@ class AgentExecutor:
             "error": error,
             "metrics": {
                 "latency_ms": latency_ms,
+                "framework_used": framework_name,
                 # Assuming result contains token usage if successful
-                "tokens": result.get("tokens", 0) if isinstance(result, dict) else 0
+                "tokens": (
+                    result.get("tokens")
+                    or result.get("tokens_used")
+                    or (result.get("metrics", {}) or {}).get("tokens_used", 0)
+                ) if isinstance(result, dict) else 0
             }
         }
 

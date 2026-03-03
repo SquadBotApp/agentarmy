@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import styles from './components/FractalCanvas.module.css';
 
 type Props = {
   zpe?: number; // expected range ~0.2 - 2.0
@@ -71,7 +72,7 @@ export function FractalCanvas({ zpe = 1, theme = "quantum" }: Readonly<Props>) {
       // allow CSS to size; default pixel size will be set on draw
       width={300}
       height={180}
-      style={{ borderRadius: 12, width: "100%", height: 180 }}
+      className={styles.canvas}
     />
   );
 }

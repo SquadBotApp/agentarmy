@@ -37,8 +37,24 @@ from orchestrator import orchestrate as run_orchestrator
 from executor import RegistryAgentExecutor
 from job_runner import JobRunner
 from agents import PlannerAgent, ExecutorAgent, CriticAgent, GovernorAgent
+from frameworks import SUPPORTED_FRAMEWORKS
+from integrations import (
+    SUPPORTED_PLATFORMS,
+    MOBILE_VENDOR_TARGETS,
+    SOCIAL_PROFILE_TEMPLATES,
+    SSH_PROFILE_TEMPLATES,
+    COMMS_ALIAS_TARGETS,
+    build_efficiency_plan,
+    build_social_intel,
+    build_ssh_plan,
+    broadcast_comms,
+)
 from lifecycle_manager import LifecycleManager, SafetyPosture, AgentVersion, RiskLevel
 from deployment_orchestrator import DeploymentOrchestrator
+from competition_arena import CompetitionArena
+from evolution_strategist import EvolutionStrategist
+cd "C:\Users\gregr\OneDrive\Documents\AgentArmy\agentarmy-dashboard"
+..\.venv\Scripts\python.exe -m uvicorn orchestration.runtime_core.api:app --host 0.0.0.0 --port 8000 --log-level info
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -101,6 +117,11 @@ class AdvancedInput(BaseModel):
     job: AdvancedJobModel
     state: AdvancedStateModel
     previous_zpe: float = 0.5
+
+class EducationSessionInput(BaseModel):
+    """Input for starting an education session"""
+    learner_id: str
+    topic: str
 
 class JobResult(BaseModel):
     """Result of orchestration job"""
@@ -166,6 +187,56 @@ async def health_check():
         enabled_providers=enabled or ["mock"]
     )
 
+
+@app.get("/capabilities")
+async def capabilities(authorization: Optional[str] = Header(None)):
+    if not authorization or not authorization.startswith(AUTH_SCHEME):
+        raise HTTPException(status_code=401, detail=AUTH_ERROR)
+    return {
+        "frameworks": sorted(SUPPORTED_FRAMEWORKS),
+        "platforms": SUPPORTED_PLATFORMS,
+        "mobile_vendors": MOBILE_VENDOR_TARGETS,
+        "social_profiles": sorted(SOCIAL_PROFILE_TEMPLATES.keys()),
+        "ssh_profiles": sorted(SSH_PROFILE_TEMPLATES.keys()),
+        "comms_aliases": COMMS_ALIAS_TARGETS,
+    }
+
+
+@app.post("/efficiency/plan")
+async def efficiency_plan(request: Request, authorization: Optional[str] = Header(None)):
+    if not authorization or not authorization.startswith(AUTH_SCHEME):
+        raise HTTPException(status_code=401, detail=AUTH_ERROR)
+    body = await request.json()
+    return build_efficiency_plan(body if isinstance(body, dict) else {})
+
+
+@app.post("/social/intel/analyze")
+async def social_intel_analysis(request: Request, authorization: Optional[str] = Header(None)):
+    if not authorization or not authorization.startswith(AUTH_SCHEME):
+        raise HTTPException(status_code=401, detail=AUTH_ERROR)
+    body = await request.json()
+    return build_social_intel(body if isinstance(body, dict) else {})
+
+
+@app.post("/ssh/plan")
+async def ssh_plan(request: Request, authorization: Optional[str] = Header(None)):
+    if not authorization or not authorization.startswith(AUTH_SCHEME):
+        raise HTTPException(status_code=401, detail=AUTH_ERROR)
+    body = await request.json()
+    return build_ssh_plan(body if isinstance(body, dict) else {})
+
+
+@app.post("/comms/broadcast")
+async def comms_broadcast(request: Request, authorization: Optional[str] = Header(None)):
+    if not authorization or not authorization.startswith(AUTH_SCHEME):
+        raise HTTPException(status_code=401, detail=AUTH_ERROR)
+    body = await request.json()
+    payload = body if isinstance(body, dict) else {}
+    result = broadcast_comms(payload)
+    if result.get("status") == "failed":
+        raise HTTPException(status_code=400, detail=result.get("error", "comms broadcast failed"))
+    return result
+
 # ============================================
 # Orchestration API
 # ============================================
@@ -196,6 +267,8 @@ async def orchestrate_task(
             "job": body["job"],
             "state": body["state"],
             "previous_zpe": body.get("previous_zpe", 0.5),
+            "integrations": body.get("integrations", {}),
+            "framework": body.get("framework", "native"),
         }
     elif "task" in body:
         # Legacy format: {task, priority, context}
@@ -211,6 +284,8 @@ async def orchestrate_task(
             },
             "state": context.get("state", {"tasks": [], "history": []}),
             "previous_zpe": context.get("previous_zpe", 0.5),
+            "integrations": body.get("integrations", context.get("integrations", {})),
+            "framework": body.get("framework", context.get("framework", "native")),
         }
     else:
         raise HTTPException(status_code=422, detail="Invalid payload: expected 'task' or 'job'+'state'")
@@ -236,6 +311,7 @@ async def orchestrate_task(
             "decision": decision,
             "execution": workflow_result.get("execution"),
             "evaluation": workflow_result.get("evaluation"),
+            "integrations": workflow_result.get("integrations"),
             "metrics": workflow_result.get("metrics"),
         }
         jobs[job_id].completed_at = datetime.now().isoformat()
@@ -283,6 +359,27 @@ async def list_jobs(
 
 lifecycle_mgr = LifecycleManager()
 deployment_orch = DeploymentOrchestrator(lifecycle_mgr)
+
+competition_arena = CompetitionArena()
+
+# The EducationCenter is needed by the strategist. It's initialized inside LifecycleManager.
+education_center = lifecycle_mgr.domains.get("education")
+
+# Connect performance to lifecycle
+if education_center:
+    try:
+        evolution_strategist = EvolutionStrategist(
+            competition_arena=competition_arena,
+            lifecycle_manager=lifecycle_mgr,
+            education_center=education_center,
+        )
+        evolution_strategist.register_hooks()
+    except ImportError:
+        logger.error("[App] evolution_strategist.py not found. Performance-based evolution is disabled.")
+    except Exception as e:
+        logger.error(f"[App] Failed to initialize EvolutionStrategist: {e}")
+else:
+    logger.warning("[App] EducationCenter not found, EvolutionStrategist disabled.")
 
 # Seed a few default agents so the UI has something to display
 for _role in ("planner", "executor", "critic", "governor"):
@@ -436,6 +533,155 @@ async def lifecycle_merge(request: Request, authorization: Optional[str] = Heade
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
+@app.post("/lifecycle/champion")
+async def lifecycle_promote_to_champion(request: Request, authorization: Optional[str] = Header(None)):
+    if not authorization or not authorization.startswith(AUTH_SCHEME):
+        raise HTTPException(status_code=401, detail=AUTH_ERROR)
+    body = await request.json()
+    try:
+        # Promotion to champion is a privileged action, so actor must be e.g. "user:root"
+        event = lifecycle_mgr.promote_to_champion(body["agent_id"], actor="user:root")
+        return {"event_id": event.event_id}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"Agent '{body.get('agent_id')}' not found.")
+
+
+@app.post("/lifecycle/demote-champion")
+async def lifecycle_demote_from_champion(request: Request, authorization: Optional[str] = Header(None)):
+    if not authorization or not authorization.startswith(AUTH_SCHEME):
+        raise HTTPException(status_code=401, detail=AUTH_ERROR)
+    body = await request.json()
+    try:
+        # Demotion from champion is also a privileged action
+        event = lifecycle_mgr.demote_from_champion(body["agent_id"], actor="user:root")
+        return {"event_id": event.event_id}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"Agent '{body.get('agent_id')}' not found.")
+
+
+# ============================================
+# Competition Arena API
+# ============================================
+
+class CompetitionLaunchInput(BaseModel):
+    name: str
+    agent_names: List[str]
+    task_description: str
+    rounds: int = 1
+
+class Competitor:
+    """Wrapper to link a ManagedAgent record to an executable agent for competitions."""
+    def __init__(self, managed_agent: Any, executable_agent: Any):
+        self.managed_agent = managed_agent
+        self.executable_agent = executable_agent
+        self.name = managed_agent.name  # For the arena leaderboard
+        self.role = managed_agent.role  # For finding the executable
+
+    async def act(self, task_description: str):
+        # The executable agents have an `execute` method.
+        if hasattr(self.executable_agent, "execute"):
+            return await self.executable_agent.execute({"description": task_description})
+        return {"status": "failed", "error": "Agent has no execute method"}
+
+@app.post("/competitions/launch")
+async def launch_competition_endpoint(
+    input: CompetitionLaunchInput,
+    authorization: Optional[str] = Header(None)
+):
+    if not authorization or not authorization.startswith(AUTH_SCHEME):
+        raise HTTPException(status_code=401, detail=AUTH_ERROR)
+
+    competitors = []
+    all_managed_agents = lifecycle_mgr.list_agents()
+
+    for name in input.agent_names:
+        managed_agent = next((a for a in all_managed_agents if a.name == name), None)
+        if not managed_agent:
+            raise HTTPException(status_code=404, detail=f"Agent '{name}' not found in lifecycle manager.")
+
+        executable_agent = agent_registry.get(managed_agent.role)
+        if not executable_agent:
+            raise HTTPException(status_code=404, detail=f"No executable agent found for role '{managed_agent.role}'.")
+
+        competitors.append(Competitor(managed_agent, executable_agent))
+
+    if not competitors:
+        raise HTTPException(status_code=400, detail="No valid agents specified for competition.")
+
+    async def competition_task(agent: Competitor):
+        return await agent.act(input.task_description)
+
+    results = await competition_arena.launch_competition(
+        name=input.name,
+        agents=competitors,
+        task=competition_task,
+        rounds=input.rounds,
+    )
+    return {"status": "completed", "results": results, "leaderboard": competition_arena.get_leaderboard(input.name)}
+
+@app.get("/competitions/{name}")
+async def get_competition_results(name: str, authorization: Optional[str] = Header(None)):
+    if not authorization or not authorization.startswith(AUTH_SCHEME):
+        raise HTTPException(status_code=401, detail=AUTH_ERROR)
+    return competition_arena.get_competition(name)
+
+@app.get("/competitions/{name}/leaderboard")
+async def get_competition_leaderboard(name: str, authorization: Optional[str] = Header(None)):
+    if not authorization or not authorization.startswith(AUTH_SCHEME):
+        raise HTTPException(status_code=401, detail=AUTH_ERROR)
+    return competition_arena.get_leaderboard(name)
+
+
+# ============================================
+# Education Center API
+# ============================================
+
+@app.get("/education/progress/{agent_name}")
+async def get_education_progress(agent_name: str, authorization: Optional[str] = Header(None)):
+    """Get the training progress for a specific agent."""
+    if not authorization or not authorization.startswith(AUTH_SCHEME):
+        raise HTTPException(status_code=401, detail=AUTH_ERROR)
+
+    if not education_center:
+        raise HTTPException(status_code=503, detail="EducationCenter is not available.")
+
+    # The learner_id in EducationCenter corresponds to the agent's name.
+    learner_profile = education_center.state["learners"].get(agent_name)
+    if not learner_profile:
+        raise HTTPException(status_code=404, detail=f"No training progress found for agent '{agent_name}'.")
+
+    # The ProgressAgent is responsible for tracking and reporting progress.
+    progress_data = education_center.progress_agent.track(learner_profile)
+
+    return {
+        "agent_name": agent_name,
+        "profile": learner_profile,
+        "progress": progress_data,
+    }
+
+@app.post("/education/session/start")
+async def start_education_session(
+    input: EducationSessionInput,
+    authorization: Optional[str] = Header(None)
+):
+    """Start a specific training session for an agent."""
+    if not authorization or not authorization.startswith(AUTH_SCHEME):
+        raise HTTPException(status_code=401, detail=AUTH_ERROR)
+
+    if not education_center:
+        raise HTTPException(status_code=503, detail="EducationCenter is not available.")
+
+    try:
+        # The EducationCenter.start_session method expects a dict
+        result = education_center.start_session(input.dict())
+        return {"status": "started", "result": result}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 # ============================================
 # Deployment Orchestrator API

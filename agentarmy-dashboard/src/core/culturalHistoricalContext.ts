@@ -323,7 +323,7 @@ export class CulturalHistoricalContextLayer {
 
     // Build item
     const item: CulturalItem = {
-      id: `chi-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      id: `chi-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
       sourceId,
       content,
       contextType,

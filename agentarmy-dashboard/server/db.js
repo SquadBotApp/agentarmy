@@ -5,6 +5,7 @@
 
 const Database = require('better-sqlite3');
 const path = require('node:path');
+const crypto = require('node:crypto');
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', 'data', 'agentarmy.db');
 
@@ -18,6 +19,56 @@ if (!fs.existsSync(dataDir)) {
 // Initialize database
 const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL'); // Better concurrency
+
+const SENSITIVE_KEY_RE = /(password|passphrase|secret|token|apikey|api_key|authorization|cookie|private.?key|ssh_key)/i;
+const MAX_KERNEL_EVENT_ROWS = Number.parseInt(process.env.KERNEL_EVENT_MAX_ROWS || '5000', 10);
+const KERNEL_EVENT_RETENTION_DAYS = Number.parseInt(process.env.KERNEL_EVENT_RETENTION_DAYS || '30', 10);
+
+function redactForAudit(value, key = '', depth = 0) {
+  if (depth > 6) return '[TRUNCATED_DEPTH]';
+  if (SENSITIVE_KEY_RE.test(String(key || ''))) return '[REDACTED]';
+
+  if (value == null) return value;
+  if (typeof value === 'string') {
+    if (/^bearer\s+[a-z0-9\-._~+/]+=*$/i.test(value) || value.length > 4096) {
+      return '[REDACTED]';
+    }
+    return value;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') return value;
+  if (Array.isArray(value)) {
+    return value.slice(0, 50).map((item) => redactForAudit(item, key, depth + 1));
+  }
+  if (typeof value === 'object') {
+    const out = {};
+    const entries = Object.entries(value).slice(0, 100);
+    for (const [k, v] of entries) {
+      out[k] = redactForAudit(v, k, depth + 1);
+    }
+    return out;
+  }
+  return String(value);
+}
+
+function pruneKernelEvents() {
+  if (Number.isFinite(MAX_KERNEL_EVENT_ROWS) && MAX_KERNEL_EVENT_ROWS > 0) {
+    db.prepare(`
+      DELETE FROM kernel_events
+      WHERE id NOT IN (
+        SELECT id
+        FROM kernel_events
+        ORDER BY id DESC
+        LIMIT ?
+      )
+    `).run(MAX_KERNEL_EVENT_ROWS);
+  }
+  if (Number.isFinite(KERNEL_EVENT_RETENTION_DAYS) && KERNEL_EVENT_RETENTION_DAYS > 0) {
+    db.prepare(`
+      DELETE FROM kernel_events
+      WHERE julianday(created_at) < julianday('now') - ?
+    `).run(KERNEL_EVENT_RETENTION_DAYS);
+  }
+}
 
 // ============================================
 // Schema Migrations
@@ -90,11 +141,38 @@ function initSchema() {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
+    -- Profile store: persisted operational profiles/templates
+    CREATE TABLE IF NOT EXISTS profile_store (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      kind TEXT NOT NULL, -- social|ssh|comms
+      name TEXT NOT NULL,
+      data TEXT NOT NULL, -- JSON payload
+      created_by TEXT,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(kind, name)
+    );
+
     -- Indexes for common queries
     CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
     CREATE INDEX IF NOT EXISTS idx_tasks_job_id ON tasks(job_id);
     CREATE INDEX IF NOT EXISTS idx_decisions_job_id ON decisions(job_id);
     CREATE INDEX IF NOT EXISTS idx_agent_performance_agent_id ON agent_performance(agent_id);
+    CREATE INDEX IF NOT EXISTS idx_profile_store_kind ON profile_store(kind);
+
+    -- Kernel event chain: audit trail for policy decisions and command execution
+    CREATE TABLE IF NOT EXISTS kernel_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_type TEXT NOT NULL, -- policy_decision|command_execute
+      action TEXT NOT NULL,
+      actor TEXT,
+      payload TEXT, -- JSON
+      decision TEXT, -- JSON
+      prev_hash TEXT,
+      event_hash TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_kernel_events_created_at ON kernel_events(created_at DESC);
   `);
 
   // Initialize default config if not exists
@@ -365,6 +443,107 @@ const configOps = {
 };
 
 // ============================================
+// Profile Store Operations
+// ============================================
+
+const profileOps = {
+  upsert(kind, name, data, createdBy = null) {
+    const stmt = db.prepare(`
+      INSERT INTO profile_store (kind, name, data, created_by, updated_at)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(kind, name) DO UPDATE SET
+        data = excluded.data,
+        created_by = excluded.created_by,
+        updated_at = excluded.updated_at
+    `);
+    stmt.run(
+      kind,
+      name,
+      JSON.stringify(data || {}),
+      createdBy,
+      new Date().toISOString()
+    );
+    return { kind, name };
+  },
+
+  list(kind) {
+    return db.prepare(`
+      SELECT kind, name, data, created_by, updated_at, created_at
+      FROM profile_store
+      WHERE kind = ?
+      ORDER BY name ASC
+    `).all(kind).map((row) => ({
+      kind: row.kind,
+      name: row.name,
+      data: row.data ? JSON.parse(row.data) : {},
+      created_by: row.created_by,
+      updated_at: row.updated_at,
+      created_at: row.created_at,
+    }));
+  },
+};
+
+// ============================================
+// Kernel Event Operations (hash-chained)
+// ============================================
+
+const kernelEventOps = {
+  record(event) {
+    const now = new Date().toISOString();
+    const payloadRedacted = redactForAudit(event.payload || {});
+    const decisionRedacted = redactForAudit(event.decision || {});
+    const payloadJson = JSON.stringify(payloadRedacted);
+    const decisionJson = JSON.stringify(decisionRedacted);
+    const last = db.prepare('SELECT event_hash FROM kernel_events ORDER BY id DESC LIMIT 1').get();
+    const prevHash = last?.event_hash || '';
+    const hashInput = [prevHash, now, event.event_type || '', event.action || '', event.actor || '', payloadJson, decisionJson].join('|');
+    const eventHash = crypto.createHash('sha256').update(hashInput).digest('hex');
+
+    const stmt = db.prepare(`
+      INSERT INTO kernel_events (event_type, action, actor, payload, decision, prev_hash, event_hash, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    const result = stmt.run(
+      event.event_type || 'policy_decision',
+      event.action || 'unknown',
+      event.actor || null,
+      payloadJson,
+      decisionJson,
+      prevHash || null,
+      eventHash,
+      now
+    );
+    pruneKernelEvents();
+    return { id: result.lastInsertRowid, event_hash: eventHash, prev_hash: prevHash || null };
+  },
+
+  list(limit = 100) {
+    return db.prepare(`
+      SELECT id, event_type, action, actor, payload, decision, prev_hash, event_hash, created_at
+      FROM kernel_events
+      ORDER BY id DESC
+      LIMIT ?
+    `).all(limit).map((row) => ({
+      ...row,
+      payload: (() => {
+        try {
+          return row.payload ? JSON.parse(row.payload) : {};
+        } catch {
+          return {};
+        }
+      })(),
+      decision: (() => {
+        try {
+          return row.decision ? JSON.parse(row.decision) : {};
+        } catch {
+          return {};
+        }
+      })(),
+    }));
+  },
+};
+
+// ============================================
 // Learning Loop: Compute Agent Weights
 // ============================================
 
@@ -406,5 +585,10 @@ module.exports = {
   decisions: decisionOps,
   performance: performanceOps,
   config: configOps,
+  profiles: profileOps,
+  kernelEvents: kernelEventOps,
   computeAgentWeights,
+  _internals: {
+    redactForAudit,
+  },
 };

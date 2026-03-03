@@ -8,19 +8,37 @@ export type EfficiencyPlan = {
   notes: string[];
 };
 
-export async function fetchEfficiencyPlan(goal: string, mobileVendors: string[] = []): Promise<EfficiencyPlan> {
+export type EfficiencyFramework =
+  | "native"
+  | "langgraph"
+  | "crewai"
+  | "smolagents"
+  | "autogen"
+  | "frabric"
+  | "fabric";
+
+export async function fetchEfficiencyPlan(
+  goal: string,
+  mobileVendors: string[] = [],
+  framework?: EfficiencyFramework
+): Promise<EfficiencyPlan> {
   const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:4000";
   const token = localStorage.getItem("agent-token");
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers.Authorization = `Bearer ${token}`;
 
+  const payload: Record<string, unknown> = {
+    goal,
+    mobile_vendors: mobileVendors,
+  };
+  if (framework && framework.trim()) {
+    payload.framework = framework.trim().toLowerCase();
+  }
+
   const res = await fetch(`${backendUrl}/orchestrate/efficiency-plan`, {
     method: "POST",
     headers,
-    body: JSON.stringify({
-      goal,
-      mobile_vendors: mobileVendors,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {

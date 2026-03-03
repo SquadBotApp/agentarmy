@@ -274,10 +274,11 @@ const MAX_WEIGHT_DRIFT = 0.15;
 
 /** Freshness twiddler — boosts recent content for time‑sensitive queries. */
 function freshnessTwiddler(results: RankedResult[], query: SearchQuery): RankedResult[] {
-  if (query.queryFreshnessNeed < 0.1) return results;
-  const boost = query.queryFreshnessNeed;
+  const { queryFreshnessNeed } = query;
+  if (queryFreshnessNeed < 0.1) return results;
+  const boost = queryFreshnessNeed;
   for (const r of results) {
-    const age = r.document.freshness.recencyScore;
+    const { freshness: { recencyScore: age } } = r.document;
     const adjustment = boost * age * 0.15;
     r.finalScore += adjustment;
     r.twiddlerTrace.push({ stage: 'freshness', adjustment });

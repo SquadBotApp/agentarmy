@@ -1,9 +1,11 @@
 import { useEffect, useRef } from "react";
+import styles from './components/FractalGL.module.css';
 
-type Props = { zpe?: number; theme?: "quantum" | "forest" | "architecture" };
+type Props = Readonly<{ zpe?: number; theme?: "quantum" | "forest" | "architecture" }>;
 
 function compileShader(gl: WebGLRenderingContext, src: string, type: number) {
-  const sh = gl.createShader(type)!;
+  const sh = gl.createShader(type);
+  if (!sh) throw new Error("Failed to create shader");
   gl.shaderSource(sh, src);
   gl.compileShader(sh);
   if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
@@ -46,7 +48,8 @@ export function FractalGL({ zpe = 1, theme = "quantum" }: Props) {
     const vs = compileShader(gl, vert, gl.VERTEX_SHADER);
     const fs = compileShader(gl, frag2, gl.FRAGMENT_SHADER);
 
-    const prog = gl.createProgram()!;
+    const prog = gl.createProgram();
+    if (!prog) throw new Error("Failed to create program");
     gl.attachShader(prog, vs);
     gl.attachShader(prog, fs);
     gl.linkProgram(prog);
@@ -83,8 +86,8 @@ export function FractalGL({ zpe = 1, theme = "quantum" }: Props) {
 
     function themeColor(t: string) {
       if (t === "forest") return [0.2, 0.6, 0.2];
-      if (t === "architecture") return [0.9, 0.7, 0.6];
-      return [0.4, 0.5, 1.0];
+      if (t === "architecture") return [0.9, 0.7, 0.6]; // No zero fraction
+      return [0.4, 0.5, 1];
     }
 
     function draw(time: number) {
@@ -116,5 +119,5 @@ export function FractalGL({ zpe = 1, theme = "quantum" }: Props) {
     };
   }, [zpe, theme]);
 
-  return <canvas ref={canvasRef} style={{ width: "100%", height: 180, borderRadius: 12 }} />;
+  return <canvas ref={canvasRef} className={styles.canvas} />;
 }

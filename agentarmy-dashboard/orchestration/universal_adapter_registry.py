@@ -7,6 +7,7 @@ Universal Adapter Layer for AgentArmyOS
 from typing import Dict, Any, Callable, List
 import os
 import importlib
+from pathlib import Path
 
 class UniversalAdapterRegistry:
     def __init__(self, kernel):
@@ -16,7 +17,24 @@ class UniversalAdapterRegistry:
 
     def scan_and_register(self, directory: str):
         # Scan for new tools/APIs/binaries and auto-generate adapters
-        for fname in os.listdir(directory):
+        requested = Path(directory)
+        candidates = [requested]
+        if not requested.is_absolute():
+            module_dir = Path(__file__).resolve().parent
+            candidates.append(module_dir / requested)
+            candidates.append(module_dir / "runtime_core" / "adapters")
+
+        scan_dir = None
+        for cand in candidates:
+            if cand.exists() and cand.is_dir():
+                scan_dir = cand
+                break
+
+        if scan_dir is None:
+            self._emit_event({"type": "adapter_scan_skipped", "directory": str(directory), "reason": "not found"})
+            return
+
+        for fname in os.listdir(scan_dir):
             if fname.endswith("_adapter.py") and fname not in self.adapters:
                 module_name = fname[:-3]
                 try:

@@ -121,7 +121,7 @@ export const HoneycombLayout: React.FC = () => {
             <div className={styles.metricBar}>
               <div 
                 className={styles.metricBarFill} 
-                style={{ width: `${core.zpe.total * 100}%` }}
+                data-width={core.zpe.total * 100}
               />
             </div>
           </div>
@@ -176,10 +176,8 @@ export const HoneycombLayout: React.FC = () => {
                     combinedPulse > 0.5 ? styles.pulse : ''
                   }`}
                   onClick={() => setSelectedModule(type)}
-                  style={{
-                    '--pulse-intensity': combinedPulse,
-                    '--hue-shift': `${pulse[type]?.hueShift || 0}deg`,
-                  } as React.CSSProperties}
+                  data-pulse-intensity={combinedPulse}
+                  data-hue-shift={pulse[type]?.hueShift || 0}
                 >
                   <div className={styles.hexContent}>
                     <span className={styles.moduleIcon}>{icon}</span>
