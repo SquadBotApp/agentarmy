@@ -1,10 +1,64 @@
 import os
-import dotenv
-from agentarmy.providers.openai_provider import OpenAIProvider
-from agentarmy.providers.anthropic_provider import AnthropicProvider
-from agentarmy.providers.simai_provider import SimAiProvider
-from agentarmy.core.router import ModelRouter
-from task import Task
+
+from sim_engine import Environment, Simulation, Billing
+from agent import Agent
+
+# --- Minimal registries so the engine runs ---
+
+class AgentsRegistry:
+    def __init__(self, agents):
+        self.agents = agents
+
+    def always_on(self):
+        return [a for a in self.agents if a.tier >= 3]
+
+    def subscribed_to(self, event):
+        return self.agents  # simple: all agents see all events
+
+    def for_task(self, task):
+        return self.agents[0]  # simple: first agent handles tasks
+
+
+class TaskQueue:
+    def __init__(self):
+        self.queue = []
+
+    def pop_ready(self):
+        if self.queue:
+            return self.queue.pop(0)
+        return None
+
+
+class EventBus:
+    def __init__(self):
+        self.events = []
+
+    def consume(self):
+        events = list(self.events)
+        self.events.clear()
+        return events
+
+
+# --- Boot the Sim AI engine ---
+
+env = Environment()
+billing = Billing(free_steps=10)
+
+agents = [
+    Agent(id="agent_1", tier=3),
+    Agent(id="agent_2", tier=6),
+    Agent(id="agent_3", tier=9),
+]
+
+registry = AgentsRegistry(agents)
+task_queue = TaskQueue()
+event_bus = EventBus()
+
+sim = Simulation(env, registry, task_queue, event_bus, billing)
+
+# --- Run the hybrid loop forever ---
+while True:
+    sim.step()
 
 # Load API keys
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")

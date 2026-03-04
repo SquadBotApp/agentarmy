@@ -1,23 +1,25 @@
 import pytest
 from core.expansion import ExpansionManager
+from core.contracts import TaskResult, SimulationMetrics
 
 # Mock results data based on a potential sim_engine.py output
 GOOD_RESULTS = [
-    {'metrics': {'accuracy': 0.95}},
-    {'metrics': {'accuracy': 0.98}}
+    TaskResult(task_name='task_good_1', status='completed', metrics=SimulationMetrics(accuracy=0.95)),
+    TaskResult(task_name='task_good_2', status='completed', metrics=SimulationMetrics(accuracy=0.98))
 ]
 POOR_RESULTS = [
-    {'metrics': {'accuracy': 0.75}},
-    {'metrics': {'accuracy': 0.80}}
+    TaskResult(task_name='task_poor_1', status='completed', metrics=SimulationMetrics(accuracy=0.75)),
+    TaskResult(task_name='task_poor_2', status='completed', metrics=SimulationMetrics(accuracy=0.80))
 ]
 MIXED_RESULTS = [
-    {'metrics': {'accuracy': 0.99}},
-    {'metrics': {'accuracy': 0.81}} # Average is 0.9
+    TaskResult(task_name='task_mixed_1', status='completed', metrics=SimulationMetrics(accuracy=0.99)),
+    TaskResult(task_name='task_mixed_2', status='completed', metrics=SimulationMetrics(accuracy=0.81)) # Average is 0.9
 ]
 EMPTY_RESULTS = []
 INVALID_RESULTS = [
-    {'data': 'no_metrics_here'},
-    {}
+    # Results that are valid objects but should not contribute to performance calculation
+    TaskResult(task_name='task_failed', status='failed', metrics=SimulationMetrics(accuracy=0.99)),
+    TaskResult(task_name='task_no_metrics', status='completed', metrics=None)
 ]
 
 def test_expansion_manager_initialization():

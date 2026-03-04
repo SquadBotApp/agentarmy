@@ -1,24 +1,26 @@
 import pytest
 from core.reflection import ReflectionEngine
+from core.contracts import TaskResult, SimulationMetrics
 
 # Mock results data with a consistent structure
 SUCCESSFUL_RESULTS = [
-    {'task_name': 'process_data', 'status': 'completed', 'metrics': {'accuracy': 0.99}},
-    {'task_name': 'generate_report', 'status': 'completed'}
+    TaskResult(task_name='process_data', status='completed', metrics=SimulationMetrics(accuracy=0.99)),
+    TaskResult(task_name='generate_report', status='completed')
 ]
 
 FAILED_RESULTS = [
-    {'task_name': 'fetch_api_data', 'status': 'failed', 'error': 'Timeout'},
+    TaskResult(task_name='fetch_api_data', status='failed', error_message='Timeout'),
 ]
 
 MIXED_RESULTS = [
-    {'task_name': 'process_data', 'status': 'completed'},
-    {'task_name': 'fetch_api_data', 'status': 'failed', 'error': '404 Not Found'}
+    TaskResult(task_name='process_data', status='completed'),
+    TaskResult(task_name='fetch_api_data', status='failed', error_message='404 Not Found')
 ]
 
 MALFORMED_RESULTS = [
-    {'task_name': 'legacy_job', 'info': 'job ran'}, # No 'status' key
-    {} # Empty dict
+    # This test case is no longer relevant, as the dataclass enforces structure.
+    # We will test for a different kind of malformed data.
+    TaskResult(task_name='legacy_job', status='unknown_status')
 ]
 
 def test_reflection_engine_initialization():
@@ -53,7 +55,7 @@ def test_update_lessons_handles_malformed_results():
     """Tests that the engine handles results with missing keys gracefully."""
     engine = ReflectionEngine()
     new_tasks = engine.update_lessons(MALFORMED_RESULTS)
-    assert new_tasks == [], "Should not generate tasks for results with unknown status"
+    assert new_tasks == [], "Should not generate tasks for results with an unknown status"
 
 def test_update_lessons_handles_empty_input():
     """Tests that the engine returns an empty list for empty input."""

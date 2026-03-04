@@ -1,6 +1,7 @@
 # Recursive improvement engine
 import logging
 from typing import List, Any, Dict
+from .contracts import TaskResult
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class ReflectionEngine:
         logger.info(f"Reflecting on plan: {plan} with results: {results}")
         self.lessons_learned.append({"plan": plan, "results": results})
 
-    def update_lessons(self, results: List[Dict[str, Any]]) -> List[str]:
+    def update_lessons(self, results: List[TaskResult]) -> List[str]:
         """
         Analyzes results and generates new tasks based on success or failure.
         This is the core of the reflective process.
@@ -33,17 +34,14 @@ class ReflectionEngine:
             return new_tasks
 
         for result in results:
-            # This logic is robust to handle various dictionary formats from different tools.
-            original_task = result.get('task_name', 'unknown_task')
-            status = result.get('status', 'unknown')
-
-            if status == 'completed':
+            # Access attributes directly for clear, robust logic
+            if result.status == 'completed':
                 # If a task was successful, generate a verification task.
-                new_task = f"verify_and_document_{original_task}"
+                new_task = f"verify_and_document_{result.task_name}"
                 new_tasks.append(new_task)
-            elif status == 'failed':
+            elif result.status == 'failed':
                 # If a task failed, generate a retry task.
-                new_task = f"retry_and_debug_{original_task}"
+                new_task = f"retry_and_debug_{result.task_name}"
                 new_tasks.append(new_task)
 
         return new_tasks

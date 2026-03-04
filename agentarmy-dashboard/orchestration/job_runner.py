@@ -201,7 +201,10 @@ class JobRunner:
         mobile_vendors = mobile_cfg.get("vendors") or []
         if not isinstance(mobile_vendors, list):
             mobile_vendors = []
-        mobile_targets = self._platform_hub.resolve_mobile_targets(mobile_vendors)
+        # Defensive: fallback if resolve_mobile_targets is missing
+        mobile_targets = []
+        if hasattr(self._platform_hub, "resolve_mobile_targets"):
+            mobile_targets = self._platform_hub.resolve_mobile_targets(mobile_vendors)
 
         targets = platform_targets + mobile_targets
         if not targets and platform_enabled:

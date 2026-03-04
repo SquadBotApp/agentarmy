@@ -32,6 +32,7 @@ class FakeN8N:
         return {"enabled": True, "status": "accepted", "workflow": workflow}
 
 
+
 class FakePlatformHub:
     def __init__(self):
         self.calls = []
@@ -44,6 +45,10 @@ class FakePlatformHub:
             {"event_type": event_type, "payload": payload, "targets": list(targets)}
         )
         return {t: {"status": "accepted"} for t in targets}
+
+    def resolve_mobile_targets(self, vendors):
+        # Return a list of mobile target names for the given vendors
+        return [f"{vendor}_mobile" for vendor in vendors]
 
 
 def fake_orchestrate(payload):

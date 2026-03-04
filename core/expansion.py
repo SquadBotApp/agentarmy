@@ -1,5 +1,6 @@
 import logging
 from typing import List, Dict, Any
+from .contracts import TaskResult
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class ExpansionManager:
         self.cooldown_cycles = cooldown_cycles
         self.cycles_since_expansion = cooldown_cycles  # Start ready to expand
 
-    def _calculate_average_performance(self, results: List[Dict[str, Any]]) -> float:
+    def _calculate_average_performance(self, results: List[TaskResult]) -> float:
         """Calculates average performance from a list of simulation results."""
         if not results:
             return 0.0
@@ -23,15 +24,14 @@ class ExpansionManager:
         total_accuracy = 0
         count = 0
         for result in results:
-            # Safely access nested dictionary keys
-            accuracy = result.get('metrics', {}).get('accuracy')
-            if isinstance(accuracy, (int, float)):
-                total_accuracy += accuracy
+            # Safely access typed attributes
+            if result.status == 'completed' and result.metrics:
+                total_accuracy += result.metrics.accuracy
                 count += 1
         
         return total_accuracy / count if count > 0 else 0.0
 
-    def should_expand(self, results: List[Dict[str, Any]]) -> bool:
+    def should_expand(self, results: List[TaskResult]) -> bool:
         """
         Determines whether to expand the agent pool.
         Returns True if performance is high and cooldown has passed.

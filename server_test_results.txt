@@ -1,0 +1,5 @@
+
+> agentarmy-server@0.1.0 test
+> echo 'No Node.js tests defined yet.' && exit 0
+
+'No Node.js tests defined yet.' 

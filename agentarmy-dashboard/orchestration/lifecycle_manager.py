@@ -195,11 +195,20 @@ CONSTITUTIONAL_RULES: List[SafetyConstraint] = [
 # ---------------------------------------------------------------------------
 
 class LifecycleManager:
+
     """
     Central governance layer for all agent lifecycle operations.
     Every mutation flows through constitutional checks and produces
     an immutable audit trail event.
     """
+
+    def _require_privileged_actor(self, actor, action):
+        if not self._is_privileged_actor(actor):
+            raise ValueError(f"{action} requires privileged actor, got '{actor}'")
+
+    def _is_privileged_actor(self, actor):
+        # 'system', 'governor', and 'user:root' are privileged
+        return actor in ("system", "governor", "user:root")
 
     def __init__(self) -> None:
         self.agents: Dict[str, ManagedAgent] = {}

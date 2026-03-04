@@ -1,0 +1,18 @@
+[project]
+name = "agentarmy"
+version = "0.1.0"
+description = "AgentArmyOS – multi-agent simulation engine and orchestration layer"
+authors = [{ name="Greg Allen" }]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+]
+
+[project.scripts]
+agentarmy = "backend.cli:main"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"

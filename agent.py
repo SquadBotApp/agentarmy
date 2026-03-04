@@ -1,10 +1,4 @@
-from agentarmy.router import Router
-from task import Task
-
+# Deprecated: This legacy agent definition is superseded by core/orchestration.py
+# and the string-based agent definitions in agentarmy.py.
 class Agent:
-    def __init__(self, router: Router):
-        self.router = router
-
-    def run(self, task: Task):
-        return self.router.execute(task:w)
-ggdggdGG
+    pass
