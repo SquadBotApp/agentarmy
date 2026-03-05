@@ -20,4 +20,4 @@ EXPOSE 5001
 ENV PYTHONUNBUFFERED=1
 
 # Run agentarmy.py when the container launches
-CMD ["python", "run_agentarmy.py"]
+CMD ["python", "main.py"]

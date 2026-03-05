@@ -1,5 +1,11 @@
 Flask
 requests
-pydantic
 pytest
+scikit-optimize
 pytest-asyncio
+ruff
+pyright
+ruff
+pyright
+ruff
+pyright
