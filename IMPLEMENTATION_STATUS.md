@@ -83,115 +83,180 @@
   - Collapse phase: merge results using weighted voting
   - Best provider/strategy extraction via voting
 
-**Expansion Logic**:
-1. Read signals from Recursive Engine (routing scores, ZPE, success rate)
-2. Decide expansion level:
-   - Poor performance → Baseline (1)
-   - Fair performance → 3-way
-   - Good performance → 6-way
-   - Excellent performance → 9-way
-3. Generate branches with different strategies
-4. Each branch gets strategy-adjusted prompt, assigned provider, configured temperature
-5. Branches execute in parallel (dispatcher's responsibility)
-6. Results collapse via weighted voting
-7. Best provider/strategy determined and returned for Recursive Engine feedback
-
-**Features**:
-- Adaptive parallelism (scale effort based on confidence)
-- Diverse approach coverage (9 strategies = comprehensive exploration)
-- Democratic decision making (weighted voting)
-- Continuous learning feedback loop
-- Controlled swarm behavior
-
 **Tests**: 14 comprehensive test cases
-- Expansion level decisions (excellent/good/fair/poor metrics)
-- Branch generation and strategy diversity
-- Provider assignment and configuration
-- Temperature tuning validation
-- Collapse operations (success, mixed results)
-- Voting engine (provider/strategy selection)
-- Contribution scoring
 
 ---
 
-### Integration Architecture
+### Phase 5: ✅ COMPLETE
+**Möbius Loop (Recursive Plan Optimization)**
+
+**Modules**:
+- `core/mobius/feedback_signals.py`: Signal collection
+  - Aggregates outputs from Recursive Engine
+  - Collects routing scores, ZPE metrics, provider health
+  - get_best_providers(): rank providers by combined score
+  - get_provider_health(): comprehensive health scores
+
+- `core/mobius/plan_rewriter.py`: Structural transformations
+  - rewrite(): reorder tasks by provider health (best providers first)
+  - insert_checkpoints(): add validation tasks at intervals
+  - combine_related_tasks(): batch similar provider tasks
+  - Intelligent task ordering for optimal execution
+
+- `core/mobius/strategy_refiner.py`: Execution strategy adjustment
+  - refine(): add strategy scores and execution priorities
+  - adjust_parallelism(): scale based on provider health (aggressive/balanced/conservative)
+  - add_task_dependencies(): create critical path for risky providers
+  - set_task_parameters(): tune temperature, timeout, retries per task
+
+- `core/mobius/mobius_loop.py`: Main orchestrator
+  - refine(): base refinement cycle
+  - refine_with_checkpoints(): add validation safeguards
+  - refine_with_optimization(): full optimization pipeline
+  - get_provider_recommendations(): guide planner
+  - get_plan_quality_estimate(): predict success probability
+
+**Integration Flow**:
+```
+plan = planner.create(job)
+↓
+plan = mobius_loop.refine(plan)  ← NEW: optimize based on signals
+↓
+branches = expansion_engine.expand(plan)
+↓
+results = execute(branches)
+↓
+recursive_engine.ingest(results) → feeds signals back to Möbius Loop
+```
+
+**Key Features**:
+- Adaptive task ordering (best providers execute first)
+- Parameter tuning (temperature, timeout, retries per task)
+- Checkpoint insertion (catch errors early)
+- Parallelism scaling (confidence-based)
+- Provider recommendations (guide planning)
+- Quality estimation (success probability 0-1)
+- Iteration tracking (measures refinement)
+
+**Tests**: 16 comprehensive test cases
+
+---
+
+## Complete Intelligence Cycle Architecture
 
 ```
 ┌─────────────────────────────────────┐
-│    Orchestrator (main loop)          │
-└─────────────────────────────────────┘
-              ↓
+│    Planning Phase                   │
+│  (initial plan generation)          │
+└──────────────┬──────────────────────┘
+               ↓
 ┌─────────────────────────────────────┐
-│   Expansion Engine                  │
-│  (3→6→9 branching decision)          │
-└─────────────────────────────────────┘
-              ↓
+│   Möbius Loop (NEW - Phase 5)      │
+│  (optimize plan based on signals)   │
+│  • Rewrite: reorder tasks           │
+│  • Refine: adjust strategy          │
+│  • Enhance: add checkpoints         │
+└──────────────┬──────────────────────┘
+               ↓
+┌─────────────────────────────────────┐
+│   Expansion Engine (Phase 4)        │
+│  (create parallel variants)         │
+│  • 3-6-9 branching decision         │
+│  • Strategy allocation              │
+│  • Provider assignment              │
+└──────────────┬──────────────────────┘
+               ↓
     ┌──────────────────────────────────┐
-    │  Recursive Engine                │
-    │ (reads signals for expansion)    │
-    │ (gets updated after collapse)    │
+    │  Recursive Engine (Phase 3)      │
+    │ (provides optimization signals)  │
     └──────────────────────────────────┘
-              ↓
-    ┌─────────────────────────────────┐
-    │ Provider Routing Layer          │
-    │ (dispatches to best provider)   │
-    └─────────────────────────────────┘
-              ↓
-         [Multiple Branches]
-    (execute with different strategies)
-              ↓
-    ┌─────────────────────────────────┐
-    │   Collapse Engine               │
-    │ (merge via weighted voting)     │
-    └─────────────────────────────────┘
-              ↓
-    ┌─────────────────────────────────┐
-    │  Job Result → Recursive Engine  │
-    │  (learns for next cycle)        │
-    └─────────────────────────────────┘
+               ↓
+┌─────────────────────────────────────┐
+│  Execution Phase                    │
+│  (parallel branch execution)        │
+│  • Multiple strategies evaluated    │
+│  • Different providers tested       │
+│  • Results collected per branch     │
+└──────────────┬──────────────────────┘
+               ↓
+┌─────────────────────────────────────┐
+│  Collapse Phase                     │
+│  (merge results via voting)         │
+│  • Weighted voting on best result   │
+│  • Provider/strategy evaluation     │
+│  • Metrics aggregation              │
+└──────────────┬──────────────────────┘
+               ↓
+┌─────────────────────────────────────┐
+│  Feedback Loop                      │
+│  (learning & optimization)          │
+│  • Results ingested to Recursive    │
+│  • Patterns learned                 │
+│  • Routing scores updated           │
+│  • ZPE metrics recorded             │
+│  • Next cycle uses improved signals │
+└─────────────────────────────────────┘
 ```
 
 ---
 
-### Data Flow Example
+## Data Flow: Complete Example
 
 ```
-Job Input: "Analyze market trends"
-              ↓
-Recursive Engine signals: routing={openai: 0.85, claude: 0.8}, zpe={openai: 0.88, claude: 0.82}
-              ↓
-Expansion Decision: "Metrics excellent → expand to 9-way"
-              ↓
-Generate 9 Branches:
-  - aggressive (temp: 0.9)   → openai
-  - risk_taker (temp: 0.95)  → claude
-  - analytical (temp: 0.5)   → openai
-  - optimizer (temp: 0.6)    → claude
-  - validator (temp: 0.3)    → openai
-  - balanced (temp: 0.7)     → claude
-  - creative (temp: 0.85)    → openai
-  - conservative (temp: 0.4) → claude
-  - safety_first (temp: 0.2) → openai
-              ↓
-[Parallel Execution - each branch gets its strategy-tuned prompt]
-              ↓
-Collapse Results:
-  - Success rate: 8/9 (89%)
-  - Best result: from "optimizer" branch (ZPE: 0.92)
-  - Best provider: openai (weighted vote: 0.87)
-  - Avg cost: $0.014
-              ↓
-Feed back to Recursive Engine:
-  - Update provider routing scores
-  - Record ZPE metrics
-  - Store learned patterns
-              ↓
-Next cycle: uses improved routing for better performance
+Input Job: "Analyze quarterly market trends"
+│
+├─ PLAN (Phase 0)
+│  Creates 4 tasks:
+│  1. Gather data (provider: claude)
+│  2. Analyze trends (provider: openai)
+│  3. Forecast impact (provider: claude)
+│  4. Summarize findings (provider: openai)
+│
+├─ MÖBIUS LOOP REFINE (Phase 5) ← NEW
+│  • Collects signals from Recursive Engine:
+│    - openai routing: 0.85, ZPE: 0.88
+│    - claude routing: 0.65, ZPE: 0.68
+│  • Reorders tasks: openai first (higher score)
+│  • Adds 2 validation checkpoints
+│  • Sets parallelism: "aggressive" (good health)
+│  • Optimizes parameters:
+│    - openai tasks: temp=0.8, timeout=30s, retries=1
+│    - claude tasks: temp=0.5, timeout=60s, retries=3
+│
+├─ EXPANSION ENGINE (Phase 4)
+│  • Signals excellent (routing 0.75 avg, ZPE 0.78 avg)
+│  • Decides: expand to 6-way branching
+│  • Creates 6 branches per task:
+│    - Branch 1: aggressive (temp=0.9)
+│    - Branch 2: balanced (temp=0.7)
+│    - Branch 3: conservative (temp=0.4)
+│    - + 3 more specialized strategies
+│
+├─ PARALLEL EXECUTION
+│  • 6 branches × 4 tasks = 24 parallel executions
+│  • Each with different strategy/provider/parameters
+│
+├─ COLLAPSE (Phase 4)
+│  • Gather results from 24 executions
+│  • Success rate: 22/24 (92%)
+│  • Best result: from branch 2 (balanced, openai)
+│  • ZPE average: 0.84
+│  • Cost: $0.042 total
+│  • Voting: openai wins as best provider
+│
+└─ FEEDBACK LOOP (Phase 3)
+   • Ingest job result with 24 task records
+   • Recursive Engine learns:
+     * openai: +0.02 routing boost, ZPE stable at 0.88
+     * claude: +0.01 routing boost, ZPE improves to 0.72
+   • Update memory with successful patterns
+   • Next cycle uses improved scores
+   * CYCLE REPEATS: Better signals → Better plans → Better results
 ```
 
 ---
 
-### Testing & Verification
+## Testing & Verification
 
 All components include comprehensive test coverage:
 
@@ -210,105 +275,156 @@ docker exec -it agentarmy-backend pytest -v tests/test_recursive_engine.py
 docker exec -it agentarmy-backend pytest -v tests/test_expansion_engine.py
 ```
 
+**Möbius Loop**: 16 tests ← NEW
+```bash
+docker exec -it agentarmy-backend pytest -v tests/test_mobius_loop.py
+```
+
 **Run all**:
 ```bash
 docker exec -it agentarmy-backend pytest -v tests/
+# Total: 44 comprehensive test cases
 ```
 
 ---
 
-### Next Phases (Remaining)
+## Next Phases (Remaining)
 
-**Phase 5**: Möbius Loop Orchestration (recursive task decomposition)
-**Phase 6**: Competitive Intelligence (market/competitor tracking)
-**Phase 7**: Compliance/Governance (rules enforcement, boundaries)
+**Phase 6**: Competitive Intelligence 
+- Track provider evolution over time
+- Learn from historical patterns
+- Predict future provider behavior
+- Adapt strategies based on market trends
+
+**Phase 7**: Compliance/Governance
+- Rule enforcement
+- Boundary validation
+- Risk management
+- Audit trails
+
+**Phase 8**: Parallel Universes (Order-3 Simulation)
+- Run multiple scenarios simultaneously
+- Compare outcomes
+- Learn from divergences
+
+**Phase 9**: Meta-Synthesis
+- Cross-universe reasoning
+- Unified decision making
+- Global optimization
 
 ---
 
-### Key Metrics Tracked
+## Key Metrics Tracked (Comprehensive)
 
-Per Job:
+**Per Job**:
 - Task success rate
-- Latency (ms)
-- Cost (USD)
-- ZPE score (quality: 0-1)
-- Provider assignment
-- Strategy effectiveness
+- Total latency (ms)
+- Total cost (USD)
+- Average ZPE score
+- Provider assignments
+- Branch success rates
 
-Per Provider:
+**Per Provider**:
 - Request count
-- Success rate
-- Average latency
-- Total cost
-- Performance score
-- Availability status
+- Success rate (%)
+- Average latency (ms)
+- Total cost (USD)
+- Routing score (-1 to 1)
+- ZPE score (0 to 1)
+- Performance rank
 
-Per Branch:
+**Per Branch** (Expansion):
 - Strategy used
 - Risk level
 - Provider assigned
 - Execution result
 - Contribution score
+- Cost per branch
+
+**Per Plan** (Möbius):
+- Iteration number
+- Quality estimate (0-1)
+- Parallelism level
+- Checkpoint count
+- Task reordering count
 
 ---
 
-### File Structure
+## File Structure (Complete)
 
 ```
 agentarmy/
 ├── core/
 │   ├── providers/
-│   │   ├── router.py (ProviderRouter)
-│   │   └── base.py (OpenAI, Claude implementations)
+│   │   ├── router.py (ProviderRouter, 6 strategies)
+│   │   └── base.py (OpenAI, Claude, Mock)
 │   ├── recursive/
-│   │   ├── recursive_engine.py (main)
-│   │   ├── run_history.py
-│   │   ├── pattern_learner.py
-│   │   ├── routing_updater.py
-│   │   ├── memory_store.py
-│   │   ├── zpe_tracker.py
+│   │   ├── recursive_engine.py (main coordinator)
+│   │   ├── run_history.py (job/task records)
+│   │   ├── pattern_learner.py (pattern extraction)
+│   │   ├── routing_updater.py (score adjustment)
+│   │   ├── memory_store.py (insight storage)
+│   │   ├── zpe_tracker.py (quality metrics)
 │   │   └── __init__.py
 │   ├── expansion/
-│   │   ├── expansion_engine.py (main)
-│   │   ├── signals.py
-│   │   ├── strategies.py
-│   │   ├── branch.py
-│   │   ├── collapse.py
+│   │   ├── expansion_engine.py (main, 3-6-9)
+│   │   ├── signals.py (decision logic)
+│   │   ├── strategies.py (9 strategy types)
+│   │   ├── branch.py (branch representation)
+│   │   ├── collapse.py (merge via voting)
+│   │   └── __init__.py
+│   ├── mobius/
+│   │   ├── mobius_loop.py (main orchestrator) ← NEW
+│   │   ├── feedback_signals.py (signal collection)
+│   │   ├── plan_rewriter.py (structural transform)
+│   │   ├── strategy_refiner.py (strategy adjust)
 │   │   └── __init__.py
 │   ├── orchestration.py (integration point)
 │   └── job_runner.py (wrapper)
 ├── tests/
 │   ├── test_provider_routing.py
 │   ├── test_recursive_engine.py
-│   └── test_expansion_engine.py
-├── docker-compose.yml (with watch mode)
+│   ├── test_expansion_engine.py
+│   └── test_mobius_loop.py ← NEW
+├── docker-compose.yml (watch mode enabled)
 ├── dev.bat / dev.sh (launchers)
 └── requirements.txt (all dependencies)
 ```
 
 ---
 
-### Git Commits
+## Git Commits
 
 ```
-23bf9ea - Integrate Recursive Engine into job lifecycle
+b687a77 - Implement Möbius Loop - recursive plan optimization
 b5b7603 - Implement 3-6-9 Expansion Engine
 19f4d1  - Implement Recursive Engine
 12d3b6e - Implement Provider Routing Layer
 9a4ab03 - Add Docker dev workflows
-bc3fec9 - Fix requirements.txt
-6afccfb - Fix module import conflict
 ```
 
 ---
 
-### Status: ✅ Fully Functional
+## Status: ✅ FULLY FUNCTIONAL
 
-The system is now self-improving in real-time:
-1. Every job result feeds the Recursive Engine
-2. Patterns are learned and routing is optimized
-3. Expansion dynamically adapts to confidence levels
-4. Provider selection improves with each cycle
-5. Democratic voting ensures best strategies prevail
+**Complete Intelligence Cycle:**
+1. ✅ Provider Routing (6 strategies)
+2. ✅ Recursive Engine (self-learning)
+3. ✅ 3-6-9 Expansion (adaptive parallelism)
+4. ✅ Möbius Loop (plan optimization) ← NOW COMPLETE
+5. ⏳ Competitive Intelligence (next)
+6. ⏳ Compliance/Governance
+7. ⏳ Parallel Universes
+8. ⏳ Meta-Synthesis
 
-Ready for Möbius Loop Orchestration (Phase 5).
+**The system now:**
+- Plans intelligently (initial structure)
+- Optimizes plans (Möbius Loop)
+- Expands adaptively (3-6-9)
+- Executes diverse strategies
+- Learns continuously (Recursive Engine)
+- Improves iteratively (full feedback loop)
+
+**44 Total Tests Pass**: All phases validated and working.
+
+**Ready for Phase 6: Competitive Intelligence**
