@@ -1,23 +1,25 @@
 import pytest
-from core.contracts.types import TaskResult
+from core.contracts import TaskResult
 from core.universes.selector import UniverseSelector
 from core.universes.universes import Universes
 from core.universes.collapse import UniverseCollapse
 
 # --- Synthetic test cases ---
 
-def make_task_result(task_id, provider, zpe, success=True):
+def make_task_result(task_name, status, accuracy=None, error_message=None):
+    # Use SimulationMetrics if accuracy is provided
+    from core.contracts import SimulationMetrics
+    metrics = SimulationMetrics(accuracy=accuracy) if accuracy is not None else None
     return TaskResult(
-        task_id=task_id,
-        provider=provider,
-        success=success,
-        output=f"output_{task_id}",
-        metadata={"zpe_score": zpe}
+        task_name=task_name,
+        status=status,
+        metrics=metrics,
+        error_message=error_message
     )
 
 def test_low_complexity():
     # 1 provider, low ZPE variance, all success
-    results = [make_task_result(f"t{i}", "openai", 0.5) for i in range(3)]
+    results = [make_task_result(f"task_{i}", "completed", accuracy=0.5) for i in range(3)]
     selector = UniverseSelector()
     count = selector.select(results)
     assert count == 3
@@ -30,12 +32,12 @@ def test_low_complexity():
 def test_medium_complexity():
     # 2 providers, moderate ZPE spread
     results = [
-        make_task_result("t1", "openai", 0.4),
-        make_task_result("t2", "claude", 0.7),
-        make_task_result("t3", "openai", 0.6),
-        make_task_result("t4", "claude", 0.8),
-        make_task_result("t5", "openai", 0.5),
-        make_task_result("t6", "claude", 0.6),
+        make_task_result("task_1", "completed", accuracy=0.4),
+        make_task_result("task_2", "completed", accuracy=0.7),
+        make_task_result("task_3", "completed", accuracy=0.6),
+        make_task_result("task_4", "completed", accuracy=0.8),
+        make_task_result("task_5", "completed", accuracy=0.5),
+        make_task_result("task_6", "completed", accuracy=0.6),
     ]
     selector = UniverseSelector()
     count = selector.select(results)
