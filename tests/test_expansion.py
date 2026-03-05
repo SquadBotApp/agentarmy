@@ -1,8 +1,6 @@
 import pytest
 from core.expansion import ExpansionManager
 from core.contracts import TaskResult, SimulationMetrics
-
-# Mock results data based on a potential sim_engine.py output
 GOOD_RESULTS = [
     TaskResult(task_name='task_good_1', status='completed', metrics=SimulationMetrics(accuracy=0.95)),
     TaskResult(task_name='task_good_2', status='completed', metrics=SimulationMetrics(accuracy=0.98))

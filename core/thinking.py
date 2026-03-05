@@ -1,6 +1,14 @@
 """
 ThinkingCore - The "blackbox AI brain" of AgentArmyOS
 Provides structured reasoning signals to guide planning, universe behavior, routing, and governance
+
+Enhanced with:
+- Advanced complexity estimation with domain-specific cues
+- Semantic distance scoring for universe divergence
+- EMA-based latency smoothing for providers
+- Multi-pass refinement logic
+- Coherence checking
+- Early-collapse heuristics
 """
 import logging
 import time
@@ -8,6 +16,7 @@ import re
 from typing import Dict, List, Any, Optional, Set
 from dataclasses import dataclass, field
 from enum import Enum
+from collections import deque
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +33,18 @@ class RiskLevel(Enum):
     HIGH = "high"
 
 
+class Domain(Enum):
+    GENERAL = "general"
+    CODE = "code"
+    DATA = "data"
+    LEGAL = "legal"
+    MEDICAL = "medical"
+    FINANCIAL = "financial"
+    MARKETING = "marketing"
+    SECURITY = "security"
+    RESEARCH = "research"
+
+
 class UniverseProfile(Enum):
     ANALYTICAL = "analytical"
     CREATIVE = "creative"
@@ -31,6 +52,9 @@ class UniverseProfile(Enum):
     ADVERSARIAL = "adversarial"
     INTUITIVE = "intuitive"
     METACOGNITIVE = "metacognitive"
+    DETAILED = "detailed"
+    CONCISE = "concise"
+    EXPERIMENTAL = "experimental"
 
 
 @dataclass
@@ -41,6 +65,7 @@ class ComplexityFactors:
     domain_score: float = 0.0
     ambiguity_score: float = 0.0
     novelty_score: float = 0.0
+    coherence_score: float = 1.0
 
 
 @dataclass
@@ -51,8 +76,11 @@ class PlanSignals:
     subtask_hints: List[str]
     risk: RiskLevel
     confidence: float
+    domain: Domain
     suggested_depth: int = 3
     complexity_factors: ComplexityFactors = None
+    needs_refinement: bool = False
+    coherence_flags: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -63,6 +91,8 @@ class UniverseSignals:
     recursion_needed: bool
     collapse_threshold: float
     confidence: float
+    early_collapse_possible: bool = False
+    refinement_loops_needed: int = 0
 
 
 @dataclass
@@ -71,7 +101,9 @@ class CollapseSignals:
     winner: int  # Index of winning universe
     confidence: float
     needs_refinement: bool
+    divergence_score: float = 0.0
     notes: List[str] = field(default_factory=list)
+    semantic_distances: List[float] = field(default_factory=list)
 
 
 @dataclass
@@ -82,6 +114,36 @@ class RoutingSignals:
     cost_tolerance: str
     latency_tolerance: str
     confidence: float
+    domain_preference: str = "general"
+    failure_prediction: float = 0.0
+
+
+@dataclass
+class ProviderMetrics:
+    """Extended provider metrics with EMA smoothing"""
+    accuracy: float = 0.7
+    latency_ms: float = 100
+    cost: float = 0.01
+    success_rate: float = 0.9
+    count: int = 0
+    # EMA smoothed metrics
+    ema_latency: float = 100
+    ema_accuracy: float = 0.7
+    ema_success_rate: float = 0.9
+    # Failure tracking
+    recent_failures: int = 0
+    failure_streak: int = 0
+
+
+@dataclass
+class AgentState:
+    """Agent memory and state"""
+    agent_id: str
+    short_term_memory: deque = field(default_factory=lambda: deque(maxlen=10))
+    long_term_memory: Dict = field(default_factory=dict)
+    performance_score: float = 0.5
+    specialization: List[str] = field(default_factory=list)
+    reflection_count: int = 0
 
 
 class ComplexityEstimator:
@@ -448,6 +510,9 @@ class ThinkingCore:
     The central "brain" that provides reasoning signals to all subsystems.
     """
     
+    # EMA smoothing factor
+    EMA_FACTOR = 0.3
+    
     def __init__(self, database=None, metrics=None):
         self.db = database
         self.metrics = metrics
@@ -461,6 +526,70 @@ class ThinkingCore:
         self.provider_scores = {}  # provider -> performance metrics
         self.profile_performance = {}  # profile -> avg score
         self.collapse_patterns = []  # historical collapse decisions
+        
+        # Domain detection
+        self.domain_keywords = {
+            Domain.CODE: ["code", "function", "class", "api", "algorithm", "debug", "refactor"],
+            Domain.DATA: ["data", "database", "query", "sql", "analytics", "metric"],
+            Domain.LEGAL: ["legal", "law", "contract", "compliance", "regulation"],
+            Domain.MEDICAL: ["medical", "health", "patient", "diagnosis", "treatment"],
+            Domain.FINANCIAL: ["financial", "money", "investment", "budget", "cost", "revenue"],
+            Domain.MARKETING: ["marketing", "campaign", "brand", "customer", "seo"],
+            Domain.SECURITY: ["security", "authentication", "encryption", "vulnerability"],
+            Domain.RESEARCH: ["research", "study", "analysis", "paper", "hypothesis"],
+        }
+        
+        # Agent states
+        self.agents: Dict[str, AgentState] = {}
+        
+    def _detect_domain(self, text: str) -> Domain:
+        """Detect the domain of the task"""
+        text_lower = text.lower()
+        scores = {domain: 0 for domain in Domain}
+        
+        for domain, keywords in self.domain_keywords.items():
+            for keyword in keywords:
+                if keyword in text_lower:
+                    scores[domain] += 1
+        
+        max_domain = Domain.GENERAL
+        max_score = 0
+        for domain, score in scores.items():
+            if score > max_score:
+                max_score = score
+                max_domain = domain
+                
+        return max_domain
+    
+    def _check_coherence(self, text: str) -> tuple:
+        """Check reasoning coherence in text"""
+        flags = []
+        score = 1.0
+        
+        # Check for contradictions
+        contradiction_pairs = [
+            ("however", "therefore"), ("but", "so"), ("although", "thus"),
+            ("not", "yes"), ("never", "always")
+        ]
+        
+        for pair in contradiction_pairs:
+            if pair[0] in text.lower() and pair[1] in text.lower():
+                flags.append("Possible contradiction detected")
+                score -= 0.2
+                break
+        
+        # Check for incomplete thoughts
+        if text.count(',') > text.count('.') * 3:
+            flags.append("Many incomplete clauses")
+            score -= 0.1
+            
+        # Check for logical connectors
+        connectors = ["therefore", "because", "hence", "consequently"]
+        if not any(c in text.lower() for c in connectors):
+            flags.append("Missing logical connectors")
+            score -= 0.1
+            
+        return max(0.0, score), flags
         
     def advise_on_plan(self, job: Dict[str, Any]) -> PlanSignals:
         """Analyze job and return planning guidance."""
