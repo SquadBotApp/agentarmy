@@ -99,7 +99,6 @@ async def main():
     mobius_orchestrator = MobiusOrchestrator(agents=initial_agents, provider_router=provider_router)
     reflection_engine = ReflectionEngine()
     universes_layer = Universes()
-    cpm_engine = CPMEngine()
     intel_module = CompetitiveIntelligence()
     compliance_engine = ComplianceEngine()
     billing_engine = BillingEngine()

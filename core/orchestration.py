@@ -33,23 +33,13 @@ class Orchestrator:
             cycle_start_msg = f"Cycle {cycles_run + 1} starting. Agents: {len(self.agents)}, Tasks: {len(self.tasks)}"
             self._add_log(cycle_start_msg)
 
-            # CPM Analysis to prioritize tasks
-            tasks_to_run = self.tasks
-            if self.cpm:
-                cpm_analysis = self.cpm.analyze(self.tasks)
-                self._add_log(f"CPM Analysis complete. Critical tasks identified.")
-                # Prioritize critical tasks first
-                critical_tasks = [t['task'] for t in cpm_analysis if t['critical']]
-                non_critical_tasks = [t['task'] for t in cpm_analysis if not t['critical']]
-                tasks_to_run = critical_tasks + non_critical_tasks
-
             # Use Parallel Universes if available, otherwise standard Mobius Loop
             if self.universes:
                 # Example strategies for parallel exploration
                 strategies = ["aggressive", "conservative", "balanced"]
-                results = await self.universes.run_parallel_simulations(tasks_to_run, strategies, self.mobius)
+                results = await self.universes.run_parallel_simulations(self.tasks, strategies, self.mobius)
             else:
-                results = await self.mobius.mobius_loop(tasks_to_run)
+                results = await self.mobius.mobius_loop(self.tasks)
 
             self._add_log(f"Mobius loop completed with {len(results)} results.")
             self.reflection.after_task([], results) # Plan is now implicit to the Mobius loop

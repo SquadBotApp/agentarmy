@@ -44,21 +44,19 @@ async def test_orchestrator_single_cycle():
     
     mock_mobius.mobius_loop.return_value = mock_results
     mock_reflection.update_lessons.return_value = mock_new_tasks
-    mock_cpm.analyze.return_value = [{'task': t, 'critical': True} for t in initial_tasks] # Simple mock
 
     # 2. Execution
-    orch = Orchestrator(agents, initial_tasks, mock_expansion, mock_mobius, mock_reflection, cpm=mock_cpm, meta_synthesizer=mock_meta_synth, zpe=mock_zpe, intel=mock_intel, compliance=mock_compliance, billing_engine=MagicMock(), bounded_growth_governor=None)
+    orch = Orchestrator(agents, initial_tasks, mock_expansion, mock_mobius, reflection,cpm=mock_cpm,meta_synthesizer=mock_meta_synth, zpe=mock_zpe, intel=mock_intel, compliance=mock_compliance, billing_engine=MagicMock(), bounded_growth_governor=None)
     await orch.run(max_cycles=1)
 
     # 3. Assertions
     # Verify that the dependencies were called correctly and in order
-    mock_cpm.analyze.assert_called_once_with(initial_tasks)
+    mock_meta_synth.synthesize.assert_called_once_with(mock_results)
     mock_mobius.mobius_loop.assert_awaited_once_with(initial_tasks)
     mock_reflection.after_task.assert_called_once_with([], mock_results)
     mock_expansion.should_expand.assert_called_once_with(mock_results)
     mock_reflection.update_lessons.assert_called_once_with(mock_results)
     mock_zpe.score.assert_called_once_with(mock_results)
-    mock_meta_synth.synthesize.assert_called_once_with(mock_results)
     
     # Verify the orchestrator's internal state was updated
     assert orch.tasks == mock_new_tasks
@@ -75,20 +73,17 @@ async def test_orchestrator_handles_empty_tasks():
     mock_mobius = MagicMock()
     mock_mobius.mobius_loop = AsyncMock()
     mock_reflection = MagicMock(spec=ReflectionEngine)
-    mock_zpe = MagicMock(spec=ZPEngine)
-    mock_cpm = MagicMock(spec=CPMEngine)
     mock_meta_synth = MagicMock(spec=MetaSynthesizer)
+    mock_zpe = MagicMock(spec=ZPEngine)
     
     # Configure mock to return empty results from the mobius loop
     mock_mobius.mobius_loop.return_value = []
-    mock_cpm.analyze.return_value = []
 
     # Execution
-    orch = Orchestrator(agents=["agent1"], tasks=[], expansion_manager=mock_expansion, mobius=mock_mobius, reflection=mock_reflection, cpm=mock_cpm, meta_synthesizer=mock_meta_synth, zpe=mock_zpe, billing_engine=MagicMock(), bounded_growth_governor=None)
+    orch = Orchestrator(agents=["agent1"], tasks=[], expansion_manager=mock_expansion, mobius=mock_mobius, reflection=mock_reflection, meta_synthesizer=mock_meta_synth, zpe=mock_zpe, billing_engine=MagicMock(), bounded_growth_governor=None)
     await orch.run(max_cycles=1)
 
     # Assertions
-    mock_cpm.analyze.assert_called_once_with([])
     mock_mobius.mobius_loop.assert_awaited_once_with([])
     mock_reflection.after_task.assert_called_once_with([], [])
     mock_expansion.should_expand.assert_called_once_with([])
@@ -99,7 +94,7 @@ async def test_orchestrator_handles_empty_tasks():
 @pytest.mark.asyncio
 async def test_orchestrator_expands_agent_pool_on_recommendation():
     """
-    Tests that the orchestrator adds a new agent when the expansion manager returns True.
+    Tests that the orchestrator adds a new agent with the expansion logic
     """
     # 1. Setup
     agents = ["agent_1", "agent_2"]
@@ -108,8 +103,6 @@ async def test_orchestrator_expands_agent_pool_on_recommendation():
     mock_mobius.mobius_loop = AsyncMock(return_value=[])
     mock_reflection = MagicMock(spec=ReflectionEngine)
     mock_zpe = MagicMock(spec=ZPEngine)
-    mock_cpm = MagicMock(spec=CPMEngine)
-    mock_meta_synth = MagicMock(spec=MetaSynthesizer)
 
     # Configure mock to recommend expansion
     mock_expansion.should_expand.return_value = True
@@ -117,7 +110,7 @@ async def test_orchestrator_expands_agent_pool_on_recommendation():
     mock_expansion.get_expansion_count.return_value = 3
 
     # 2. Execution
-    orch = Orchestrator(agents, tasks=[], expansion_manager=mock_expansion, mobius=mock_mobius, reflection=mock_reflection, cpm=mock_cpm, meta_synthesizer=mock_meta_synth, zpe=mock_zpe, billing_engine=MagicMock(), bounded_growth_governor=None)
+    orch = Orchestrator(agents, tasks=[], expansion_manager=mock_expansion, mobius=mock_mobius, reflection=mock_reflection, meta_synthesizer=MagicMock(), zpe=mock_zpe, billing_engine=MagicMock(), bounded_growth_governor=None)
     initial_agent_count = len(orch.agents)
     await orch.run(max_cycles=1)
 
@@ -140,14 +133,12 @@ async def test_orchestrator_does_not_expand_without_recommendation():
     mock_mobius.mobius_loop = AsyncMock(return_value=[])
     mock_reflection = MagicMock(spec=ReflectionEngine)
     mock_zpe = MagicMock(spec=ZPEngine)
-    mock_cpm = MagicMock(spec=CPMEngine)
-    mock_meta_synth = MagicMock(spec=MetaSynthesizer)
 
     # Configure mock to NOT recommend expansion
     mock_expansion.should_expand.return_value = False
 
     # 2. Execution
-    orch = Orchestrator(agents, tasks=[], expansion_manager=mock_expansion, mobius=mock_mobius, reflection=mock_reflection, cpm=mock_cpm, meta_synthesizer=mock_meta_synth, zpe=mock_zpe, billing_engine=MagicMock(), bounded_growth_governor=None)
+    orch = Orchestrator(agents, tasks=[], expansion_manager=mock_expansion, mobius=mock_mobius, reflection=mock_reflection, zpe=mock_zpe, billing_engine=MagicMock(), bounded_growth_governor=None)
     initial_agent_count = len(orch.agents)
     await orch.run(max_cycles=1)
 
