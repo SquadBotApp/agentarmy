@@ -18,3 +18,4 @@ class TaskResult:
     error_message: Optional[str] = None
     simulation_id: Optional[str] = None
     cost_usd: Optional[float] = None
+    provider_name: Optional[str] = None

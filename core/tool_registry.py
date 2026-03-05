@@ -8,6 +8,9 @@ from typing import List, Dict, Any
 class ToolRegistry:
     def __init__(self):
         self.tools: List[Dict[str, Any]] = []
+        # Register default tools
+        self.register({"name": "web_search", "score": 0.9, "cost": 0.01})
+        self.register({"name": "calculator", "score": 0.95, "cost": 0.0})
 
     def register(self, tool: Dict[str, Any]):
         self.tools.append(tool)

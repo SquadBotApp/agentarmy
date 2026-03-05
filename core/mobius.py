@@ -80,7 +80,7 @@ class MobiusOrchestrator:
             try:
                 # Route to the correct provider based on task type (use task_name as proxy for type)
                 req = ProviderRequest(task_id=str(uuid.uuid4()), prompt=task_name)
-                provider_response = await self.provider_router.choose_and_call(req)
+                provider, provider_response = await self.provider_router.choose_and_call(req)
 
                 # For now, simulate accuracy. In a real system, this would be evaluated.
                 simulated_accuracy = round(1.0 - (provider_response.latency_ms / 10000), 4)
@@ -90,7 +90,8 @@ class MobiusOrchestrator:
                     status='completed',
                     metrics=SimulationMetrics(accuracy=simulated_accuracy),
                     simulation_id=req.task_id,
-                    cost_usd=provider_response.cost_usd
+                    cost_usd=provider_response.cost_usd,
+                    provider_name=provider.name
                 )
             except Exception as e:
                 logger.error(f"Task '{task_name}' failed during execution: {e}")

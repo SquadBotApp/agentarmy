@@ -1,5 +1,8 @@
 
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class RecursiveEngine:
     def __init__(self, provider_router, max_depth: int = 5):
@@ -12,10 +15,12 @@ class RecursiveEngine:
         if depth > self.max_depth:
             return {"error": f"Max recursion depth {self.max_depth} reached", "task": task}
         # Call provider for this task
+        logger.info(f"RecursiveEngine: Running task at depth {depth}: {task}")
         response = self.provider_router.choose_and_call(task, context)
         # If the response output contains a special RECURSE marker, recurse
         if isinstance(response, dict) and response.get("RECURSE"):
             new_task = response["RECURSE"]
+            logger.info(f"RecursiveEngine: Recursing on new task: {new_task}")
             return self.run(new_task, context, depth + 1)
         return response
 

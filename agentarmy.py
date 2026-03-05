@@ -10,9 +10,14 @@ from core.orchestration import Orchestrator
 from core.expansion import ExpansionManager
 from core.mobius import MobiusOrchestrator
 from core.reflection import ReflectionEngine
+from expansion.universes import Universes
+from core.cpm import CPMEngine
 from core.intel import CompetitiveIntelligence
 from core.compliance import ComplianceEngine
 from billing.engine import BillingEngine
+from core.bounded_growth import BoundedGrowthGovernor
+from optimization.zpe import ZPEngine
+from expansion.meta_synthesizer import MetaSynthesizer
 
 async def main():
     STATE_FILE = "agentarmy_state.json"
@@ -93,9 +98,14 @@ async def main():
 
     mobius_orchestrator = MobiusOrchestrator(agents=initial_agents, provider_router=provider_router)
     reflection_engine = ReflectionEngine()
+    universes_layer = Universes()
+    cpm_engine = CPMEngine()
     intel_module = CompetitiveIntelligence()
     compliance_engine = ComplianceEngine()
     billing_engine = BillingEngine()
+    growth_governor = BoundedGrowthGovernor(max_population=50)
+    zpe_engine = ZPEngine()
+    meta_synth = MetaSynthesizer()
     
     # 4. Instantiate the Main Orchestrator
     orchestrator = Orchestrator(
@@ -104,9 +114,14 @@ async def main():
         expansion_manager=expansion_manager,
         mobius=mobius_orchestrator,
         reflection=reflection_engine,
+        cpm=cpm_engine,
+        meta_synthesizer=meta_synth,
+        zpe=zpe_engine,
+        universes=universes_layer,
         intel=intel_module,
         compliance=compliance_engine,
         billing_engine=billing_engine,
+        bounded_growth_governor=growth_governor,
         shared_state=shared_state,
         lock=lock,
         initial_log=initial_log
