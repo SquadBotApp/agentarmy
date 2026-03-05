@@ -6,7 +6,10 @@ from .signals import ExpansionSignals, ExpansionLevel
 from .strategies import ExpansionStrategies, BranchStrategy
 from .branch import Branch, BranchFactory
 from .collapse import CollapseEngine, VotingEngine
+
+# Backward compatibility: ExpansionManager alias for ExpansionEngine
 from .expansion_engine import ExpansionEngine
+from .manager import ExpansionManager
 
 __all__ = [
     "ExpansionSignals",
@@ -18,4 +21,5 @@ __all__ = [
     "CollapseEngine",
     "VotingEngine",
     "ExpansionEngine",
+    "ExpansionManager",
 ]

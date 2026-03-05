@@ -1,6 +1,6 @@
 import logging
 from typing import List, Dict, Any
-from agentarmy.core.contracts import TaskResult
+from core.contracts import TaskResult
 from skopt import Optimizer
 from skopt.space import Real
 import numpy as np

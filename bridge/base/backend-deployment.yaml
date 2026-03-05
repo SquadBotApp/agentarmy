@@ -1,0 +1,48 @@
+#! backend-deployment.yaml
+# Generated code, do not edit
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: backend
+    namespace: agentarmy
+    labels:
+        com.docker.compose.project: agentarmy
+        com.docker.compose.service: backend
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            com.docker.compose.project: agentarmy
+            com.docker.compose.service: backend
+    strategy:
+        type: Recreate
+    template:
+        metadata:
+            labels:
+                com.docker.compose.project: agentarmy
+                com.docker.compose.service: backend
+                com.docker.compose.network.default: "true"
+        spec:
+            restartPolicy: unless-stopped
+            containers:
+                - name: backend
+                  image: agentarmy-backend
+                  imagePullPolicy: IfNotPresent
+                  args:
+                    - python
+                    - main.py
+                  env:
+                    - name: MODELSLAB_API_KEY
+                      value: ""
+                    - name: PYTHONUNBUFFERED
+                      value: "1"
+                  ports:
+                    - name: backend-5001
+                      containerPort: 5001
+                  volumeMounts:
+                    - name: app
+                      mountPath: /app
+            volumes:
+                - name: app
+                  hostPath:
+                    path: C:\Users\gregr\Documents\agentarmy

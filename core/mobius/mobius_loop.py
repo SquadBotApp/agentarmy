@@ -48,7 +48,22 @@ class MobiusLoop:
         
         logger.info("Möbius Loop initialized")
     
-    def refine(self, plan: Dict[str, Any]) -> Dict[str, Any]:
+    async def mobius_loop(self, tasks: list) -> list:
+        """
+        Main orchestration method called by Orchestrator.
+        Takes tasks and returns refined results.
+        """
+        
+        logger.info(f"MobiusLoop.mobius_loop() called with {len(tasks)} tasks")
+        
+        # Create a plan dict from tasks
+        plan = {"tasks": tasks}
+        
+        # Refine the plan
+        refined = self.refine(plan)
+        
+        # Extract and return tasks as results
+        return refined.get("tasks", tasks)
         """
         Execute full refinement cycle on a plan.
         

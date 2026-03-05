@@ -1,7 +1,7 @@
 import logging
 import asyncio
 from typing import List, Dict, Any
-from agentarmy.core.contracts import TaskResult
+from core.contracts import TaskResult
 
 logger = logging.getLogger(__name__)
 

@@ -24,7 +24,12 @@ class ReflectionEngine:
         logger.info(f"Reflecting on plan: {plan} with results: {results}")
         self.lessons_learned.append({"plan": plan, "results": results})
 
-    def update_lessons(self, results: List[TaskResult]) -> List[str]:
+    def update_lessons(self, results) -> List[str]:
+        # Import here to avoid module-level import errors in Docker
+        try:
+            from .contracts import TaskResult
+        except ImportError:
+            TaskResult = None  # Fallback, will error if used
         """
         Analyzes results and generates new tasks based on success or failure.
         This is the core of the reflective process.

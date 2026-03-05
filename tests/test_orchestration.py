@@ -11,6 +11,8 @@ from core.contracts import TaskResult
 from optimization.zpe import ZPEngine
 from core.cpm import CPMEngine
 from expansion.meta_synthesizer import MetaSynthesizer
+from .mobius_orchestrator import MobiusOrchestrator
+__all__ = ["MobiusOrchestrator"]
 
 @pytest.mark.asyncio
 async def test_orchestrator_single_cycle():

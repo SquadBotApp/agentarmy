@@ -16,8 +16,9 @@ COPY . .
 # Make port 5001 available to the world outside this container
 EXPOSE 5001
 
-# Define environment variable
+# Define environment variables
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app:/app/core
 
 # Run agentarmy.py when the container launches
 CMD ["python", "main.py"]

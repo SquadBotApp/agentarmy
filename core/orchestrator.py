@@ -1,18 +1,18 @@
-from agentarmy.core.recursive_engine import RecursiveEngine
-from agentarmy.core.planner import Planner
-from agentarmy.core.cpm import CPMEngine
-from agentarmy.core.router import Router
-from agentarmy.core.providers.openai_provider import OpenAIProvider
-from agentarmy.core.providers.claude_provider import ClaudeProvider
-from agentarmy.core.providers.router import ProviderRouter, RouterConfig
-from agentarmy.core.tool_registry import ToolRegistry
-from agentarmy.expansion.orders import Orders
-from agentarmy.expansion.universes import Universes
-from agentarmy.expansion.meta_synthesizer import MetaSynthesizer
-from agentarmy.expansion.expansion_369 import Expansion369
-from agentarmy.optimization.zpe import ZPEngine
-from agentarmy.optimization.mobius import MobiusEngine
-from agentarmy.core.governance import Governance
+from core.recursive_engine import RecursiveEngine
+from core.planner import Planner
+from core.cpm import CPMEngine
+from core.router import Router
+from core.providers.openai_provider import OpenAIProvider
+from core.providers.claude_provider import ClaudeProvider
+from core.providers.router import ProviderRouter, RouterConfig
+from core.tool_registry import ToolRegistry
+from core.expansion.orders import Orders
+from core.expansion.universes import Universes
+from core.expansion.meta_synthesizer import MetaSynthesizer
+from core.expansion.expansion_369 import Expansion369
+from core.optimization.zpe import ZPEngine
+from core.optimization.mobius import MobiusEngine
+from core.governance import Governance
 
 class Orchestrator:
     def __init__(self):

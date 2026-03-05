@@ -60,7 +60,7 @@ class Orchestrator:
                         "provider": getattr(r, 'provider', "mobius"),
                         "success": getattr(r, 'success', True),
                         "latency_ms": int(getattr(r, 'latency_ms', 0)),
-                        "cost_usd": float(getattr(r, 'cost_usd', 0.0)),
+                        "cost_usd": float(getattr(r, 'cost_usd', 0.0) or 0.0),
                         "zpe_score": float(getattr(r, 'zpe_score', 0.5)),
                         "metadata": getattr(r, 'metadata', {}),
                     }

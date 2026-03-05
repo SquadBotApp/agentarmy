@@ -46,7 +46,7 @@ class JobRunner:
         try:
             # Execute all tasks
             task_results = await executor_func(tasks)
-            
+
             # Build job result structure for Recursive Engine
             job_result = {
                 "job_id": job_id,
@@ -63,16 +63,39 @@ class JobRunner:
                     for i, result in enumerate(task_results)
                 ],
             }
-            
+
             # Ingest into Recursive Engine for self-improvement
             logger.info(f"JobRunner: Ingesting job {job_id} into Recursive Engine")
             self.recursive_engine.ingest_job_result(job_result)
-            
-            logger.info(f"JobRunner: Job {job_id} completed. "
-                       f"Routing scores: {self.recursive_engine.get_routing_scores()}")
-            
-            return job_result
-        
+
+            # --- Universes integration (adaptive) ---
+            from core.universes.universes import Universes
+            from core.universes.collapse import UniverseCollapse
+            from core.universes.selector import UniverseSelector
+            from core.contracts.types import TaskResult
+
+            # Convert dict results to TaskResult dataclasses
+            task_result_objs = [
+                TaskResult(
+                    task_id=tr["task_id"],
+                    provider=tr["provider"],
+                    success=tr["success"],
+                    output=tr.get("output"),
+                    metadata=tr.get("metadata", {})
+                ) for tr in job_result["tasks"]
+            ]
+
+            selector = UniverseSelector()
+            universe_count = selector.select(task_result_objs)
+            universe_engine = Universes(universe_count=universe_count)
+            universes = universe_engine.expand_results(task_result_objs)
+
+            collapse_engine = UniverseCollapse()
+            collapsed = collapse_engine.collapse(universes)
+
+            logger.info(f"JobRunner: Universes collapsed. Scores: {collapsed['scores']}")
+
+            return collapsed
         except Exception as e:
             logger.error(f"JobRunner: Error executing job {job_id}: {str(e)}")
             raise

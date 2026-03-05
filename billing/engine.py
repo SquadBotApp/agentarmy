@@ -5,7 +5,10 @@ Real cost/profit tracking and billing logic.
 """
 import logging
 from typing import List
-from core.contracts import TaskResult
+try:
+    from core.contracts import TaskResult
+except ImportError:
+    from core.contracts import TaskResult
 
 logger = logging.getLogger(__name__)
 

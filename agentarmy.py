@@ -1,3 +1,4 @@
+
 import logging
 import argparse
 import threading
@@ -10,8 +11,7 @@ from core.orchestration import Orchestrator
 from core.expansion import ExpansionManager
 from core.mobius import MobiusOrchestrator
 from core.reflection import ReflectionEngine
-from expansion.universes import Universes
-
+from core.expansion.universes import Universes
 from core.cpm import CPMEngine
 
 from core.intel import CompetitiveIntelligence
@@ -20,8 +20,11 @@ from billing.engine import BillingEngine
 from core.bounded_growth import BoundedGrowthGovernor
 from optimization.zpe import ZPEngine
 from expansion.meta_synthesizer import MetaSynthesizer
+from core.contracts import TaskResult
+
 
 async def main():
+    from core.expansion.universes import Universes  # Local import to break circular import
     STATE_FILE = "agentarmy_state.json"
 
     def load_state():
@@ -107,6 +110,7 @@ async def main():
     growth_governor = BoundedGrowthGovernor(max_population=50)
     zpe_engine = ZPEngine()
     meta_synth = MetaSynthesizer()
+    cpm_engine = CPMEngine()
     
     # 4. Instantiate the Main Orchestrator
     orchestrator = Orchestrator(

@@ -8,9 +8,9 @@ import asyncio
 
 from core.orchestration import Orchestrator
 from core.expansion import ExpansionManager
-from core.mobius import MobiusOrchestrator
+from core.mobius_orchestrator import MobiusOrchestrator
 from core.reflection import ReflectionEngine
-from expansion.universes import Universes
+from core.expansion.universes import Universes
 from core.cpm import CPMEngine
 from core.intel import CompetitiveIntelligence
 from core.compliance import ComplianceEngine
@@ -86,18 +86,25 @@ async def main():
     logger.info(f"Initial tasks: {initial_tasks}")
 
     # 3. Instantiate Core Components
-    expansion_manager = ExpansionManager(performance_threshold=0.9, cooldown_cycles=3)
+    expansion_manager = ExpansionManager()
 
     # Provider integration (lazy instantiation)
     def get_provider_router():
         from core.providers.router import ProviderRouter
         from core.providers.base import OpenAIProvider, ClaudeProvider
+        from core.providers.devin_adapter import DevinAIAgentAdapter
+        import os
+        devin_api_key = os.getenv("DEVIN_API_KEY", "")
+        providers = [OpenAIProvider(), ClaudeProvider()]
+        if devin_api_key:
+            providers.append(DevinAIAgentAdapter(api_key=devin_api_key))
         return ProviderRouter(
-            providers=[OpenAIProvider(), ClaudeProvider()],
+            providers=providers,
             strategy='round_robin'
         )
 
     provider_router = get_provider_router()
+    recursive_engine = RecursiveEngine()
     mobius_orchestrator = MobiusOrchestrator(agents=initial_agents, provider_router=provider_router)
     reflection_engine = ReflectionEngine()
     universes_layer = Universes()
@@ -107,7 +114,6 @@ async def main():
     growth_governor = BoundedGrowthGovernor(max_population=50)
     zpe_engine = ZPEngine()
     meta_synth = MetaSynthesizer()
-    recursive_engine = RecursiveEngine()
     
     # 4. Instantiate the Main Orchestrator
     orchestrator = Orchestrator(
@@ -116,7 +122,6 @@ async def main():
         expansion_manager=expansion_manager,
         mobius=mobius_orchestrator,
         reflection=reflection_engine,
-        cpm=cpm_engine,
         meta_synthesizer=meta_synth,
         zpe=zpe_engine,
         universes=universes_layer,
@@ -145,7 +150,8 @@ async def main():
     except KeyboardInterrupt:
         logger.info("\n--- Orchestration Loop Interrupted by User ---")
     except Exception as e:
-        logger.error(f"Critical System Failure: {e}")
+        import traceback
+        logger.error(f"Critical System Failure: {e}\n{traceback.format_exc()}")
     finally:
         # Ensure we always save state and print final stats, even if interrupted
         logger.info("--- Orchestration Loop Finished ---")
