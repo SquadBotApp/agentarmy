@@ -1,9 +1,7 @@
-
-
 services:
   backend:
     build: .
-    command: python run_agentarmy.py
+    command: python main.py
     ports:
       - "5001:5001"
     volumes:
@@ -12,6 +10,20 @@ services:
       - MODELSLAB_API_KEY=${MODELSLAB_API_KEY}
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ./
+          target: /app
+          ignore:
+            - node_modules
+            - .git
+            - __pycache__
+            - .pytest_cache
+            - .venv
+        - action: rebuild
+          path: ./requirements.txt
+
   dashboard:
     build: ./dashboard
     command: node server.js
@@ -21,3 +33,24 @@ services:
       - ./dashboard:/dashboard
     environment:
       - NODE_ENV=development
+    develop:
+      watch:
+        - action: sync
+          path: ./dashboard
+          target: /dashboard
+          ignore:
+            - node_modules
+        - action: rebuild
+          path: ./dashboard/package.json
+
+  tests:
+    build: .
+    command: pytest -v --tb=short
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - backend
+    profiles:
+      - test
