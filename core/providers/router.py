@@ -31,13 +31,15 @@ class ProviderRequest:
         model: str = "default",
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        metadata: Dict[str, Any] = None
+        metadata: Dict[str, Any] = None,
+        task_id: str = None
     ):
         self.prompt = prompt
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.metadata = metadata or {}
+        self.task_id = task_id or f"task_{datetime.now().timestamp()}"
         self.created_at = datetime.now()
         self.request_id = f"req_{datetime.now().timestamp()}"
 
@@ -242,3 +244,12 @@ class ProviderRouter:
             if provider.name == provider_name:
                 provider.is_available = True
                 logger.info(f"Provider {provider_name} marked as available")
+
+    async def choose_and_call(self, request: ProviderRequest) -> tuple:
+        """
+        Convenience method that selects a provider, calls it, and returns both.
+        Returns tuple of (provider, response)
+        """
+        provider = self._select_provider()
+        response = await self.route(request)
+        return provider, response

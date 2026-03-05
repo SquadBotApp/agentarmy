@@ -1,5 +1,5 @@
 import pytest
-from core.contracts import TaskResult
+from core.contracts.types import TaskResult
 from core.universes.selector import UniverseSelector
 from core.universes.universes import Universes
 from core.universes.collapse import UniverseCollapse

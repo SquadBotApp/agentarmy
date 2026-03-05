@@ -90,7 +90,7 @@ class MobiusOrchestrator:
                     status='completed',
                     metrics=SimulationMetrics(accuracy=simulated_accuracy),
                     simulation_id=req.task_id,
-                    cost_usd=provider_response.cost_usd,
+                    cost_usd=provider_response.cost,
                     provider_name=provider.name
                 )
             except Exception as e:

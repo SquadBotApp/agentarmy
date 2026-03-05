@@ -41,8 +41,8 @@ async def test_execution_phase_successful(mock_provider_router):
     
     # Configure the mock router to return predictable async results
     mock_provider_router.choose_and_call.side_effect = [
-        ProviderResponse(output="res1", tokens_in=1, tokens_out=1, latency_ms=100, cost_usd=0.001),
-        ProviderResponse(output="res2", tokens_in=1, tokens_out=1, latency_ms=120, cost_usd=0.002),
+        ProviderResponse(output="res1", tokens_used=1, latency_ms=100, cost=0.001),
+        ProviderResponse(output="res2", tokens_used=1, latency_ms=120, cost=0.002),
     ]
 
     results = await mobius.execution_phase(plan)
