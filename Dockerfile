@@ -1,34 +1,23 @@
-# Use an official, lightweight Python runtime as a parent image
+# Use an official Python runtime as a parent image
 FROM python:3.9-slim
 
-# Create a non-root user and group for security
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
-# Set the working directory inside the container
+# Set the working directory in the container
 WORKDIR /app
 
-# Copy the dependency list
+# Copy the requirements file into the container
 COPY requirements.txt .
 
-# Install the application's dependencies
+# Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application's code into the container
+# Copy the current directory contents into the container at /app
 COPY . .
 
-# Make the healthcheck script executable
-RUN chmod +x healthcheck.py
-
-# Switch to the non-root user
-USER appuser
-
-# Make port 5001 (the dashboard) available to other containers
+# Make port 5001 available to the world outside this container
 EXPOSE 5001
 
-# Add a health check to ensure the dashboard is responsive
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD ["python", "healthcheck.py"]
+# Define environment variable
+ENV PYTHONUNBUFFERED=1
 
-# The command to run when the container starts.
-# The -u flag ensures that logs are printed in real-time.
-CMD ["python", "-u", "agentarmy.py"]
+# Run agentarmy.py when the container launches
+CMD ["python", "agentarmy.py"]

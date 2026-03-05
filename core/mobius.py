@@ -1,24 +1,24 @@
 import logging
 from typing import List, Dict, Any
+import asyncio
+import uuid
+
 from .contracts import TaskResult, SimulationMetrics
+from .providers.router import ProviderRouter
+from .providers.base import ProviderRequest
 
 logger = logging.getLogger(__name__)
-
-
-from integration.router import MultiPlatformRouter
-import random
-import uuid
 
 class MobiusOrchestrator:
     """
     Handles the strategy (planning) and execution of tasks.
     This component is the bridge between the high-level orchestrator and the "real world" simulation.
     """
-    def __init__(self, agents: List[str], provider_router=None):
+    def __init__(self, agents: List[str], provider_router: ProviderRouter):
         if not agents:
             raise ValueError("MobiusOrchestrator requires at least one agent.")
         self.agents = agents
-        self.provider_router = provider_router or MultiPlatformRouter()
+        self.provider_router = provider_router
         logger.info(f"MobiusOrchestrator initialized with agents: {self.agents}")
 
     def strategy_phase(self, tasks: List[str]) -> List[str]:
@@ -48,7 +48,7 @@ class MobiusOrchestrator:
         logger.info(f"Strategy phase: Planning {len(tasks)} tasks.")
         return tasks
 
-    def mobius_loop(self, tasks: List[str], inner_cycles: int = 2) -> List[TaskResult]:
+    async def mobius_loop(self, tasks: List[str], inner_cycles: int = 2) -> List[TaskResult]:
         """
         Möbius loop: alternate between strategy and execution phases for multiple inner cycles,
         allowing dynamic plan adjustment and recursive improvement within a single orchestration cycle.
@@ -58,7 +58,7 @@ class MobiusOrchestrator:
         for cycle in range(inner_cycles):
             logger.info(f"Möbius loop: Inner cycle {cycle+1}/{inner_cycles}.")
             plan = self.strategy_phase(current_tasks)
-            results = self.execution_phase(plan)
+            results = await self.execution_phase(plan)
             all_results.extend(results)
             # Optionally, update tasks for next inner cycle based on results (simple retry for failed tasks)
             current_tasks = [r.task_name for r in results if r.status == 'failed']
@@ -66,53 +66,45 @@ class MobiusOrchestrator:
                 break  # All tasks succeeded, exit early
         return all_results
 
-    def execution_phase(self, plan: List[str]) -> List[TaskResult]:
+    async def execution_phase(self, plan: List[str]) -> List[TaskResult]:
         """
         Executes the plan by routing each task to the appropriate provider and enriching the results.
         """
         if not plan:
             return []
-
+        
         logger.info(f"Execution phase: Executing plan with {len(plan)} tasks.")
-        results = []
-        for i, task_name in enumerate(plan):
-            assigned_agent = self.agents[i % len(self.agents)]
-            logger.info(f"Executing task '{task_name}' with agent '{assigned_agent}'.")
+        
+        async def execute_task(task_name: str, agent_name: str) -> TaskResult:
+            logger.info(f"Executing task '{task_name}' with agent '{agent_name}'.")
             try:
                 # Route to the correct provider based on task type (use task_name as proxy for type)
-                provider = self.provider_router.route(task_name)
-                if provider is None:
-                    raise RuntimeError(f"No provider found for task '{task_name}'")
-                provider_result = provider.execute(task_name)
+                req = ProviderRequest(task_id=str(uuid.uuid4()), prompt=task_name)
+                provider_response = await self.provider_router.choose_and_call(req)
 
-                # Simulate performance metrics for the expansion manager.
-                # In a real system, this would be parsed from provider_result.
-                simulated_accuracy = round(random.uniform(0.70, 0.99), 4)
+                # For now, simulate accuracy. In a real system, this would be evaluated.
+                simulated_accuracy = round(1.0 - (provider_response.latency_ms / 10000), 4)
 
-                # Determine success/failure for the learning loop
-                # This is a simple check based on the simulated provider output
-                is_success = "success" in str(provider_result).lower()
-                self.provider_router.record_result(task_name, provider.name, "success" if is_success else "fail")
-
-                sim_id = str(uuid.uuid4())
-                results.append(TaskResult(
+                return TaskResult(
                     task_name=task_name,
                     status='completed',
                     metrics=SimulationMetrics(accuracy=simulated_accuracy),
-                    error_message=None,
-                    simulation_id=sim_id
-                ))
+                    simulation_id=req.task_id,
+                    cost_usd=provider_response.cost_usd
+                )
             except Exception as e:
                 logger.error(f"Task '{task_name}' failed during execution: {e}")
-                # Also record failures from exceptions
-                provider_name = 'unknown'
-                # Safely get the provider name if it was successfully assigned
-                if 'provider' in locals() and hasattr(provider, 'name'):
-                    provider_name = provider.name
-                self.provider_router.record_result(task_name, provider_name, "fail")
-                results.append(TaskResult(
+                return TaskResult(
                     task_name=task_name,
                     status='failed',
                     error_message=str(e)
-                ))
+                )
+
+        # Create and run tasks concurrently
+        execution_tasks = []
+        for i, task_name in enumerate(plan):
+            assigned_agent = self.agents[i % len(self.agents)]
+            execution_tasks.append(execute_task(task_name, assigned_agent))
+        
+        results = await asyncio.gather(*execution_tasks)
         return results

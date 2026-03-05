@@ -2,15 +2,11 @@ version: '3.8'
 
 services:
   agentarmy:
-    # Build the image from the Dockerfile in the current directory
     build: .
-    # Name the container for easy reference
-    container_name: agentarmy_core
-    # Map port 5001 on the host to port 5001 in the container
     ports:
       - "5001:5001"
-    # Load environment variables from a .env file in the same directory
-    env_file:
-      - .env
-    # Automatically restart the container if it crashes
+    volumes:
+      - .:/app
+    environment:
+      - MODELSLAB_API_KEY=${MODELSLAB_API_KEY}
     restart: unless-stopped

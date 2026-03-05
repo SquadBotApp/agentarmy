@@ -4,7 +4,7 @@ import time
 class ClaudeProvider:
     name = "claude"
 
-    def call(self, req: ProviderRequest) -> ProviderResponse:
+    async def call(self, req: ProviderRequest) -> ProviderResponse:
         # Simulate Claude call
         start = time.time()
         # ... real Claude API call would go here ...

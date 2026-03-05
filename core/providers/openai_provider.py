@@ -4,7 +4,7 @@ import time
 class OpenAIProvider:
     name = "openai"
 
-    def call(self, req: ProviderRequest) -> ProviderResponse:
+    async def call(self, req: ProviderRequest) -> ProviderResponse:
         # Simulate OpenAI call
         start = time.time()
         # ... real OpenAI API call would go here ...

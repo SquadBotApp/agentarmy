@@ -11,14 +11,23 @@ def main():
         "task.py",
         "agent.py",
         "core/orchestrator.py",
-        "core/sim_engine.py",
         "api",
         "agentarmy-dashboard",
         "dashboard", # Remove the old dashboard directory to avoid conflicts with dashboard.py
+        "run_agentarmy.py", # Obsolete runner
         "tests/test_api_smoke.py",
         "tests/test_cli_smoke.py",
         "server_test_results.txt",
-        "orchestration_test_results.txt"
+        "orchestration_test_results.txt",
+        # Unify provider model by removing old versions
+        "providers/base.py",
+        "providers/openai.py",
+        "providers/claude.py",
+        "integration/router.py",
+        "integration/providers/claude.py",
+        "integration/providers/gemini.py",
+        "integration/providers/openai.py",
+        "core/router.py",
     ]
 
     print(f"--- Agent Army Cleanup ---")

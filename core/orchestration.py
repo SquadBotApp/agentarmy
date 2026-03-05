@@ -1,7 +1,7 @@
 # Orchestration core: main loop, agent/task management
 
 class Orchestrator:
-    def __init__(self, agents, tasks, expansion_manager, mobius, reflection, intel=None, compliance=None, shared_state=None, lock=None, initial_log=None):
+    def __init__(self, agents, tasks, expansion_manager, mobius, reflection, intel=None, compliance=None, billing_engine=None, shared_state=None, lock=None, initial_log=None):
         self.agents = agents
         self.tasks = tasks
         self.expansion_manager = expansion_manager
@@ -9,12 +9,13 @@ class Orchestrator:
         self.reflection = reflection
         self.intel = intel
         self.compliance = compliance
+        self.billing_engine = billing_engine
         self.shared_state = shared_state
         self.lock = lock
         self.log = initial_log if initial_log is not None else []
         self._update_shared_state() # Initial state
 
-    def run(self, max_cycles: int = 1):
+    async def run(self, max_cycles: int = 1):
         """
         Runs the main orchestration loop for a specified number of cycles.
 
@@ -28,9 +29,13 @@ class Orchestrator:
             self._add_log(cycle_start_msg)
 
             # Use the advanced Mobius Loop for recursive strategy and execution
-            results = self.mobius.mobius_loop(self.tasks)
+            results = await self.mobius.mobius_loop(self.tasks)
             self._add_log(f"Mobius loop completed with {len(results)} results.")
             self.reflection.after_task([], results) # Plan is now implicit to the Mobius loop
+
+            # Record usage for billing
+            if self.billing_engine:
+                self.billing_engine.record_usage(results)
 
             # Run Compliance Checks
             if self.compliance:

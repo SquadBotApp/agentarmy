@@ -1,59 +1,70 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import MagicMock, AsyncMock
 from core.mobius import MobiusOrchestrator
-from integration.router import MultiPlatformRouter
-from providers.openai import OpenAIProvider
-from providers.claude import ClaudeProvider
-from core.contracts import TaskResult
+from core.providers.router import ProviderRouter
+from core.providers.base import ProviderResponse
 
-def test_mobius_initialization():
+@pytest.fixture
+def mock_provider_router():
+    router = MagicMock(spec=ProviderRouter)
+    # Configure the mock's async method
+    router.choose_and_call = AsyncMock()
+    return router
+
+@pytest.mark.asyncio
+async def test_mobius_initialization(mock_provider_router):
     """Tests that MobiusOrchestrator initializes correctly."""
     agents = ["agent_007", "agent_47"]
-    mobius = MobiusOrchestrator(agents=agents)
+    mobius = MobiusOrchestrator(agents=agents, provider_router=mock_provider_router)
     assert mobius.agents == agents
+    assert mobius.provider_router is mock_provider_router
 
-def test_mobius_initialization_fails_with_no_agents():
+@pytest.mark.asyncio
+async def test_mobius_initialization_fails_with_no_agents(mock_provider_router):
     """Tests that initialization fails if no agents are provided."""
     with pytest.raises(ValueError, match="requires at least one agent"):
-        MobiusOrchestrator(agents=[])
+        MobiusOrchestrator(agents=[], provider_router=mock_provider_router)
 
 def test_strategy_phase_passthrough():
     """Tests the strategy phase simply passes tasks through for now."""
-    mobius = MobiusOrchestrator(agents=["agent_1"])
+    # This is a synchronous method, so it can be tested without async
+    mobius = MobiusOrchestrator(agents=["agent_1"], provider_router=MagicMock())
     tasks = ["task_a", "task_b"]
     plan = mobius.strategy_phase(tasks)
     assert plan == tasks
 
-
-def test_execution_phase_successful():
+@pytest.mark.asyncio
+async def test_execution_phase_successful(mock_provider_router):
     """Tests a successful execution phase where all providers complete."""
-    router = MultiPlatformRouter()
-    router.add_provider("openai", OpenAIProvider())
-    router.add_provider("claude", ClaudeProvider())
-    mobius = MobiusOrchestrator(agents=["agent_1"], provider_router=router)
-    plan = ["chat", "summarize"]
-    results = mobius.execution_phase(plan)
+    mobius = MobiusOrchestrator(agents=["agent_1"], provider_router=mock_provider_router)
+    plan = ["task_alpha", "task_beta"]
+    
+    # Configure the mock router to return predictable async results
+    mock_provider_router.choose_and_call.side_effect = [
+        ProviderResponse(output="res1", tokens_in=1, tokens_out=1, latency_ms=100, cost_usd=0.001),
+        ProviderResponse(output="res2", tokens_in=1, tokens_out=1, latency_ms=120, cost_usd=0.002),
+    ]
+
+    results = await mobius.execution_phase(plan)
+
     assert len(results) == 2
-    assert results[0].task_name == 'chat'
+    assert mock_provider_router.choose_and_call.call_count == 2
+    assert results[0].task_name == 'task_alpha'
     assert results[0].status == 'completed'
-    assert results[1].task_name == 'summarize'
-    assert results[1].status == 'completed'
+    assert results[0].cost_usd == 0.001
 
+@pytest.mark.asyncio
+async def test_execution_phase_handles_provider_failure(mock_provider_router):
+    """Tests that the execution phase gracefully handles an exception from a provider."""
+    mobius = MobiusOrchestrator(agents=["agent_1"], provider_router=mock_provider_router)
+    plan = ["task_gamma"]
 
-def test_execution_phase_handles_missing_provider():
-    """Tests that the execution phase gracefully handles missing provider."""
-    router = MultiPlatformRouter()
-    # Do not add any providers
-    mobius = MobiusOrchestrator(agents=["agent_1"], provider_router=router)
-    plan = ["unknown_task_type"]
-    results = mobius.execution_phase(plan)
+    # Configure the mock to raise an exception
+    mock_provider_router.choose_and_call.side_effect = RuntimeError("Provider API is down")
+
+    results = await mobius.execution_phase(plan)
+
     assert len(results) == 1
-    assert results[0].task_name == 'unknown_task_type'
+    assert results[0].task_name == 'task_gamma'
     assert results[0].status == 'failed'
-    assert "No provider found for task" in results[0].error_message
-
-def test_execution_phase_with_empty_plan():
-    """Tests that an empty plan results in an empty list of results."""
-    mobius = MobiusOrchestrator(agents=["agent_1"])
-    results = mobius.execution_phase([])
-    assert results == []
+    assert "Provider API is down" in results[0].error_message

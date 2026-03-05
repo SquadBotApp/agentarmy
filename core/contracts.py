@@ -17,3 +17,4 @@ class TaskResult:
     metrics: Optional[SimulationMetrics] = None
     error_message: Optional[str] = None
     simulation_id: Optional[str] = None
+    cost_usd: Optional[float] = None

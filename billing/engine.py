@@ -1,18 +1,28 @@
 
 """
 Billing Engine for AgentArmyOS
-Blueprint: Real cost/profit tracking and billing logic.
+Real cost/profit tracking and billing logic.
 """
-from typing import List, Dict, Any
+import logging
+from typing import List
+from core.contracts import TaskResult
+
+logger = logging.getLogger(__name__)
 
 class BillingEngine:
     def __init__(self):
-        self.usage_log: List[Dict[str, Any]] = []
+        self.usage_log: List[TaskResult] = []
+        self.total_cost = 0.0
 
-    def bill(self, usage: Dict[str, Any]) -> float:
-        # Placeholder: sum up cost field
-        self.usage_log.append(usage)
-        return usage.get('cost', 0.0)
+    def record_usage(self, results: List[TaskResult]):
+        """Records usage from a list of task results and updates total cost."""
+        for result in results:
+            if result.cost_usd is not None and result.cost_usd > 0:
+                self.usage_log.append(result)
+                self.total_cost += result.cost_usd
+        
+        logger.info(f"Billing: Recorded {len(results)} results. Total cost is now ${self.total_cost:.6f}")
 
     def total_billed(self) -> float:
-        return sum(u.get('cost', 0.0) for u in self.usage_log)
+        """Returns the total accumulated cost."""
+        return self.total_cost

@@ -3,11 +3,10 @@
     "tasks": [
         {
             "label": "dev",
-            "type": "shell",
             "command": "bash",
             "args": [
                 "-c",
-                "pytest --maxfail=1 --disable-warnings -q & python agentarmy.py"
+                "pytest --maxfail=1 --disable-warnings -q & ruff check . & pyright & python run_agentarmy.py"
             ],
             "isBackground": true,
             "problemMatcher": []

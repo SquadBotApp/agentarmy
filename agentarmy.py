@@ -4,6 +4,7 @@ import threading
 from dashboard import app, shared_state, lock
 import json
 import os
+import asyncio
 
 from core.orchestration import Orchestrator
 from core.expansion import ExpansionManager
@@ -11,8 +12,9 @@ from core.mobius import MobiusOrchestrator
 from core.reflection import ReflectionEngine
 from core.intel import CompetitiveIntelligence
 from core.compliance import ComplianceEngine
+from billing.engine import BillingEngine
 
-def main():
+async def main():
     STATE_FILE = "agentarmy_state.json"
 
     def load_state():
@@ -81,17 +83,19 @@ def main():
     expansion_manager = ExpansionManager(performance_threshold=0.9, cooldown_cycles=3)
 
     # Provider integration
-    from integration.router import MultiPlatformRouter
-    from providers.openai import OpenAIProvider
-    from providers.claude import ClaudeProvider
-    provider_router = MultiPlatformRouter()
-    provider_router.add_provider("openai", OpenAIProvider())
-    provider_router.add_provider("claude", ClaudeProvider())
+    from core.providers.router import ProviderRouter
+    from core.providers.openai_provider import OpenAIProvider
+    from core.providers.claude_provider import ClaudeProvider
+    provider_router = ProviderRouter(
+        providers=[OpenAIProvider(), ClaudeProvider()],
+        strategy='round_robin'
+    )
 
     mobius_orchestrator = MobiusOrchestrator(agents=initial_agents, provider_router=provider_router)
     reflection_engine = ReflectionEngine()
     intel_module = CompetitiveIntelligence()
     compliance_engine = ComplianceEngine()
+    billing_engine = BillingEngine()
     
     # 4. Instantiate the Main Orchestrator
     orchestrator = Orchestrator(
@@ -102,6 +106,7 @@ def main():
         reflection=reflection_engine,
         intel=intel_module,
         compliance=compliance_engine,
+        billing_engine=billing_engine,
         shared_state=shared_state,
         lock=lock,
         initial_log=initial_log
@@ -118,7 +123,7 @@ def main():
     
     try:
         # 6. Run the main loop based on command-line arguments.
-        orchestrator.run(max_cycles=args.cycles)
+        await orchestrator.run(max_cycles=args.cycles)
     except KeyboardInterrupt:
         logger.info("\n--- Orchestration Loop Interrupted by User ---")
     except Exception as e:
@@ -126,7 +131,8 @@ def main():
     finally:
         # Ensure we always save state and print final stats, even if interrupted
         logger.info("--- Orchestration Loop Finished ---")
+        logger.info(f"Final total cost: ${billing_engine.total_billed():.6f}")
         save_state(orchestrator)
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
