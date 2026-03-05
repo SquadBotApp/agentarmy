@@ -7,3 +7,4 @@ __pycache__/
 .vscode/
 dashboard.log
 agentarmy.log
+agentarmy_state.json

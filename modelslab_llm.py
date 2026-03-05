@@ -1,28 +1,37 @@
-import requests
 import os
+import requests
+import logging
 
-MODEL_IDS = {
-    "gemini": "gemini-1.5-pro",
-    "qwen": "qwen-2-72b-instruct",
-    "codex": "deepseek-coder-33b-instruct",
-    "chatgpt": "gpt-3.5-turbo"
-}
+logger = logging.getLogger(__name__)
 
-API_KEY = os.getenv("MODELSLAB_API_KEY") or "U4a5UEtOluadK4BXiVaDPPoKwbjwfalAbOiSYxjB4AwF0DUTWy20gXP3qyuN"
-BASE_URL = "https://modelslab.com/api/v7/llm/chat/completions"
+def call_modelslab_llm(model, user_message, system_message):
+    """
+    Calls the ModelsLab LLM API (or compatible).
+    If the API key is missing, raises ValueError to trigger the system's 
+    internal fallback protocols (Creative Mode).
+    """
+    api_key = os.getenv("MODELSLAB_API_KEY")
+    if not api_key:
+        # This specific error message is expected by the caller to trigger fallback
+        raise ValueError("MODELSLAB_API_KEY environment variable not set.")
 
-def call_modelslab_llm(model: str, user_message: str, system_message: str = "You are a helpful assistant."):
+    # Example endpoint - replace with actual if available
+    url = "https://modelslab.com/api/v6/llm/chat"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
     payload = {
-        "model": MODEL_IDS[model],
+        "model": model,
         "messages": [
             {"role": "system", "content": system_message},
             {"role": "user", "content": user_message}
         ]
     }
-    headers = {
-        "key": API_KEY,
-        "Content-Type": "application/json"
-    }
-    resp = requests.post(BASE_URL, headers=headers, json=payload, timeout=60)
-    resp.raise_for_status()
-    return resp.json()
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        logger.error(f"LLM call failed: {e}")
+        raise e

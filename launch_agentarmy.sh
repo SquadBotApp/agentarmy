@@ -5,6 +5,11 @@ set -e
 
 echo "--- Starting AgentArmy System ---"
 
+# Source environment variables from .env file if it exists
+if [ -f .env ]; then
+  export $(cat .env | sed 's/#.*//g' | xargs)
+fi
+
 # Start the Python orchestration core and dashboard in the background.
 # Logs will be saved to agentarmy.log.
 nohup python3 agentarmy.py > agentarmy.log 2>&1 &
@@ -15,7 +20,7 @@ sleep 5
 
 # Health check for the dashboard
 echo "Performing health check on dashboard..."
-curl -f http://localhost:5001/state > /dev/null && echo "Health check PASSED." || (echo "Health check FAILED. Check agentarmy.log for details." && exit 1)
+python3 healthcheck.py && echo "Health check PASSED." || (echo "Health check FAILED. Check agentarmy.log for details." && exit 1)
 
 echo "AgentArmy launch complete!"
 echo "Dashboard is running at http://localhost:5001"

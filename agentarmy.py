@@ -2,13 +2,42 @@ import logging
 import argparse
 import threading
 from dashboard import app, shared_state, lock
+import json
+import os
 
 from core.orchestration import Orchestrator
 from core.expansion import ExpansionManager
 from core.mobius import MobiusOrchestrator
 from core.reflection import ReflectionEngine
+from core.intel import CompetitiveIntelligence
+from core.compliance import ComplianceEngine
 
 def main():
+    STATE_FILE = "agentarmy_state.json"
+
+    def load_state():
+        """Loads the application state from a JSON file if it exists."""
+        if os.path.exists(STATE_FILE):
+            try:
+                with open(STATE_FILE, 'r') as f:
+                    state = json.load(f)
+                    logger.info(f"Resuming from saved state in {STATE_FILE}")
+                    return state.get('agents'), state.get('tasks'), state.get('log')
+            except (json.JSONDecodeError, IOError) as e:
+                logger.error(f"Could not load state file: {e}. Starting fresh.")
+        return None, None, None
+
+    def save_state(orchestrator):
+        """Saves the application state to a JSON file."""
+        state = {
+            'agents': orchestrator.agents,
+            'tasks': orchestrator.tasks,
+            'log': orchestrator.log
+        }
+        with open(STATE_FILE, 'w') as f:
+            json.dump(state, f, indent=2)
+        logger.info(f"Application state saved to {STATE_FILE}")
+
     """
     Main entrypoint for the Agent Army application.
     Initializes and runs the orchestration loop.
@@ -39,17 +68,30 @@ def main():
     """)
     logger.info("--- System Online: Initializing Agent Army ---")
 
-    # 2. Define Initial State
-    initial_agents = ["agent_alpha", "agent_beta"]
-    initial_tasks = ["analyze_market_trends", "generate_quarterly_report", "optimize_database_queries"]
+    # 2. Load previous state or define initial state
+    saved_agents, saved_tasks, saved_log = load_state()
+    initial_agents = saved_agents or ["agent_alpha", "agent_beta"]
+    initial_tasks = saved_tasks or ["analyze_market_trends", "generate_quarterly_report", "optimize_database_queries"]
+    initial_log = saved_log or []
     
     logger.info(f"Initial agents: {initial_agents}")
     logger.info(f"Initial tasks: {initial_tasks}")
 
     # 3. Instantiate Core Components
     expansion_manager = ExpansionManager(performance_threshold=0.9, cooldown_cycles=3)
-    mobius_orchestrator = MobiusOrchestrator(agents=initial_agents)
+
+    # Provider integration
+    from integration.router import MultiPlatformRouter
+    from providers.openai import OpenAIProvider
+    from providers.claude import ClaudeProvider
+    provider_router = MultiPlatformRouter()
+    provider_router.add_provider("openai", OpenAIProvider())
+    provider_router.add_provider("claude", ClaudeProvider())
+
+    mobius_orchestrator = MobiusOrchestrator(agents=initial_agents, provider_router=provider_router)
     reflection_engine = ReflectionEngine()
+    intel_module = CompetitiveIntelligence()
+    compliance_engine = ComplianceEngine()
     
     # 4. Instantiate the Main Orchestrator
     orchestrator = Orchestrator(
@@ -58,8 +100,11 @@ def main():
         expansion_manager=expansion_manager,
         mobius=mobius_orchestrator,
         reflection=reflection_engine,
+        intel=intel_module,
+        compliance=compliance_engine,
         shared_state=shared_state,
-        lock=lock
+        lock=lock,
+        initial_log=initial_log
     )
     
     # 5. Start the dashboard in a separate thread
@@ -79,10 +124,9 @@ def main():
     except Exception as e:
         logger.error(f"Critical System Failure: {e}")
     finally:
-        # Ensure we always print the final stats, even if interrupted
+        # Ensure we always save state and print final stats, even if interrupted
         logger.info("--- Orchestration Loop Finished ---")
-        logger.info(f"Final agent pool: {orchestrator.agents}")
-        logger.info(f"Final task list: {orchestrator.tasks}")
+        save_state(orchestrator)
 
 if __name__ == "__main__":
     main()

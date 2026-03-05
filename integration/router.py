@@ -1,5 +1,6 @@
+
 # Multi-platform provider router
-from ..providers.base import ProviderRouter
+from providers.base import ProviderRouter
 
 class MultiPlatformRouter(ProviderRouter):
     def __init__(self):

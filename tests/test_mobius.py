@@ -1,6 +1,9 @@
 import pytest
 from unittest.mock import patch
 from core.mobius import MobiusOrchestrator
+from integration.router import MultiPlatformRouter
+from providers.openai import OpenAIProvider
+from providers.claude import ClaudeProvider
 from core.contracts import TaskResult
 
 def test_mobius_initialization():
@@ -21,50 +24,33 @@ def test_strategy_phase_passthrough():
     plan = mobius.strategy_phase(tasks)
     assert plan == tasks
 
-# Use patch to mock the sim_engine dependency, a best practice for unit testing
-@patch('core.mobius.sim_engine', autospec=True)
-def test_execution_phase_successful(mock_sim_engine):
-    """Tests a successful execution phase where all simulations complete."""
-    # 1. Setup
-    mobius = MobiusOrchestrator(agents=["agent_1"])
-    plan = ["task_alpha", "task_beta"]
-    
-    # Configure the mock sim_engine to return predictable results
-    mock_sim_engine.run_simulation.side_effect = [
-        {"simulation_id": "sim_1", "metrics": {"accuracy": 0.9}},
-        {"simulation_id": "sim_2", "metrics": {"accuracy": 0.8}}
-    ]
 
-    # 2. Execution
+def test_execution_phase_successful():
+    """Tests a successful execution phase where all providers complete."""
+    router = MultiPlatformRouter()
+    router.add_provider("openai", OpenAIProvider())
+    router.add_provider("claude", ClaudeProvider())
+    mobius = MobiusOrchestrator(agents=["agent_1"], provider_router=router)
+    plan = ["chat", "summarize"]
     results = mobius.execution_phase(plan)
-
-    # 3. Assertions
     assert len(results) == 2
-    assert mock_sim_engine.run_simulation.call_count == 2
-    
-    # Check that the results were correctly augmented with task name and status
-    assert results[0].task_name == 'task_alpha'
+    assert results[0].task_name == 'chat'
     assert results[0].status == 'completed'
-    assert results[0].metrics.accuracy == 0.9
-    
-    assert results[1].task_name == 'task_beta'
+    assert results[1].task_name == 'summarize'
     assert results[1].status == 'completed'
 
-@patch('core.mobius.sim_engine', autospec=True)
-def test_execution_phase_handles_simulation_failure(mock_sim_engine):
-    """Tests that the execution phase gracefully handles an exception from the simulation."""
-    mobius = MobiusOrchestrator(agents=["agent_1"])
-    plan = ["task_gamma"]
 
-    # Configure the mock to raise an exception
-    mock_sim_engine.run_simulation.side_effect = RuntimeError("Simulation engine exploded")
-
+def test_execution_phase_handles_missing_provider():
+    """Tests that the execution phase gracefully handles missing provider."""
+    router = MultiPlatformRouter()
+    # Do not add any providers
+    mobius = MobiusOrchestrator(agents=["agent_1"], provider_router=router)
+    plan = ["unknown_task_type"]
     results = mobius.execution_phase(plan)
-
     assert len(results) == 1
-    assert results[0].task_name == 'task_gamma'
+    assert results[0].task_name == 'unknown_task_type'
     assert results[0].status == 'failed'
-    assert "Simulation engine exploded" in results[0].error_message
+    assert "No provider found for task" in results[0].error_message
 
 def test_execution_phase_with_empty_plan():
     """Tests that an empty plan results in an empty list of results."""

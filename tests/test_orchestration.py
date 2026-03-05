@@ -5,6 +5,8 @@ from core.orchestration import Orchestrator
 from core.expansion import ExpansionManager
 from core.mobius import MobiusOrchestrator
 from core.reflection import ReflectionEngine
+from core.intel import CompetitiveIntelligence
+from core.compliance import ComplianceEngine
 from core.contracts import TaskResult
 
 
@@ -21,6 +23,8 @@ def test_orchestrator_single_cycle():
     mock_expansion = MagicMock(spec=ExpansionManager)
     mock_mobius = MagicMock(spec=MobiusOrchestrator)
     mock_reflection = MagicMock(spec=ReflectionEngine)
+    mock_intel = MagicMock(spec=CompetitiveIntelligence)
+    mock_compliance = MagicMock(spec=ComplianceEngine)
 
     # Define mock return values to control the flow of the cycle
     mock_plan = ["planned_task1", "planned_task2"]
@@ -30,19 +34,17 @@ def test_orchestrator_single_cycle():
     ]
     mock_new_tasks = ["new_task1"]
     
-    mock_mobius.strategy_phase.return_value = mock_plan
-    mock_mobius.execution_phase.return_value = mock_results
+    mock_mobius.mobius_loop.return_value = mock_results
     mock_reflection.update_lessons.return_value = mock_new_tasks
 
     # 2. Execution
-    orch = Orchestrator(agents, initial_tasks, mock_expansion, mock_mobius, mock_reflection)
+    orch = Orchestrator(agents, initial_tasks, mock_expansion, mock_mobius, mock_reflection, intel=mock_intel, compliance=mock_compliance)
     orch.run(max_cycles=1)
 
     # 3. Assertions
     # Verify that the dependencies were called correctly and in order
-    mock_mobius.strategy_phase.assert_called_once_with(initial_tasks)
-    mock_mobius.execution_phase.assert_called_once_with(mock_plan)
-    mock_reflection.after_task.assert_called_once_with(mock_plan, mock_results)
+    mock_mobius.mobius_loop.assert_called_once_with(initial_tasks)
+    mock_reflection.after_task.assert_called_once_with([], mock_results)
     mock_expansion.should_expand.assert_called_once_with(mock_results)
     mock_reflection.update_lessons.assert_called_once_with(mock_results)
     
@@ -59,17 +61,19 @@ def test_orchestrator_handles_empty_tasks():
     mock_expansion = MagicMock(spec=ExpansionManager)
     mock_mobius = MagicMock(spec=MobiusOrchestrator)
     mock_reflection = MagicMock(spec=ReflectionEngine)
+    
+    # Configure mock to return empty results from the mobius loop
+    mock_mobius.mobius_loop.return_value = []
 
     # Execution
     orch = Orchestrator(agents=["agent1"], tasks=[], expansion_manager=mock_expansion, mobius=mock_mobius, reflection=mock_reflection)
     orch.run(max_cycles=1)
 
     # Assertions
-    mock_mobius.strategy_phase.assert_called_once_with([])
-    mock_mobius.execution_phase.assert_called_once()
-    mock_reflection.after_task.assert_called_once()
-    mock_expansion.should_expand.assert_called_once()
-    mock_reflection.update_lessons.assert_called_once()
+    mock_mobius.mobius_loop.assert_called_once_with([])
+    mock_reflection.after_task.assert_called_once_with([], [])
+    mock_expansion.should_expand.assert_called_once_with([])
+    mock_reflection.update_lessons.assert_called_once_with([])
 
 
 def test_orchestrator_expands_agent_pool_on_recommendation():
@@ -84,6 +88,8 @@ def test_orchestrator_expands_agent_pool_on_recommendation():
 
     # Configure mock to recommend expansion
     mock_expansion.should_expand.return_value = True
+    # Configure mock to return the number of agents to add (first expansion is 3)
+    mock_expansion.get_expansion_count.return_value = 3
 
     # 2. Execution
     orch = Orchestrator(agents, tasks=[], expansion_manager=mock_expansion, mobius=mock_mobius, reflection=mock_reflection)
@@ -91,9 +97,10 @@ def test_orchestrator_expands_agent_pool_on_recommendation():
     orch.run(max_cycles=1)
 
     # 3. Assertions
-    assert len(orch.agents) == initial_agent_count + 1, "Agent pool should have grown by one"
-    assert orch.agents[-1] == f"agent_{initial_agent_count + 1}", "The new agent's name is incorrect"
+    assert len(orch.agents) == initial_agent_count + 3, "Agent pool should have grown by three"
+    assert orch.agents[-1] == f"agent_{initial_agent_count + 3}", "The new agent's name is incorrect"
     mock_expansion.should_expand.assert_called_once()
+    mock_expansion.get_expansion_count.assert_called_once()
 
 
 def test_orchestrator_does_not_expand_without_recommendation():
@@ -117,3 +124,4 @@ def test_orchestrator_does_not_expand_without_recommendation():
     # 3. Assertions
     assert len(orch.agents) == initial_agent_count, "Agent pool should not have changed"
     mock_expansion.should_expand.assert_called_once()
+    mock_expansion.get_expansion_count.assert_not_called()
