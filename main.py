@@ -18,6 +18,7 @@ from billing.engine import BillingEngine
 from core.bounded_growth import BoundedGrowthGovernor
 from optimization.zpe import ZPEngine
 from expansion.meta_synthesizer import MetaSynthesizer
+from core.recursive import RecursiveEngine
 
 async def main():
     STATE_FILE = "agentarmy_state.json"
@@ -89,8 +90,7 @@ async def main():
 
     # Provider integration
     from core.providers.router import ProviderRouter
-    from core.providers.openai_provider import OpenAIProvider
-    from core.providers.claude_provider import ClaudeProvider
+    from core.providers.base import OpenAIProvider, ClaudeProvider
     provider_router = ProviderRouter(
         providers=[OpenAIProvider(), ClaudeProvider()],
         strategy='round_robin'
@@ -105,6 +105,7 @@ async def main():
     growth_governor = BoundedGrowthGovernor(max_population=50)
     zpe_engine = ZPEngine()
     meta_synth = MetaSynthesizer()
+    recursive_engine = RecursiveEngine()
     
     # 4. Instantiate the Main Orchestrator
     orchestrator = Orchestrator(
@@ -123,7 +124,8 @@ async def main():
         bounded_growth_governor=growth_governor,
         shared_state=shared_state,
         lock=lock,
-        initial_log=initial_log
+        initial_log=initial_log,
+        recursive_engine=recursive_engine
     )
     
     # 5. Start the dashboard in a separate thread

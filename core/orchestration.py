@@ -1,7 +1,13 @@
 # Orchestration core: main loop, agent/task management
 
+import logging
+from core.recursive import RecursiveEngine
+
+logger = logging.getLogger(__name__)
+
+
 class Orchestrator:
-    def __init__(self, agents, tasks, expansion_manager, mobius, reflection, cpm=None, meta_synthesizer=None, zpe=None, universes=None, intel=None, compliance=None, billing_engine=None, bounded_growth_governor=None, shared_state=None, lock=None, initial_log=None):
+    def __init__(self, agents, tasks, expansion_manager, mobius, reflection, cpm=None, meta_synthesizer=None, zpe=None, universes=None, intel=None, compliance=None, billing_engine=None, bounded_growth_governor=None, shared_state=None, lock=None, initial_log=None, recursive_engine=None):
         self.agents = agents
         self.tasks = tasks
         self.expansion_manager = expansion_manager
@@ -18,6 +24,7 @@ class Orchestrator:
         self.shared_state = shared_state
         self.lock = lock
         self.log = initial_log if initial_log is not None else []
+        self.recursive_engine = recursive_engine or RecursiveEngine()
         self._update_shared_state() # Initial state
 
     async def run(self, max_cycles: int = 1):
@@ -43,6 +50,26 @@ class Orchestrator:
 
             self._add_log(f"Mobius loop completed with {len(results)} results.")
             self.reflection.after_task([], results) # Plan is now implicit to the Mobius loop
+
+            # RECURSIVE ENGINE INTEGRATION: Ingest job results for self-improvement
+            job_result = {
+                "job_id": f"cycle_{cycles_run}",
+                "tasks": [
+                    {
+                        "task_id": getattr(r, 'task_id', f"task_{i}"),
+                        "provider": getattr(r, 'provider', "mobius"),
+                        "success": getattr(r, 'success', True),
+                        "latency_ms": int(getattr(r, 'latency_ms', 0)),
+                        "cost_usd": float(getattr(r, 'cost_usd', 0.0)),
+                        "zpe_score": float(getattr(r, 'zpe_score', 0.5)),
+                        "metadata": getattr(r, 'metadata', {}),
+                    }
+                    for i, r in enumerate(results)
+                ],
+            }
+            self.recursive_engine.ingest_job_result(job_result)
+            routing_scores = self.recursive_engine.get_routing_scores()
+            self._add_log(f"Recursive Engine: Routing scores updated: {routing_scores}")
 
             # Synthesize Results
             if self.meta_synthesizer:
