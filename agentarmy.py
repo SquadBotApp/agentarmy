@@ -1,4 +1,5 @@
 
+
 import logging
 import argparse
 import threading
@@ -6,6 +7,7 @@ from dashboard import app, shared_state, lock
 import json
 import os
 import asyncio
+import uvicorn
 
 from core.orchestration import Orchestrator
 from core.expansion import ExpansionManager
@@ -132,15 +134,22 @@ async def main():
         initial_log=initial_log
     )
     
-    # 5. Start the dashboard in a separate thread
+    # 5. Start the dashboard and API server in separate threads
     logger.info("--- Starting Dashboard Web Server ---")
     dashboard_thread = threading.Thread(target=lambda: app.run(host='0.0.0.0', port=5001, debug=False), daemon=True)
     dashboard_thread.start()
     logger.info("Dashboard running on http://127.0.0.1:5001")
-    
+
+    # Start FastAPI server in a background thread
+    def run_api():
+        uvicorn.run("api.main:app", host="0.0.0.0", port=5000, reload=False)
+    api_thread = threading.Thread(target=run_api, daemon=True)
+    api_thread.start()
+    logger.info("API server running on http://0.0.0.0:5000")
+
     run_mode = f"for {args.cycles} cycles" if args.cycles is not None else "indefinitely"
     logger.info(f"--- Starting Orchestration Loop (Running {run_mode}) ---")
-    
+
     try:
         # 6. Run the main loop based on command-line arguments.
         await orchestrator.run(max_cycles=args.cycles)
