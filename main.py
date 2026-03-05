@@ -88,14 +88,16 @@ async def main():
     # 3. Instantiate Core Components
     expansion_manager = ExpansionManager(performance_threshold=0.9, cooldown_cycles=3)
 
-    # Provider integration
-    from core.providers.router import ProviderRouter
-    from core.providers.base import OpenAIProvider, ClaudeProvider
-    provider_router = ProviderRouter(
-        providers=[OpenAIProvider(), ClaudeProvider()],
-        strategy='round_robin'
-    )
+    # Provider integration (lazy instantiation)
+    def get_provider_router():
+        from core.providers.router import ProviderRouter
+        from core.providers.base import OpenAIProvider, ClaudeProvider
+        return ProviderRouter(
+            providers=[OpenAIProvider(), ClaudeProvider()],
+            strategy='round_robin'
+        )
 
+    provider_router = get_provider_router()
     mobius_orchestrator = MobiusOrchestrator(agents=initial_agents, provider_router=provider_router)
     reflection_engine = ReflectionEngine()
     universes_layer = Universes()
