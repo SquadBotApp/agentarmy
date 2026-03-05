@@ -1,5 +1,6 @@
 Flask
 requests
+aiohttp
 pytest
 pytest-asyncio
 scikit-optimize

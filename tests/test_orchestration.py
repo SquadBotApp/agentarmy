@@ -34,6 +34,7 @@ async def test_orchestrator_single_cycle():
     mock_cpm = MagicMock(spec=CPMEngine)
     mock_meta_synth = MagicMock(spec=MetaSynthesizer)
 
+
     # Define mock return values to control the flow of the cycle
     mock_plan = ["planned_task1", "planned_task2"]
     mock_results = [
@@ -53,6 +54,7 @@ async def test_orchestrator_single_cycle():
     # Verify that the dependencies were called correctly and in order
     mock_meta_synth.synthesize.assert_called_once_with(mock_results)
     mock_mobius.mobius_loop.assert_awaited_once_with(initial_tasks)
+
     mock_reflection.after_task.assert_called_once_with([], mock_results)
     mock_expansion.should_expand.assert_called_once_with(mock_results)
     mock_reflection.update_lessons.assert_called_once_with(mock_results)
