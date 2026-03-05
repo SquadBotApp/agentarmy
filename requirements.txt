@@ -1,11 +1,12 @@
 Flask
 requests
 pytest
-scikit-optimize
 pytest-asyncio
+scikit-optimize
+pydantic
 ruff
 pyright
-ruff
-pyright
-ruff
-pyright
+numpy
+scipy
+scikit-learn
+PyYAML
