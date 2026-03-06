@@ -1,28 +1,39 @@
-# AgentArmy 3-6-9-12-15-18 Expansion Fix TODO
+# AgentArmy Integration with Replit Agents and Voiceflow
 
-## Objective
-Fix the agent army to properly scale from 3 to 6 to 9 to 12 to 15 to 18+ agents using the 3-6-9 recursive expansion strategy, allowing up to 200 agents to solve complex problems.
+## Overview
+This document tracks the integration of Replit Agents and Voiceflow Conversational AI into the AgentArmy system.
 
 ## Tasks
 
-### Phase 1: Fix Core Expansion Logic
-- [ ] 1.1 Fix ExpansionManager.get_expansion_count() to cycle through 3-6-9-12-15-18 pattern
-- [ ] 1.2 Update main.py to set BoundedGrowthGovernor max_population=200
-- [ ] 1.3 Update expansion_369.py to properly expand tasks
+### Phase 1: Replit Integration ✅
+- [x] 1.1 Create ReplitProvider class in core/providers/
+- [x] 1.2 Create ReplitAgentAdapter in runtime_core/adapters/
+- [x] 1.3 Update main.py to include Replit in provider router
+- [x] 1.4 Add environment configuration (.env.example)
+- [x] 1.5 Update docker-compose.yml with Replit env vars
 
-### Phase 2: Add Army Victory Logic
-- [ ] 2.1 Modify Orchestrator to treat partial failures as learning opportunities
-- [ ] 2.2 Add "war not battle" logic - aggregate success from multiple agents
-- [ ] 2.3 Implement failure-to-strength conversion in RecursiveEngine
+### Phase 2: Voiceflow Integration ✅
+- [x] 2.1 Create VoiceflowProvider class in core/providers/
+- [x] 2.2 Create VoiceflowAdapter in runtime_core/adapters/
+- [x] 2.3 Update main.py to include Voiceflow in provider router
+- [x] 2.4 Update docker-compose.yml with Voiceflow env vars
 
-### Phase 3: Git Automation & Testing
-- [ ] 3.1 Add git auto-commit after each test run
-- [ ] 3.2 Run tests and verify expansion works
-- [ ] 3.3 Iterate and improve based on results
+## Environment Variables
+Set these in your .env file:
 
-## Implementation Plan
-1. First fix ExpansionManager to properly cycle through 3-6-9
-2. Update main.py to allow 200 agents
-3. Add the army-level victory logic
-4. Test and auto-commit
+### Replit Agents
+- `REPLIT_API_KEY` - Your Replit API key
+- `REPLIT_WORKSPACE_ID` - Your workspace ID
+- `REPLIT_AGENT_ID` - Agent to use (default: "default")
+- `REPLIT_TIMEOUT_SECONDS` - Session timeout (default: 120)
+
+### Voiceflow Conversational AI
+- `VOICEFLOW_API_KEY` - Your Voiceflow API key
+- `VOICEFLOW_VERSION_ID` - Version ID (default: "production")
+- `VOICEFLOW_TIMEOUT_SECONDS` - Request timeout (default: 30)
+
+## Usage
+- Replit provider is automatically added when `REPLIT_API_KEY` is set
+- Voiceflow provider is automatically added when `VOICEFLOW_API_KEY` is set
+- Both providers use PERFORMANCE_BASED routing strategy
 

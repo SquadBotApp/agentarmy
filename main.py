@@ -90,17 +90,34 @@ async def main():
 
     # Provider integration (lazy instantiation)
     def get_provider_router():
-        from core.providers.router import ProviderRouter
+        from core.providers.router import ProviderRouter, RoutingStrategy
         from core.providers.base import OpenAIProvider, ClaudeProvider
-        from core.providers.devin_adapter import DevinAIAgentAdapter
+        from core.providers.replit_provider import ReplitProvider
+        from core.providers.voiceflow_provider import VoiceflowProvider
         import os
-        devin_api_key = os.getenv("DEVIN_API_KEY", "")
+        
+        replit_api_key = os.getenv("REPLIT_API_KEY", "")
+        voiceflow_api_key = os.getenv("VOICEFLOW_API_KEY", "")
+        
         providers = [OpenAIProvider(), ClaudeProvider()]
-        if devin_api_key:
-            providers.append(DevinAIAgentAdapter(api_key=devin_api_key))
+        
+        # Add Replit provider if API key is configured
+        if replit_api_key:
+            providers.append(ReplitProvider())
+            logger.info("Replit provider added to router")
+        else:
+            logger.info("Replit API key not configured - provider skipped")
+        
+        # Add Voiceflow provider if API key is configured
+        if voiceflow_api_key:
+            providers.append(VoiceflowProvider())
+            logger.info("Voiceflow provider added to router")
+        else:
+            logger.info("Voiceflow API key not configured - provider skipped")
+        
         return ProviderRouter(
             providers=providers,
-            strategy='round_robin'
+            strategy=RoutingStrategy.PERFORMANCE_BASED
         )
 
     provider_router = get_provider_router()
