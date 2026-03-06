@@ -1,7 +1,7 @@
 import pytest
 from core.contracts import TaskResult
+from core.universes import Universes, UniverseManager
 from core.universes.selector import UniverseSelector
-from core.universes.universes import Universes
 from core.universes.collapse import UniverseCollapse
 
 # --- Synthetic test cases ---

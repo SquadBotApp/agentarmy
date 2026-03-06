@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import List
-from core.contracts.types import TaskResult
+from core.contracts import TaskResult
 
 class UniverseSelector:
     """
@@ -14,12 +14,21 @@ class UniverseSelector:
         if not results:
             return 3
 
-        providers = {r.provider for r in results}
-        zpe_values = [r.metadata.get("zpe_score", 0.0) for r in results]
+        # Handle both 'provider' and 'provider_name' attributes
+        providers = {getattr(r, 'provider', getattr(r, 'provider_name', 'unknown')) for r in results}
+        zpe_values = []
+        for r in results:
+            # Handle different metadata locations
+            if hasattr(r, 'metadata') and r.metadata:
+                zpe_values.append(r.metadata.get("zpe_score", 0.0))
+            elif hasattr(r, 'metrics') and r.metrics:
+                zpe_values.append(getattr(r.metrics, 'zpe_score', 0.0))
+            else:
+                zpe_values.append(0.0)
 
         complexity = len(results)
         divergence = len(providers)
-        zpe_variance = max(zpe_values) - min(zpe_values)
+        zpe_variance = max(zpe_values) - min(zpe_values) if zpe_values else 0.0
 
         score = complexity + divergence + zpe_variance
 

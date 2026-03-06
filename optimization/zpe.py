@@ -1,9 +1,21 @@
 import logging
 from typing import List, Dict, Any
 from core.contracts import TaskResult
-from skopt import Optimizer
-from skopt.space import Real
-import numpy as np
+
+# Make scikit-optimize optional
+try:
+    from skopt import Optimizer
+    from skopt.space import Real
+    SKOPT_AVAILABLE = True
+except ImportError:
+    SKOPT_AVAILABLE = False
+    Optimizer = None
+    Real = None
+
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
 logger = logging.getLogger(__name__)
 
@@ -18,20 +30,25 @@ class ZPEngine:
         self.accuracy_weight = 0.6
         self.cost_weight = 0.3
         self.latency_weight = 0.1
-        self.space = [
-            Real(0.0, 1.0, name='accuracy_weight'),
-            Real(0.0, 1.0, name='cost_weight'),
-            Real(0.0, 1.0, name='latency_weight')
-        ]
-        self.optimizer = Optimizer(
-            dimensions=self.space,
-            base_estimator="GP",  # Gaussian Process
-            n_initial_points=10,
-            acq_func="gp_hedge",  # Probability Improvement acquisition
-            random_state=42,
-        )
+        self.space = None
+        self.optimizer = None
+        
+        if SKOPT_AVAILABLE and Real is not None:
+            self.space = [
+                Real(0.0, 1.0, name='accuracy_weight'),
+                Real(0.0, 1.0, name='cost_weight'),
+                Real(0.0, 1.0, name='latency_weight')
+            ]
+            self.optimizer = Optimizer(
+                dimensions=self.space,
+                base_estimator="GP",  # Gaussian Process
+                n_initial_points=10,
+                acq_func="gp_hedge",  # Probability Improvement acquisition
+                random_state=42,
+            )
+        
         self.known_scores = []
-        self.default_accuracy_weight = 0.6 # The old accuracy weights from before added bayesian optimisation
+        self.default_accuracy_weight = 0.6
 
     def score(self, results: List[TaskResult]) -> float:
         """

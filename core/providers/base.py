@@ -4,9 +4,14 @@ Base provider implementations
 
 import os
 import logging
-import aiohttp
 from typing import Optional
 from datetime import datetime
+
+try:
+    import aiohttp
+    AIOHTTP_AVAILABLE = True
+except ImportError:
+    AIOHTTP_AVAILABLE = False
 
 from .router import Provider, ProviderRequest, ProviderResponse
 
@@ -23,6 +28,14 @@ class OpenAIProvider(Provider):
     
     async def generate(self, request: ProviderRequest) -> ProviderResponse:
         """Generate response using OpenAI API"""
+        
+        if not AIOHTTP_AVAILABLE:
+            return ProviderResponse(
+                provider_name=self.name,
+                output="",
+                success=False,
+                error="aiohttp package not installed. Run: pip install aiohttp"
+            )
         
         if not self.api_key:
             return ProviderResponse(

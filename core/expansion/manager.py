@@ -1,29 +1,58 @@
+import logging
+from typing import List, Dict, Any
+from ..contracts import TaskResult
+
+logger = logging.getLogger(__name__)
 
 class ExpansionManager:
-    def __init__(self, last_results=None, average_score=0.0, *args, **kwargs):
-        self.last_results = last_results or []
-        self.average_score = average_score  # From ZPE engine post-reflection
+    """
+    Decides if the agent pool should be expanded based on performance metrics.
+    """
+    def __init__(self, performance_threshold: float = 0.9, cooldown_cycles: int = 5):
+        if not 0 < performance_threshold <= 1.0:
+            raise ValueError("performance_threshold must be between 0 and 1.")
+        self.performance_threshold = performance_threshold
+        self.cooldown_cycles = cooldown_cycles
+        self.cycles_since_expansion = cooldown_cycles  # Start ready to expand
+        self.total_expansions = 0
+        self.expansion_pattern = [3, 6, 9]  # 3-6-9 expansion logic
 
-    def __getattr__(self, name):
-        if name == 'all_success':
-            return all(getattr(r, 'status', None) == 'success' for r in self.last_results)
-        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
+    def _calculate_average_performance(self, results: List[TaskResult]) -> float:
+        """Calculates average performance from a list of simulation results."""
+        if not results:
+            return 0.0
+        
+        total_accuracy = 0
+        count = 0
+        for result in results:
+            # Safely access typed attributes
+            if result.status == 'completed' and result.metrics:
+                total_accuracy += result.metrics.accuracy
+                count += 1
+        
+        return total_accuracy / count if count > 0 else 0.0
 
-    def should_expand(self, results=None):
+    def should_expand(self, results: List[TaskResult]) -> bool:
         """
-        Determine if expansion should occur based on results.
-        - True if all successes or positive ZPE score (triggers bounded growth).
-        - False otherwise (e.g., failures or neutral/negative score).
+        Determines whether to expand the agent pool using 3-6-9 logic.
+        Returns True if performance is high and cooldown has passed.
         """
-        if results:
-            self.last_results = results  # Update if new results passed (from orchestrator)
-        return self.all_success or self.average_score > 0.0
+        self.cycles_since_expansion += 1
+        if self.cycles_since_expansion <= self.cooldown_cycles:
+            return False
+        avg_performance = self._calculate_average_performance(results)
+        if avg_performance >= self.performance_threshold:
+            logger.info(f"Performance threshold met ({avg_performance=:.2f}). Recommending expansion.")
+            self.cycles_since_expansion = 0  # Reset cooldown
+            self.total_expansions += 1
+            return True
+        return False
 
-    def get_expansion_count(self):
-        if self.should_expand():  # Reuse the new method for consistency
-            return 2 if self.all_success else 1
-        return 0
-        # If you have average_score logic, add it here
-        # elif hasattr(self, 'average_score') and self.average_score > 0:
-        #     return 1
-        return 0
+    def get_expansion_count(self) -> int:
+        """
+        Returns the number of agents to add based on the 3-6-9 pattern and expansion round.
+        """
+        # Cycle through 3, 6, 9, then repeat
+        idx = (self.total_expansions - 1) % len(self.expansion_pattern)
+        return self.expansion_pattern[idx] if self.total_expansions > 0 else 0
+

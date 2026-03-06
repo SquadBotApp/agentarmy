@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import List, Dict, Any
 from core.universes.scoring import UniverseScoring
-from core.contracts.types import TaskResult
+from core.contracts import TaskResult
 
 class UniverseCollapse:
     """
