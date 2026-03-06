@@ -7,20 +7,25 @@ langgraph>=0.2.0
 langchain>=0.3.0
 langchain-core>=0.3.0
 
-# LLM Providers (install at least one)
-# OpenAI
+# LLM Providers - Install all for maximum flexibility
+
+# 1. Google AI Studio (Gemini) - RECOMMENDED: Free tier, no rate limits
+langchain-google-genai>=0.1.0
+google-generativeai>=0.7.0
+
+# 2. OpenRouter - Access to 50+ models (DeepSeek, Qwen, Kimi, etc.)
 langchain-openai>=0.1.0
 openai>=1.0.0
 
-# Anthropic Claude
-langchain-anthropic>=0.1.0
-anthropic>=0.18.0
+# 3. Groq - Lightning-fast inference
+langchain-groq>=0.1.0
 
-# xAI Grok
+# 4. xAI Grok
 langchain-xai>=0.1.0
 
-# Groq (free tier available)
-langchain-groq>=0.1.0
+# 5. Anthropic Claude
+langchain-anthropic>=0.1.0
+anthropic>=0.18.0
 
 # Gradio for dashboard UI
 gradio>=4.0.0

@@ -1,19 +1,62 @@
 """
 Telemetry Analyzer Node
 Uses LLM to analyze telemetry data, detect anomalies, and propose actions.
-Supports multiple LLM providers: OpenAI, Anthropic, xAI (Grok), and local models.
+Supports multiple LLM providers: Google AI (Gemini), OpenRouter, Groq, xAI, OpenAI, Anthropic.
 """
 
 import json
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from datetime import datetime
 
 
-# Import LLM clients - support multiple providers
 def get_llm_client():
-    """Get the configured LLM client based on available API keys."""
-    # Try xAI Grok first (as recommended in the brief)
+    """
+    Get the configured LLM client based on available API keys.
+    
+    Supported providers (in priority order):
+    1. Google AI Studio (Gemini) - No rate limits, free tier
+    2. OpenRouter - Access to 50+ models (DeepSeek, Qwen, Kimi, etc.)
+    3. Groq - Lightning-fast inference for Llama, Mistral, DeepSeek
+    4. xAI Grok - Fast reasoning model
+    5. OpenAI GPT-4o - Top-tier models
+    6. Anthropic Claude - Best for complex reasoning
+    """
+    # 1. Try Google AI Studio (Gemini) - Recommended for free tier
+    if os.getenv("GOOGLE_API_KEY"):
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            return ChatGoogleGenerativeAI(
+                model="gemini-2.0-flash",
+                temperature=0,
+                google_api_key=os.getenv("GOOGLE_API_KEY")
+            )
+        except ImportError:
+            pass
+    
+    # 2. Try OpenRouter - Access to 50+ models
+    if os.getenv("OPENROUTER_API_KEY"):
+        try:
+            from langchain_openai import ChatOpenAI
+            return ChatOpenAI(
+                model="openrouter/ai/qwen/qwen2.5-72b-instruct",
+                temperature=0,
+                api_key=os.getenv("OPENROUTER_API_KEY"),
+                base_url="https://openrouter.ai/v1"
+            )
+        except ImportError:
+            pass
+    
+    # 3. Try Groq - Lightning-fast inference
+    if os.getenv("GROQ_API_KEY"):
+        try:
+            from langchain_groq import ChatGroq
+            model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+            return ChatGroq(model=model, temperature=0, groq_api_key=os.getenv("GROQ_API_KEY"))
+        except ImportError:
+            pass
+    
+    # 4. Try xAI Grok
     if os.getenv("GROK_API_KEY"):
         try:
             from langchain_xai import ChatXAI
@@ -21,7 +64,7 @@ def get_llm_client():
         except ImportError:
             pass
     
-    # Try OpenAI
+    # 5. Try OpenAI
     if os.getenv("OPENAI_API_KEY"):
         try:
             from langchain_openai import ChatOpenAI
@@ -29,7 +72,7 @@ def get_llm_client():
         except ImportError:
             pass
     
-    # Try Anthropic
+    # 6. Try Anthropic
     if os.getenv("ANTHROPIC_API_KEY"):
         try:
             from langchain_anthropic import ChatAnthropic
@@ -37,15 +80,7 @@ def get_llm_client():
         except ImportError:
             pass
     
-    # Try Groq (free tier available)
-    if os.getenv("GROQ_API_KEY"):
-        try:
-            from langchain_groq import ChatGroq
-            return ChatGroq(model="grok-beta", temperature=0, groq_api_key=os.getenv("GROQ_API_KEY"))
-        except ImportError:
-            pass
-    
-    # Fallback to mock for testing
+    # Fallback to rule-based analysis
     return None
 
 
@@ -112,7 +147,7 @@ def analyze(state: Dict[str, Any]) -> Dict[str, Any]:
             # Parse JSON response
             result = json.loads(response.content)
             
-            print(f"🔍 Analysis complete: {result.get('anomaly_type', 'unknown')} - {result.get('severity', 'unknown')}")
+            print(f"Analysis complete: {result.get('anomaly_type', 'unknown')} - {result.get('severity', 'unknown')}")
             
             return {
                 "anomaly": result.get("anomaly_description", "none"),
@@ -125,7 +160,7 @@ def analyze(state: Dict[str, Any]) -> Dict[str, Any]:
                 "last_updated": datetime.now().isoformat()
             }
         except Exception as e:
-            print(f"⚠️ LLM analysis failed: {e}")
+            print(f"LLM analysis failed: {e}")
             # Fall through to rule-based analysis
     
     # Fallback: Rule-based analysis when LLM is unavailable
@@ -150,11 +185,11 @@ def rule_based_analysis(state: Dict[str, Any]) -> Dict[str, Any]:
     # Temperature check
     temp = telemetry.get("temp_c", 22)
     if temp > 35:
-        anomalies.append(f"Critical thermal anomaly: {temp}°C")
+        anomalies.append(f"Critical thermal anomaly: {temp}C")
         proposed_actions.append("Activate emergency cooling, notify crew")
         severity = "critical"
     elif temp > 28:
-        anomalies.append(f"Elevated temperature: {temp}°C")
+        anomalies.append(f"Elevated temperature: {temp}C")
         proposed_actions.append("Adjust thermal control system")
         severity = "warning" if severity != "critical" else "critical"
         confidence *= 0.8
@@ -187,11 +222,11 @@ def rule_based_analysis(state: Dict[str, Any]) -> Dict[str, Any]:
     # Attitude check
     attitude = telemetry.get("attitude_error_deg", 0)
     if attitude > 5:
-        anomalies.append(f"Attitude error: {attitude}°")
+        anomalies.append(f"Attitude error: {attitude} deg")
         proposed_actions.append("Activate reaction wheel correction")
         severity = "critical" if attitude > 10 else ("warning" if severity != "critical" else "critical")
     elif attitude > 2:
-        anomalies.append(f"Elevated attitude error: {attitude}°")
+        anomalies.append(f"Elevated attitude error: {attitude} deg")
         proposed_actions.append("Monitor attitude control system")
         severity = "warning" if severity != "critical" else "critical"
     
@@ -231,7 +266,7 @@ def rule_based_analysis(state: Dict[str, Any]) -> Dict[str, Any]:
         anomaly_desc = "none"
         action = "Continue nominal operations"
     
-    print(f"🔍 Rule-based analysis: {anomaly_desc} (severity: {severity})")
+    print(f"Rule-based analysis: {anomaly_desc} (severity: {severity})")
     
     return {
         "anomaly": anomaly_desc,
@@ -243,4 +278,3 @@ def rule_based_analysis(state: Dict[str, Any]) -> Dict[str, Any]:
         "last_updated": datetime.now().isoformat(),
         "errors": errors
     }
-
