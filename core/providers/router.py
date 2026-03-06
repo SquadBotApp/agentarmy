@@ -22,6 +22,22 @@ class RoutingStrategy(str, Enum):
     LOAD_BALANCED = "load_balanced"
 
 
+class RouterConfig:
+    """Configuration for the ProviderRouter"""
+    
+    def __init__(
+        self,
+        strategy: RoutingStrategy = RoutingStrategy.ROUND_ROBIN,
+        max_retries: int = 3,
+        timeout_ms: int = 30000,
+        fallback_enabled: bool = True
+    ):
+        self.strategy = strategy
+        self.max_retries = max_retries
+        self.timeout_ms = timeout_ms
+        self.fallback_enabled = fallback_enabled
+
+
 class ProviderRequest:
     """Request sent to a provider"""
     
@@ -115,13 +131,15 @@ class ProviderRouter:
     def __init__(
         self,
         providers: List[Provider],
-        strategy: RoutingStrategy = RoutingStrategy.ROUND_ROBIN
+        strategy: RoutingStrategy = RoutingStrategy.ROUND_ROBIN,
+        config: RouterConfig = None
     ):
         self.providers = providers
-        self.strategy = strategy
+        self.strategy = config.strategy if config else strategy
+        self.config = config
         self.current_index = 0
         self.request_log: List[Dict[str, Any]] = []
-        logger.info(f"ProviderRouter initialized with {len(providers)} providers using {strategy} strategy")
+        logger.info(f"ProviderRouter initialized with {len(providers)} providers using {self.strategy} strategy")
     
     async def route(self, request: ProviderRequest) -> ProviderResponse:
         """Route a request to the best provider based on strategy"""
@@ -253,3 +271,4 @@ class ProviderRouter:
         provider = self._select_provider()
         response = await self.route(request)
         return provider, response
+

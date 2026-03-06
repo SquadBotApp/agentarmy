@@ -7,11 +7,11 @@ from core.providers.claude_provider import ClaudeProvider
 from core.providers.router import ProviderRouter, RouterConfig
 from core.tool_registry import ToolRegistry
 from core.expansion.orders import Orders
-from core.expansion.universes import Universes
+from core.expansion.universes import UniverseManager as Universes
 from core.expansion.meta_synthesizer import MetaSynthesizer
 from core.expansion.expansion_369 import Expansion369
-from core.optimization.zpe import ZPEngine
-from core.optimization.mobius import MobiusEngine
+from optimization.zpe import ZPEngine
+from optimization.mobius import MobiusEngine
 from core.governance import Governance
 from core.thinking import get_thinking_core
 

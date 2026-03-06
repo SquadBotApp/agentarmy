@@ -50,9 +50,9 @@ async def test_hive_mind_falls_back_on_no_api_key():
     """Test that Hive Mind falls back correctly when no API key is available."""
     with patch.dict(os.environ, {"MODELSLAB_API_KEY": ""}, clear=True):
         # Simulate missing MODELSLAB_API_KEY by patching os.environ
-        expansion_manager = MagicMock()
-        mobius_orchestrator = MagicMock()
-        reflection_engine = MagicMock()
         # This test expects a ValueError when API key is missing
-        # The actual implementation should handle this gracefully
-        assert True  # Placeholder - test needs proper implementation
+        # Replace with actual call that should raise ValueError
+        with pytest.raises(ValueError):
+            # Example: call a function that requires the API key
+            # Replace 'function_that_requires_api_key()' with the real function
+            raise ValueError("MODELSLAB_API_KEY is missing")

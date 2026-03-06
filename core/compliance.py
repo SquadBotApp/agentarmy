@@ -5,6 +5,7 @@ from .contracts import TaskResult
 
 logger = logging.getLogger(__name__)
 
+
 class ComplianceEngine:
     """
     Enforces governance and safety rules on agent actions.
@@ -74,3 +75,11 @@ class ComplianceEngine:
         if result.error_message and "encrypted" in result.error_message.lower():
             return True
         return True
+
+
+# Aliases for compatibility
+Compliance = ComplianceEngine
+
+def enforce(task, *args, **kwargs):
+    """Compatibility alias for enforce method"""
+    return ComplianceEngine().enforce_rules(task, args[0] if args else None)

@@ -76,7 +76,7 @@ class PlanSignals:
     subtask_hints: List[str]
     risk: RiskLevel
     confidence: float
-    domain: Domain
+    domain: Domain = Domain.GENERAL
     suggested_depth: int = 3
     complexity_factors: ComplexityFactors = None
     needs_refinement: bool = False
@@ -158,6 +158,15 @@ class ComplexityEstimator:
         "what is", "who is", "when did", "define"
     }
     
+    @staticmethod
+    def _to_string(text) -> str:
+        """Convert any input to string"""
+        if not isinstance(text, str):
+            if isinstance(text, list):
+                return " ".join(str(item) for item in text)
+            return str(text)
+        return text
+    
     MEDIUM_COMPLEXITY_INDICATORS = {
         "analyze", "compare", "explain", "describe", "two", "multiple",
         "steps", "process", "between", "differences", "similar"
@@ -191,6 +200,14 @@ class ComplexityEstimator:
     def estimate(self, text: str, context: Dict = None) -> ComplexityFactors:
         """Estimate complexity based on text analysis"""
         factors = ComplexityFactors()
+        
+        # Handle non-string input (lists, etc.)
+        if not isinstance(text, str):
+            if isinstance(text, list):
+                text = " ".join(str(item) for item in text)
+            else:
+                text = str(text)
+        
         text_lower = text.lower()
         
         # 1. Length-based complexity (0-1)
@@ -266,6 +283,12 @@ class ComplexityEstimator:
     
     def get_subtask_hints(self, text: str) -> List[str]:
         """Generate subtask hints based on analysis"""
+        # Handle non-string input
+        if not isinstance(text, str):
+            if isinstance(text, list):
+                text = " ".join(str(item) for item in text)
+            else:
+                text = str(text)
         hints = []
         text_lower = text.lower()
         
@@ -737,6 +760,12 @@ class ThinkingCore:
     
     def _assess_risk(self, text: str) -> RiskLevel:
         """Assess risk level of the task"""
+        # Handle non-string input
+        if not isinstance(text, str):
+            if isinstance(text, list):
+                text = " ".join(str(item) for item in text)
+            else:
+                text = str(text)
         text_lower = text.lower()
         
         high_risk_words = ["production", "deploy", "critical", "security", "financial", 

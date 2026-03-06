@@ -425,6 +425,26 @@ Provide your reasoning and final answer:"""
     def get_run_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get history of universe runs"""
         return self.run_history[-limit:]
+    
+    def expand_results(self, task: str) -> List[Universe]:
+        """
+        Expand a task into multiple universe results based on complexity.
+        Returns a list of universe objects with reasoning styles applied.
+        """
+        count = self.estimate_complexity(task)
+        # Create dummy universes for testing purposes
+        universes = []
+        styles = self._select_diverse_styles(count)
+        for i, style in enumerate(styles):
+            universe = Universe(
+                universe_id=f"expand_{i}",
+                style=style,
+                prompt=task,
+                output=None,
+                state=UniverseState.RUNNING
+            )
+            universes.append(universe)
+        return universes
 
 
 # Singleton instance

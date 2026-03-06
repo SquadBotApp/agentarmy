@@ -48,6 +48,42 @@ class MobiusLoop:
         
         logger.info("Möbius Loop initialized")
     
+    def refine(self, plan: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute full refinement cycle on a plan.
+        
+        Args:
+            plan: Original plan from planner
+        
+        Returns:
+            Refined plan optimized based on current signals
+        """
+        
+        logger.info("Starting Möbius Loop refinement")
+        
+        # 1. Collect signals from Recursive Engine
+        collected_signals = self.signals.collect()
+        logger.info(f"Collected signals: {list(collected_signals.keys())}")
+        
+        # 2. Rewrite plan (reorder tasks)
+        rewritten_plan = self.rewriter.rewrite(plan, collected_signals)
+        logger.info(f"Plan rewritten: {len(plan.get('tasks', []))} tasks")
+        
+        # 3. Refine strategy (adjust parameters)
+        refined_plan = self.refiner.refine(rewritten_plan, collected_signals)
+        logger.info(f"Strategy refined: added execution parameters")
+        
+        # 4. Add annotations for tracking
+        final_plan = {
+            **refined_plan,
+            "mobius_iteration": plan.get("mobius_iteration", 0) + 1,
+            "signals_applied": True,
+        }
+        
+        logger.info(f"Möbius Loop refinement complete (iteration {final_plan['mobius_iteration']})")
+        
+        return final_plan
+    
     async def mobius_loop(self, tasks: list) -> list:
         """
         Main orchestration method called by Orchestrator.
