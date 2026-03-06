@@ -11,3 +11,5 @@ numpy
 scipy
 scikit-learn
 PyYAML
+
+uvicorn
