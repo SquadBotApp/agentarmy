@@ -14,12 +14,13 @@ class MobiusOrchestrator:
     Handles the strategy (planning) and execution of tasks.
     This component is the bridge between the high-level orchestrator and the "real world" simulation.
     """
-    def __init__(self, agents: List[str], provider_router: ProviderRouter):
+    def __init__(self, agents: List[str], provider_router: ProviderRouter, max_inner_cycles: int = 100):
         if not agents:
             raise ValueError("MobiusOrchestrator requires at least one agent.")
         self.agents = agents
         self.provider_router = provider_router
-        logger.info(f"MobiusOrchestrator initialized with agents: {self.agents}")
+        self.max_inner_cycles = max_inner_cycles
+        logger.info(f"MobiusOrchestrator initialized with agents: {self.agents}, max_inner_cycles: {self.max_inner_cycles}")
 
     def strategy_phase(self, tasks: List[str]) -> List[str]:
         """
@@ -48,22 +49,53 @@ class MobiusOrchestrator:
         logger.info(f"Strategy phase: Planning {len(tasks)} tasks.")
         return tasks
 
-    async def mobius_loop(self, tasks: List[str], inner_cycles: int = 2) -> List[TaskResult]:
+    async def mobius_loop(self, tasks: List[str], inner_cycles: int = None) -> List[TaskResult]:
         """
         Möbius loop: alternate between strategy and execution phases for multiple inner cycles,
         allowing dynamic plan adjustment and recursive improvement within a single orchestration cycle.
+        
+        Army victory logic: Partial failures are OK. The army wins if success_rate >= 0.5.
+        This allows the loop to continue for improvement while recognizing partial success.
         """
+        if inner_cycles is None:
+            inner_cycles = self.max_inner_cycles
         current_tasks = tasks
         all_results = []
+        
+        # Helper to calculate success rate
+        def calculate_success_rate(results: List[TaskResult]) -> float:
+            if not results:
+                return 0.0
+            success_count = sum(1 for r in results if getattr(r, 'status', None) in ('success', 'completed'))
+            return success_count / len(results)
+        
         for cycle in range(inner_cycles):
             logger.info(f"Möbius loop: Inner cycle {cycle+1}/{inner_cycles}.")
             plan = self.strategy_phase(current_tasks)
             results = await self.execution_phase(plan)
             all_results.extend(results)
-            # Optionally, update tasks for next inner cycle based on results (simple retry for failed tasks)
+
+            # Calculate success rate for victory determination
+            success_rate = calculate_success_rate(results)
+
+            # Army victory logic: Partial successes are OK (success_rate >= 0.5)
+            if success_rate >= 0.5:
+                logger.info(f"Army VICTORY! Success rate: {success_rate:.2%} - Partial failures are OK.")
+                # Continue to next cycle for further optimization, unless all tasks succeeded
+
+            # Update tasks for next inner cycle based on failed tasks
             current_tasks = [r.task_name for r in results if r.status == 'failed']
             if not current_tasks:
+                logger.info("All tasks succeeded, exiting early.")
                 break  # All tasks succeeded, exit early
+        
+        # Final victory check on all results
+        final_success_rate = calculate_success_rate(all_results)
+        if final_success_rate >= 0.5:
+            logger.info(f"FINAL ARMY VICTORY! Overall success rate: {final_success_rate:.2%}")
+        else:
+            logger.warning(f"Army needs improvement. Overall success rate: {final_success_rate:.2%}")
+        
         return all_results
 
     async def execution_phase(self, plan: List[str]) -> List[TaskResult]:
@@ -109,3 +141,4 @@ class MobiusOrchestrator:
         
         results = await asyncio.gather(*execution_tasks)
         return results
+       

@@ -86,7 +86,7 @@ async def main():
     logger.info(f"Initial tasks: {initial_tasks}")
 
     # 3. Instantiate Core Components
-    expansion_manager = ExpansionManager()
+    expansion_manager = ExpansionManager(performance_threshold=0.5, cooldown_cycles=1)
 
     # Provider integration (lazy instantiation)
     def get_provider_router():
@@ -111,7 +111,7 @@ async def main():
     intel_module = CompetitiveIntelligence()
     compliance_engine = ComplianceEngine()
     billing_engine = BillingEngine()
-    growth_governor = BoundedGrowthGovernor(max_population=50)
+    growth_governor = BoundedGrowthGovernor(max_population=200)
     zpe_engine = ZPEngine()
     meta_synth = MetaSynthesizer()
     

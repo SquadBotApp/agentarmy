@@ -102,14 +102,14 @@ class Orchestrator:
 
             # ACT on the recommendation from the expansion manager
             if self.expansion_manager.should_expand(results):
-                # Use the 3-6-9 expansion logic
-                num_to_add_base = self.expansion_manager.get_expansion_count()
+                # Use the 3-6-9 expansion logic - pass current agent count for max_agents cap
+                current_agent_count = len(self.agents)
+                num_to_add_base = self.expansion_manager.get_expansion_count(current_agent_count)
                 
-                # Apply Bounded Growth Governor
+                # Apply Bounded Growth Governor (if present)
                 if self.bounded_growth_governor:
-                    current_population = len(self.agents)
-                    governed_next_population = self.bounded_growth_governor.next_population(current_population)
-                    max_agents_to_add = governed_next_population - current_population
+                    governed_next_population = self.bounded_growth_governor.next_population(current_agent_count)
+                    max_agents_to_add = governed_next_population - current_agent_count
                     num_to_add = min(num_to_add_base, max_agents_to_add)
                     if num_to_add < num_to_add_base:
                         self._add_log(f"Growth Governor: Capping expansion from {num_to_add_base} to {num_to_add} agents.")
@@ -117,12 +117,14 @@ class Orchestrator:
                     num_to_add = num_to_add_base
 
                 if num_to_add > 0:
-                    self._add_log(f"Army expanding by {num_to_add} agents...")
-                    current_agent_count = len(self.agents)
+                    self._add_log(f"ATOM BOMB STRATEGY: Army expanding by {num_to_add} agents! 💥")
                     for i in range(num_to_add):
                         new_agent_name = f"agent_{current_agent_count + i + 1}"
                         self.agents.append(new_agent_name)
-                        self._add_log(f"New agent '{new_agent_name}' created.")
+                    self._add_log(f"ARMY READY: {len(self.agents)} agents now deployed for the war!")
+                    
+                    # Log the strategic philosophy
+                    self._add_log("PHILOSOPHY: 'Failing a battle doesn't mean losing the war' - Each agent contributes to victory!")
             self.tasks = self.reflection.update_lessons(results)
             self._add_log(f"Reflection phase updated task list. New task count: {len(self.tasks)}.")
             if max_cycles is not None:
