@@ -1,0 +1,35 @@
+# Commercial Space HITL AI Agent Dependencies
+
+# Core LangGraph framework
+langgraph>=0.2.0
+
+# LangChain for LLM integration
+langchain>=0.3.0
+langchain-core>=0.3.0
+
+# LLM Providers (install at least one)
+# OpenAI
+langchain-openai>=0.1.0
+openai>=1.0.0
+
+# Anthropic Claude
+langchain-anthropic>=0.1.0
+anthropic>=0.18.0
+
+# xAI Grok
+langchain-xai>=0.1.0
+
+# Groq (free tier available)
+langchain-groq>=0.1.0
+
+# Gradio for dashboard UI
+gradio>=4.0.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# HTTP requests
+requests>=2.31.0
+
+# Additional utilities
+python-dateutil>=2.8.0
