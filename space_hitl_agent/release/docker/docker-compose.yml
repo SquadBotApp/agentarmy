@@ -1,0 +1,53 @@
+# SpaceOS Agent - Docker Compose
+# Production deployment configuration
+
+services:
+  spaceos-agent:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: production
+    image: spaceos/agent:latest
+    container_name: spaceos-agent
+    ports:
+      - "7860:7860"
+    environment:
+      - STATION_TYPE=${STATION_TYPE:-haven-1}
+      - PROFILE=${PROFILE:-crewed}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - SIMULATION_MODE=${SIMULATION_MODE:-true}
+    volumes:
+      - ./config:/app/config:ro
+      - spaceos-logs:/app/logs
+      - spaceos-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - spaceos-network
+
+  # Optional: Telemetry forwarder for real data
+  spaceos-telemetry:
+    image: curlimages/curl:latest
+    container_name: spaceos-telemetry
+    command: >
+      sh -c "echo 'Telemetry connector ready' &&
+             tail -f /dev/null"
+    networks:
+      - spaceos-network
+
+volumes:
+  spaceos-logs:
+  spaceos-data:
+
+networks:
+  spaceos-network:
+    driver: bridge
+

@@ -1,0 +1,227 @@
+# Space HITL Agent - Configurable Profiles
+# This file defines different operational profiles for various mission scenarios
+
+# ============================================================================
+# Profile: Uncrewed Mode
+# ============================================================================
+uncrewed:
+  description: "Uncrewed/autonomous operations - maximum automation with safety limits"
+  
+  # Telemetry settings
+  telemetry:
+    cycle_interval_seconds: 30
+    anomaly_injection_probability: 0.15
+  
+  # Human-in-the-loop settings
+  hitl:
+    auto_approve_nominal: true
+    auto_approve_confidence_threshold: 0.95
+    require_approval_for: ["critical", "warning"]
+  
+  # Safety settings
+  safety:
+    enforce_no_go_zones: true
+    action_cooldowns_enabled: true
+    two_person_approval_for_life_support: false
+    audit_logging: true
+  
+  # Agent thresholds
+  thresholds:
+    power_warning: 6.0
+    power_critical: 3.0
+    temp_warning: 30.0
+    temp_critical: 38.0
+    pressure_warning: 97.0
+    pressure_critical: 93.0
+    oxygen_warning: 92.0
+    oxygen_critical: 85.0
+  
+  # Enabled agents
+  enabled_agents:
+    - power
+    - thermal
+    - attitude
+    - payload
+    - logistics
+  
+  # External data
+  external_data:
+    include_iss_position: true
+    include_norad_elements: true
+    include_starlink: false
+
+
+# ============================================================================
+# Profile: Crewed Mode
+# ============================================================================
+crewed:
+  description: "Crewed operations - human oversight with crew safety priority"
+  
+  telemetry:
+    cycle_interval_seconds: 10
+    anomaly_injection_probability: 0.20
+  
+  hitl:
+    auto_approve_nominal: false
+    auto_approve_confidence_threshold: 0.99
+    require_approval_for: ["critical", "warning", "nominal"]
+  
+  safety:
+    enforce_no_go_zones: true
+    action_cooldowns_enabled: true
+    two_person_approval_for_life_support: true
+    audit_logging: true
+  
+  thresholds:
+    power_warning: 8.0
+    power_critical: 5.0
+    temp_warning: 28.0
+    temp_critical: 35.0
+    pressure_warning: 99.0
+    pressure_critical: 95.0
+    oxygen_warning: 95.0
+    oxygen_critical: 88.0
+  
+  enabled_agents:
+    - power
+    - thermal
+    - life_support
+    - attitude
+    - payload
+    - logistics
+  
+  external_data:
+    include_iss_position: true
+    include_norad_elements: true
+    include_starlink: true
+
+
+# ============================================================================
+# Profile: Experiment Mode
+# ============================================================================
+experiment:
+  description: "Science experiment operations - focus on payload/science agents"
+  
+  telemetry:
+    cycle_interval_seconds: 60
+    anomaly_injection_probability: 0.10
+  
+  hitl:
+    auto_approve_nominal: true
+    auto_approve_confidence_threshold: 0.90
+    require_approval_for: ["critical"]
+  
+  safety:
+    enforce_no_go_zones: true
+    action_cooldowns_enabled: false
+    two_person_approval_for_life_support: false
+    audit_logging: true
+  
+  thresholds:
+    power_warning: 5.0
+    power_critical: 2.0
+    temp_warning: 32.0
+    temp_critical: 40.0
+    pressure_warning: 97.0
+    pressure_critical: 93.0
+    oxygen_warning: 90.0
+    oxygen_critical: 80.0
+  
+  enabled_agents:
+    - power
+    - thermal
+    - payload
+  
+  external_data:
+    include_iss_position: true
+    include_norad_elements: false
+    include_starlink: false
+
+
+# ============================================================================
+# Profile: Docking Mode
+# ============================================================================
+docking:
+  description: "Docking operations - focus on attitude/orbit for approach"
+  
+  telemetry:
+    cycle_interval_seconds: 5
+    anomaly_injection_probability: 0.25
+  
+  hitl:
+    auto_approve_nominal: false
+    auto_approve_confidence_threshold: 0.99
+    require_approval_for: ["critical", "warning", "nominal"]
+  
+  safety:
+    enforce_no_go_zones: true
+    action_cooldowns_enabled: false
+    two_person_approval_for_life_support: true
+    audit_logging: true
+  
+  thresholds:
+    power_warning: 7.0
+    power_critical: 4.0
+    temp_warning: 28.0
+    temp_critical: 35.0
+    pressure_warning: 99.0
+    pressure_critical: 95.0
+    oxygen_warning: 95.0
+    oxygen_critical: 88.0
+  
+  enabled_agents:
+    - power
+    - thermal
+    - life_support
+    - attitude
+  
+  external_data:
+    include_iss_position: true
+    include_norad_elements: true
+    include_starlink: true
+
+
+# ============================================================================
+# Profile: Safe Mode
+# ============================================================================
+safe_mode:
+  description: "Emergency safe mode - minimal operations, maximum safety"
+  
+  telemetry:
+    cycle_interval_seconds: 5
+    anomaly_injection_probability: 0.40
+  
+  hitl:
+    auto_approve_nominal: false
+    auto_approve_confidence_threshold: 1.0
+    require_approval_for: ["critical", "warning", "nominal"]
+  
+  safety:
+    enforce_no_go_zones: true
+    action_cooldowns_enabled: true
+    two_person_approval_for_life_support: true
+    audit_logging: true
+  
+  thresholds:
+    power_warning: 10.0
+    power_critical: 6.0
+    temp_warning: 26.0
+    temp_critical: 32.0
+    pressure_warning: 100.0
+    pressure_critical: 97.0
+    oxygen_warning: 97.0
+    oxygen_critical: 92.0
+  
+  enabled_agents:
+    - power
+    - thermal
+    - life_support
+    - attitude
+    - payload
+    - logistics
+  
+  external_data:
+    include_iss_position: true
+    include_norad_elements: true
+    include_starlink: true
+
