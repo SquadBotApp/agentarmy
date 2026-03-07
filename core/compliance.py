@@ -71,10 +71,38 @@ class ComplianceEngine:
         Placeholder function for more sophisticated encryption checking.
         A real version would likely query the cloud platform's encryption status.
         """
-        # Placeholder: return True if "encrypted" is in result
+        # Return True if "encrypted" is in error_message, otherwise False
         if result.error_message and "encrypted" in result.error_message.lower():
             return True
-        return True
+        return False
+
+    def enforce(self, tasks, *args, **kwargs):
+        """
+        Enforces compliance on a list of tasks.
+        Returns True if all tasks are compliant, False otherwise.
+        
+        Args:
+            tasks: List of task names or task dicts
+            *args, **kwargs: Additional arguments (for compatibility)
+        """
+        if not tasks:
+            return True
+            
+        all_compliant = True
+        for task in tasks:
+            # Handle dict format
+            task_name = task if isinstance(task, str) else task.get('task', str(task))
+            # Create a dummy result for compliance check
+            dummy_result = type('Result', (), {
+                'task_name': task_name,
+                'error_message': None,
+                'status': 'completed'
+            })()
+            
+            if not self.check_compliance(task_name, dummy_result):
+                all_compliant = False
+                
+        return all_compliant
 
 
 # Aliases for compatibility

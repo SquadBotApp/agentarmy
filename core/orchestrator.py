@@ -4,6 +4,7 @@ from core.cpm import CPMEngine
 from core.router import Router
 from core.providers.openai_provider import OpenAIProvider
 from core.providers.claude_provider import ClaudeProvider
+from core.providers.llama_provider import Llama4MaverickProvider
 from core.providers.router import ProviderRouter, RouterConfig
 from core.tool_registry import ToolRegistry
 from core.expansion.orders import Orders
@@ -23,8 +24,13 @@ class Orchestrator:
         self.router = Router()
         self.tool_registry = ToolRegistry()
         # ProviderRouter with OpenAI and Claude
+        # Try Llama-4 Maverick first, fallback to Codex Max if it fails
+        try:
+            providers = [Llama4MaverickProvider(), OpenAIProvider(), ClaudeProvider()]
+        except Exception:
+            providers = [OpenAIProvider(), ClaudeProvider()]
         self.provider_router = ProviderRouter(
-            providers=[OpenAIProvider(), ClaudeProvider()],
+            providers=providers,
             config=RouterConfig()
         )
         self.orders = Orders()
@@ -59,6 +65,7 @@ class Orchestrator:
         
         # 4. Provider Execution (all model/tool calls go through ProviderRouter)
         results = []
+        routing_signals = None  # Initialize for cases where it's not set
         for assign in assignments:
             task = assign['task']
             

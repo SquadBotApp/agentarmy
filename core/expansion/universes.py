@@ -427,12 +427,30 @@ Provide your reasoning and final answer:"""
         """Get history of universe runs"""
         return self.run_history[-limit:]
     
-    def expand_results(self, task: str) -> List[Universe]:
+    def expand_results(self, task) -> List[Universe]:
         """
         Expand a task into multiple universe results based on complexity.
         Returns a list of universe objects with reasoning styles applied.
+        
+        Args:
+            task: Can be a string or a list of TaskResult objects
         """
-        count = self.estimate_complexity(task)
+        # Handle list of results (from tests) vs single string task
+        if isinstance(task, list):
+            # If it's a list, use the first task name or create a representative string
+            if task and len(task) > 0:
+                # Get a representative task string from the first result
+                first_item = task[0]
+                if hasattr(first_item, 'task_name'):
+                    task_str = first_item.task_name
+                else:
+                    task_str = str(first_item)
+            else:
+                task_str = "default_task"
+        else:
+            task_str = task
+            
+        count = self.estimate_complexity(task_str)
         # Create dummy universes for testing purposes
         universes = []
         styles = self._select_diverse_styles(count)
@@ -440,7 +458,7 @@ Provide your reasoning and final answer:"""
             universe = Universe(
                 universe_id=f"expand_{i}",
                 style=style,
-                prompt=task,
+                prompt=task_str,
                 output=None,
                 state=UniverseState.RUNNING
             )

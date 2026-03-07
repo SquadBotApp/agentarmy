@@ -65,8 +65,8 @@ class ProviderResponse:
     
     def __init__(
         self,
-        provider_name: str,
-        output: str,
+        provider_name: str = "default",
+        output: str = "",
         tokens_used: int = 0,
         latency_ms: float = 0.0,
         cost: float = 0.0,

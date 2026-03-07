@@ -6,7 +6,7 @@ from core.expansion import ExpansionManager
 from core.mobius import MobiusOrchestrator
 from core.reflection import ReflectionEngine
 from core.intel import CompetitiveIntelligence
-from core.compliance import ComplianceEngine
+from core.compliance import ComplianceEngine  # This imports from core.compliance file
 from core.contracts import TaskResult
 from optimization.zpe import ZPEngine
 from core.cpm import CPMEngine

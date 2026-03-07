@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock
-from core.mobius import MobiusOrchestrator
+from core.mobius_orchestrator import MobiusOrchestrator
 from core.providers.router import ProviderRouter
 from core.providers.base import ProviderResponse
 
@@ -51,7 +51,7 @@ async def test_execution_phase_successful(mock_provider_router):
     assert mock_provider_router.choose_and_call.call_count == 2
     assert results[0].task_name == 'task_alpha'
     assert results[0].status == 'completed'
-    assert results[0].cost_usd == 0.001
+    assert results[0].cost_usd == pytest.approx(0.001)
 
 @pytest.mark.asyncio
 async def test_execution_phase_handles_provider_failure(mock_provider_router):

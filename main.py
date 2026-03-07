@@ -1,4 +1,5 @@
 import logging
+from agent_framework.observability import configure_otel_providers
 import argparse
 import threading
 from dashboard import app, shared_state, lock
@@ -21,6 +22,12 @@ from expansion.meta_synthesizer import MetaSynthesizer
 from core.recursive import RecursiveEngine
 
 async def main():
+    # --- OpenTelemetry Tracing Setup ---
+    configure_otel_providers(
+        vs_code_extension_port=4317,  # AI Toolkit gRPC port
+        enable_sensitive_data=True
+    )
+    # --- End Tracing Setup ---
     STATE_FILE = "agentarmy_state.json"
 
     def load_state():
@@ -94,7 +101,7 @@ async def main():
         from core.providers.base import OpenAIProvider, ClaudeProvider
         from core.providers.replit_provider import ReplitProvider
         from core.providers.voiceflow_provider import VoiceflowProvider
-        import os
+
         
         replit_api_key = os.getenv("REPLIT_API_KEY", "")
         voiceflow_api_key = os.getenv("VOICEFLOW_API_KEY", "")

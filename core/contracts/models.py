@@ -4,7 +4,8 @@ from typing import Optional
 @dataclass
 class SimulationMetrics:
     """Metrics from a single simulation run."""
-    accuracy: float
+    accuracy: float = 0.0
+    latency_ms: float = 0.0
 
 @dataclass
 class TaskResult:
