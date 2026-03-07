@@ -1,65 +1,25 @@
 services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - \ 6379:6379\
+    volumes:
+      - redis_data:/data
   backend:
     build: .
-    command: python main.py
     ports:
-      - "5001:5001"
-    volumes:
-      - .:/app
+      - \5001:5001\
     environment:
-      - MODELSLAB_API_KEY=${MODELSLAB_API_KEY}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - REPLIT_API_KEY=${REPLIT_API_KEY}
-      - REPLIT_WORKSPACE_ID=${REPLIT_WORKSPACE_ID}
-      - REPLIT_AGENT_ID=${REPLIT_AGENT_ID:-default}
-      - REPLIT_TIMEOUT_SECONDS=${REPLIT_TIMEOUT_SECONDS:-120}
-      - VOICEFLOW_API_KEY=${VOICEFLOW_API_KEY}
-      - VOICEFLOW_VERSION_ID=${VOICEFLOW_VERSION_ID:-production}
-      - VOICEFLOW_TIMEOUT_SECONDS=${VOICEFLOW_TIMEOUT_SECONDS:-30}
-      - PYTHONUNBUFFERED=1
-    restart: unless-stopped
-    develop:
-      watch:
-        - action: sync
-          path: ./
-          target: /app
-          ignore:
-            - node_modules
-            - .git
-            - __pycache__
-            - .pytest_cache
-            - .venv
-        - action: rebuild
-          path: ./requirements.txt
-
-  dashboard:
-    build: ./dashboard
-    command: node server.js
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./dashboard:/dashboard
-    environment:
-      - NODE_ENV=development
-    develop:
-      watch:
-        - action: sync
-          path: ./dashboard
-          target: /dashboard
-          ignore:
-            - node_modules
-        - action: rebuild
-          path: ./dashboard/package.json
-
-  tests:
-    build: .
-    command: pytest -v --tb=short
-    volumes:
-      - .:/app
-    environment:
-      - PYTHONUNBUFFERED=1
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
-      - backend
-    profiles:
-      - test
+      - redis
+  spaceos-agent:
+    build: ./space_hitl_agent
+    ports:
+      - \7860:7860\
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+volumes:
+  redis_data:
