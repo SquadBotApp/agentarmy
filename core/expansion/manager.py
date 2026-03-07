@@ -1,4 +1,3 @@
-
 import logging
 from typing import List, Dict, Any
 from ..contracts import TaskResult
@@ -29,6 +28,7 @@ class ExpansionManager:
         # Pattern: 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57, 60...
         self.expansion_pattern = []
         for i in range(1, 70):  # Generate up to 60+ expansions
+            self.expansion_pattern.append(3 * i)
             self.expansion_pattern.append(3 * i)
         
         self.last_results = last_results or []
