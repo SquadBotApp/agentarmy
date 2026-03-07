@@ -1,5 +1,10 @@
 version: '3.8'
 services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
     redis:
       image: redis:7-alpine
       ports:
@@ -15,6 +20,9 @@ services:
     volumes:
       - ../../release/dashboard:/app/dashboard
       - ../../release/config:/app/config
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
 
   power-agent:
     build: .
@@ -22,6 +30,9 @@ services:
     volumes:
       - ../agents:/app/agents
       - ../config:/app/config
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -35,6 +46,9 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
 
   life-support-agent:
     build: .
@@ -42,6 +56,9 @@ services:
     volumes:
       - ../agents:/app/agents
       - ../config:/app/config
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -55,6 +72,9 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
 
   payload-agent:
     build: .
@@ -62,6 +82,9 @@ services:
     volumes:
       - ../agents:/app/agents
       - ../config:/app/config
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -75,12 +98,18 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
 
   telemetry-connector:
     build: .
     command: ["python", "/app/space_hitl_agent/nodes/telemetry.py"]
     volumes:
       - ../../space_hitl_agent:/app/space_hitl_agent
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
