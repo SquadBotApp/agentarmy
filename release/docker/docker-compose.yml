@@ -1,0 +1,61 @@
+version: '3.8'
+services:
+  dashboard:
+    build: .
+    command: ["python", "-m", "space_hitl_agent.ui.gradio_dashboard"]
+    ports:
+      - "8080:8080"
+    env_file:
+      - ../../.env
+    volumes:
+      - ../../release/dashboard:/app/dashboard
+      - ../../release/config:/app/config
+
+  power-agent:
+    build: .
+    command: ["python", "/app/agents/power_agent.py"]
+    volumes:
+      - ../agents:/app/agents
+      - ../config:/app/config
+
+  thermal-agent:
+    build: .
+    command: ["python", "/app/agents/thermal_agent.py"]
+    volumes:
+      - ../agents:/app/agents
+      - ../config:/app/config
+
+  life-support-agent:
+    build: .
+    command: ["python", "/app/agents/life_support_agent.py"]
+    volumes:
+      - ../agents:/app/agents
+      - ../config:/app/config
+
+  attitude-orbit-agent:
+    build: .
+    command: ["python", "/app/agents/attitude_orbit_agent.py"]
+    volumes:
+      - ../agents:/app/agents
+      - ../config:/app/config
+
+  payload-agent:
+    build: .
+    command: ["python", "/app/agents/payload_agent.py"]
+    volumes:
+      - ../agents:/app/agents
+      - ../config:/app/config
+
+  logistics-agent:
+    build: .
+    command: ["python", "/app/agents/logistics_agent.py"]
+    volumes:
+      - ../agents:/app/agents
+      - ../config:/app/config
+
+  telemetry-connector:
+    build: .
+    command: ["python", "/app/space_hitl_agent/nodes/telemetry.py"]
+    volumes:
+      - ../../space_hitl_agent:/app/space_hitl_agent
+      - ../../release/config:/app/config

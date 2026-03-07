@@ -1,0 +1,5 @@
+# Thermal Agent Config
+agent: thermal
+thresholds:
+  max_temp_c: 30
+  min_temp_c: 18

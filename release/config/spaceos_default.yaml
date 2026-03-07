@@ -1,0 +1,9 @@
+# SpaceOS Agent Default Config
+station_type: haven-1
+profile: default
+telemetry_source: "nasa_trek"
+hitl: true
+multi_agent:
+  - power
+  - science
+  - logistics

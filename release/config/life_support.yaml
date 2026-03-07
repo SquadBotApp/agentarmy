@@ -1,0 +1,5 @@
+# Life Support Agent Config
+agent: life_support
+thresholds:
+  min_oxygen_percent: 95
+  max_co2_mmhg: 5

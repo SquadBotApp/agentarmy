@@ -1,0 +1,4 @@
+# Attitude & Orbit Agent Config
+agent: attitude_orbit
+thresholds:
+  max_attitude_error_deg: 2.0

@@ -1,0 +1,5 @@
+# Human-in-the-Loop (HITL) and compliance rules for SpaceOS Agent
+approval_required:
+  - all_critical_actions
+  - experiment_start
+  - anomaly_response

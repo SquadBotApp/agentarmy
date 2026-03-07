@@ -1,0 +1,5 @@
+# Power Agent Config
+agent: power
+thresholds:
+  min_power_kw: 8
+  min_battery_percent: 30

@@ -1,0 +1,5 @@
+# Logistics Agent Config
+agent: logistics
+inventory:
+  min_food_days: 7
+  min_water_liters: 50

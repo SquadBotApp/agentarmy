@@ -1,0 +1,5 @@
+# Payload Agent Config
+agent: payload
+experiments:
+  - name: crystal_growth
+    duration_min: 120
