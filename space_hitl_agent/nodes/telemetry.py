@@ -144,16 +144,48 @@ def ingest_real_telemetry(state: Dict[str, Any], api_url: Optional[str] = None) 
     Returns:
         Updated state with real telemetry data
     """
-    # TODO: Implement real telemetry ingestion
-    # Example API endpoints:
-    # - NASA TReK: https://api.nasa.gov/insight_weather/
-    # - ISS Real-time: http://api.open-notify.org/iss-now.json
-    # - Starlink constellation tracking
-    
-    if api_url:
-        # Placeholder for real API integration
-        raise NotImplementedError("Real telemetry API integration coming soon")
-    
+    import requests
+    # NASA TReK/ISS/Starlink API integration
+    # Example: ISS position API (replace with TReK as needed)
+    try:
+        if api_url:
+            response = requests.get(api_url, timeout=5)
+            response.raise_for_status()
+            data = response.json()
+            # Example for ISS API: http://api.open-notify.org/iss-now.json
+            if "iss_position" in data:
+                iss_pos = data["iss_position"]
+                telemetry = {
+                    "station_type": "ISS",
+                    "timestamp": datetime.now().isoformat(),
+                    "latitude": float(iss_pos["latitude"]),
+                    "longitude": float(iss_pos["longitude"]),
+                    "message": data.get("message", ""),
+                }
+                print(f"📡 Real ISS Telemetry: {json.dumps(telemetry, indent=2)}")
+                return {"telemetry": telemetry, "mission_phase": "telemetry_ingested", "last_updated": datetime.now().isoformat()}
+            # NASA TReK or Starlink: adapt parsing as needed
+            # Example: NASA TReK returns weather/telemetry fields
+            if "sol_keys" in data:
+                # Mars weather example (adapt for LEO/ISS)
+                sol = data["sol_keys"][-1]
+                sol_data = data[sol]
+                telemetry = {
+                    "station_type": "TReK",
+                    "timestamp": datetime.now().isoformat(),
+                    "temp_c": sol_data.get("AT", {}).get("av"),
+                    "pressure": sol_data.get("PRE", {}).get("av"),
+                    "wind_speed": sol_data.get("HWS", {}).get("av"),
+                }
+                print(f"📡 Real NASA TReK Telemetry: {json.dumps(telemetry, indent=2)}")
+                return {"telemetry": telemetry, "mission_phase": "telemetry_ingested", "last_updated": datetime.now().isoformat()}
+            # Add Starlink or other API parsing here
+            # ...
+            # If unknown format, just return raw data
+            print(f"📡 Real Telemetry (raw): {json.dumps(data, indent=2)}")
+            return {"telemetry": data, "mission_phase": "telemetry_ingested", "last_updated": datetime.now().isoformat()}
+    except Exception as e:
+        print(f"⚠️ Telemetry API error: {e}. Falling back to simulation.")
     # Fall back to simulated data
     return ingest_telemetry(state)
 

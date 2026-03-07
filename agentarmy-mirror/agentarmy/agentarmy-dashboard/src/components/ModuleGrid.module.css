@@ -1,0 +1,59 @@
+/**
+ * ModuleGrid.module.css
+ * Responsive grid layout for module hexagons
+ */
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.hexWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.hexWrapper:hover {
+  transform: translateY(-5px);
+}
+
+.hexWrapper:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Honeycomb offset pattern for odd rows */
+.grid > .hexWrapper:nth-child(4),
+.grid > .hexWrapper:nth-child(5),
+.grid > .hexWrapper:nth-child(6) {
+  margin-top: -1.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .grid {
+    gap: 1.5rem;
+    padding: 1rem;
+  }
+  
+  .grid > .hexWrapper:nth-child(4),
+  .grid > .hexWrapper:nth-child(5),
+  .grid > .hexWrapper:nth-child(6) {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid {
+    gap: 1rem;
+  }
+}

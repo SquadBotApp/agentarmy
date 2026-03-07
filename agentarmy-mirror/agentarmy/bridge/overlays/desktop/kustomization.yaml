@@ -1,0 +1,11 @@
+#! kustomization.yaml
+# Generated code, do not edit
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+    - ../../base
+patches:
+    - path: backend-C:\Users\gregr\Documents\agentarmy-persistentVolumeClaim.yaml
+    - path: backend-service.yaml
+    - path: dashboard-C:\Users\gregr\Documents\agentarmy\dashboard-persistentVolumeClaim.yaml
+    - path: dashboard-service.yaml

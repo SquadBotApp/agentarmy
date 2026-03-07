@@ -1,0 +1,26 @@
+{
+  "name": "agentarmy-server",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo 'No Node.js tests defined yet.' && exit 0"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.212.0",
+    "@opentelemetry/instrumentation-express": "^0.60.0",
+    "@opentelemetry/instrumentation-http": "^0.212.0",
+    "@opentelemetry/node": "^0.24.0",
+    "@opentelemetry/sdk-trace-node": "^2.5.1",
+    "axios": "^1.6.2",
+    "better-sqlite3": "^12.6.2",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "node-cache": "^5.1.2"
+  }
+}

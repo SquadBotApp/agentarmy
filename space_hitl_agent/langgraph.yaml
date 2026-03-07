@@ -1,0 +1,12 @@
+# LangGraph Cloud deployment configuration for SpaceOS Agent
+name: spaceos-agent
+entrypoint: space_hitl_agent.main:create_space_agent
+python_version: 3.11
+requirements:
+  - langgraph
+  - langchain
+  - langchain-community
+  - gradio
+  - python-dotenv
+  - requests
+  - (add any LLM provider packages you use)

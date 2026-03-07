@@ -1,0 +1,45 @@
+#! dashboard-deployment.yaml
+# Generated code, do not edit
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: dashboard
+    namespace: agentarmy
+    labels:
+        com.docker.compose.project: agentarmy
+        com.docker.compose.service: dashboard
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            com.docker.compose.project: agentarmy
+            com.docker.compose.service: dashboard
+    strategy:
+        type: Recreate
+    template:
+        metadata:
+            labels:
+                com.docker.compose.project: agentarmy
+                com.docker.compose.service: dashboard
+                com.docker.compose.network.default: "true"
+        spec:
+            containers:
+                - name: dashboard
+                  image: agentarmy-dashboard
+                  imagePullPolicy: IfNotPresent
+                  args:
+                    - node
+                    - server.js
+                  env:
+                    - name: NODE_ENV
+                      value: "development"
+                  ports:
+                    - name: dashboard-3000
+                      containerPort: 3000
+                  volumeMounts:
+                    - name: dashboard
+                      mountPath: /dashboard
+            volumes:
+                - name: dashboard
+                  hostPath:
+                    path: C:\Users\gregr\Documents\agentarmy\dashboard

@@ -1,0 +1,374 @@
+.agentBadge[data-module="planner"] { background: #4a9eff; }
+.agentBadge[data-module="executor"] { background: #ffcc00; }
+.agentBadge[data-module="critic"] { background: #ff6666; }
+.agentBadge[data-module="governor"] { background: #66ff66; }
+.agentBadge[data-module="memory"] { background: #cc66ff; }
+.agentBadge[data-module="learning"] { background: #66ffcc; }
+.agentBadge[data-module="tools"] { background: #ff9966; }
+
+.pulseRing0 { animation-delay: 0s; }
+.pulseRing1 { animation-delay: 0.5s; }
+.pulseRing2 { animation-delay: 1s; }
+
+.connectionDot.dot-planner { background: #4a9eff; }
+.connectionDot.dot-executor { background: #ffcc00; }
+.connectionDot.dot-critic { background: #ff6666; }
+.connectionDot.dot-governor { background: #66ff66; }
+.connectionDot.dot-memory { background: #cc66ff; }
+.connectionDot.dot-learning { background: #66ffcc; }
+.connectionDot.active.dot-planner { box-shadow: 0 0 10px #4a9eff; }
+.connectionDot.active.dot-executor { box-shadow: 0 0 10px #ffcc00; }
+.connectionDot.active.dot-critic { box-shadow: 0 0 10px #ff6666; }
+.connectionDot.active.dot-governor { box-shadow: 0 0 10px #66ff66; }
+.connectionDot.active.dot-memory { box-shadow: 0 0 10px #cc66ff; }
+.connectionDot.active.dot-learning { box-shadow: 0 0 10px #66ffcc; }
+/**
+ * CoreHex.module.css
+ * Unified agent core with dynamic logo glow
+ * The visual brain of the AgentArmy OS
+ */
+
+.coreHex {
+  position: relative;
+  width: 220px;
+  height: 250px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: linear-gradient(135deg, #1a1a2e 0%, #0d0d1a 100%);
+  border: 3px solid var(--border-color, #4a9eff);
+  transition: border-color 0.5s ease, box-shadow 0.5s ease;
+  overflow: hidden;
+}
+
+.coreHex::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: linear-gradient(135deg, var(--border-color), transparent, var(--border-color));
+  z-index: -1;
+  opacity: 0.5;
+}
+
+.coreHex.active {
+  animation: coreBreathe var(--pulse-speed, 1.5s) ease-in-out infinite;
+}
+
+@keyframes coreBreathe {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.02);
+    filter: brightness(1.1);
+  }
+}
+
+/* ============================================
+   Logo Layer
+   ============================================ */
+
+.logoLayer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  opacity: var(--logo-opacity, 0.25);
+  transition: opacity 0.5s ease;
+}
+
+.logo {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  filter: grayscale(20%) brightness(0.8);
+  animation: logoGlow 4s ease-in-out infinite;
+}
+
+.coreHex.active .logo {
+  animation-duration: 2s;
+  filter: grayscale(0%) brightness(1);
+}
+
+@keyframes logoGlow {
+  0%, 100% {
+    opacity: 0.6;
+    filter: grayscale(20%) brightness(0.8) drop-shadow(0 0 5px rgba(74, 158, 255, 0.3));
+  }
+  50% {
+    opacity: 1;
+    filter: grayscale(0%) brightness(1) drop-shadow(0 0 15px rgba(74, 158, 255, 0.6));
+  }
+}
+
+/* ============================================
+   Glow Effect Layer
+   ============================================ */
+
+.glowLayer {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(74, 158, 255, calc(0.2 * var(--glow-intensity, 0.5))) 0%,
+    transparent 70%
+  );
+  z-index: 2;
+  pointer-events: none;
+  animation: glowPulse var(--pulse-speed, 4s) ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+/* ============================================
+   Content Layer
+   ============================================ */
+
+.content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 20px;
+  gap: 8px;
+}
+
+/* Status Badge */
+.statusBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #888;
+  animation: statusPulse 1.5s ease-in-out infinite;
+}
+
+[data-status="idle"] .statusDot { background: #888; animation: none; }
+[data-status="thinking"] .statusDot { background: #4a9eff; }
+[data-status="executing"] .statusDot { background: #ffcc00; }
+[data-status="evaluating"] .statusDot { background: #cc66ff; }
+[data-status="complete"] .statusDot { background: #66ff66; animation: none; }
+[data-status="error"] .statusDot { background: #ff6666; animation: none; }
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+.statusText {
+  color: #ccc;
+}
+
+/* ZPE Display */
+.zpeDisplay {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.zpeValue {
+  font-size: 36px;
+  font-weight: 700;
+  color: #66ff66;
+  text-shadow: 0 0 10px rgba(102, 255, 102, 0.5);
+  font-family: 'Courier New', monospace;
+}
+
+.zpeUnit {
+  font-size: 14px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+}
+
+/* Task Display */
+.taskDisplay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  max-width: 90%;
+}
+
+.taskLabel {
+  font-size: 10px;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.taskName {
+  font-size: 12px;
+  color: #4a9eff;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Agent Display */
+.agentDisplay {
+  margin-top: 4px;
+}
+
+.agentBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #000;
+  text-transform: uppercase;
+}
+
+/* Rationale */
+.rationale {
+  font-size: 10px;
+  color: #888;
+  text-align: center;
+  line-height: 1.3;
+  max-width: 90%;
+  margin-top: 4px;
+}
+
+/* ============================================
+   Pulse Rings
+   ============================================ */
+
+.pulseRings {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.pulseRing {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--border-color, #4a9eff);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  animation: pulseExpand 3s ease-out infinite;
+  opacity: 0;
+}
+
+@keyframes pulseExpand {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   Connection Points
+   ============================================ */
+
+.connectionPoints {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.connectionDot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  opacity: 0.5;
+}
+
+.connectionDot.active {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.3);
+  animation: dotPulse 1s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1.3); }
+  50% { transform: translate(-50%, -50%) scale(1.6); }
+}
+
+/* ============================================
+   Status-based Border Colors
+   ============================================ */
+
+[data-status="thinking"] {
+  --border-color: #4a9eff;
+}
+
+[data-status="executing"] {
+  --border-color: #ffcc00;
+}
+
+[data-status="evaluating"] {
+  --border-color: #cc66ff;
+}
+
+[data-status="complete"] {
+  --border-color: #66ff66;
+}
+
+[data-status="error"] {
+  --border-color: #ff6666;
+}
+
+/* ============================================
+   High-Energy Mode Enhancements
+   ============================================ */
+
+:global([data-bg-mode="high-energy"]) .coreHex {
+  box-shadow: 
+    0 0 20px rgba(74, 158, 255, 0.3),
+    inset 0 0 30px rgba(74, 158, 255, 0.1);
+}
+
+:global([data-bg-mode="high-energy"]) .logo {
+  filter: grayscale(0%) brightness(1.2);
+}
+
+:global([data-bg-mode="high-energy"]) .zpeValue {
+  text-shadow: 0 0 20px rgba(102, 255, 102, 0.8);
+}
+
+:global([data-bg-mode="high-energy"]) .pulseRing {
+  animation-duration: 2s;
+  border-width: 3px;
+}

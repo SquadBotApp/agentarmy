@@ -1,0 +1,5 @@
+agents:
+  - name: my_agent
+    entrypoint: my_agent.py
+    autostart: true
+    # Add other agent config as needed

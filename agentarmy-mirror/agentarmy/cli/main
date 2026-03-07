@@ -1,0 +1,211 @@
+#!/usr/bin/env python3
+"""
+AgentArmyOS CLI
+Terminal-native workflow for AgentArmyOS
+"""
+import argparse
+import requests
+import sys
+import time
+import json
+
+API_BASE = "http://localhost:5000"
+
+def status_cmd(args):
+    """Get system status"""
+    try:
+        r = requests.get(f"{API_BASE}/health", timeout=5)
+        data = r.json()
+        print(f"Status: {data.get('status', 'unknown')}")
+        print(f"Orchestrator: {data.get('orchestrator', 'unknown')}")
+        print(f"Loop Running: {data.get('loop_running', False)}")
+        print(f"Providers: {', '.join(data.get('providers', []))}")
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+def start_cmd(args):
+    """Start the orchestrator"""
+    try:
+        r = requests.post(f"{API_BASE}/api/start", timeout=5)
+        print(r.json().get("status", "unknown"))
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+def stop_cmd(args):
+    """Stop the orchestrator"""
+    try:
+        r = requests.post(f"{API_BASE}/api/stop", timeout=5)
+        print(r.json().get("status", "unknown"))
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+def job_submit_cmd(args):
+    """Submit a job"""
+    try:
+        data = {"input_data": args.input, "max_cycles": args.cycles}
+        r = requests.post(f"{API_BASE}/api/job", json=data, timeout=30)
+        result = r.json()
+        print(f"Job ID: {result.get('job_id')}")
+        print(f"Status: {result.get('status')}")
+        if result.get('result'):
+            print(f"Result: {json.dumps(result.get('result'), indent=2)}")
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+def job_status_cmd(args):
+    """Get job status"""
+    try:
+        r = requests.get(f"{API_BASE}/api/job/{args.job_id}", timeout=5)
+        data = r.json()
+        print(f"Job ID: {data.get('job_id')}")
+        print(f"Status: {data.get('status')}")
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+def metrics_cmd(args):
+    """Get system metrics"""
+    try:
+        r = requests.get(f"{API_BASE}/metrics", timeout=5)
+        data = r.json()
+        print(f"Active Agents: {data.get('active_agents')}")
+        print(f"Total Jobs: {data.get('total_jobs')}")
+        print(f"Total Cost: ${data.get('total_cost_usd', 0):.4f}")
+        print(f"Universe Count: {data.get('universe_count')}")
+        print(f"Orchestrator Loop: {data.get('orchestrator_loop')}")
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+def agents_cmd(args):
+    """List agents"""
+    try:
+        r = requests.get(f"{API_BASE}/api/agents", timeout=5)
+        data = r.json()
+        agents = data.get('agents', [])
+        if not agents:
+            print("No agents")
+        for agent in agents:
+            print(f"  - {agent}")
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+def universes_cmd(args):
+    """List universes"""
+    try:
+        r = requests.get(f"{API_BASE}/api/universes", timeout=5)
+        data = r.json()
+        universes = data.get('universes', [])
+        if not universes:
+            print("No universes")
+        for uni in universes:
+            print(f"  - {uni}")
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+def providers_cmd(args):
+    """List providers"""
+    try:
+        r = requests.get(f"{API_BASE}/api/providers", timeout=5)
+        data = r.json()
+        providers = data.get('providers', [])
+        if not providers:
+            print("No providers")
+        for p in providers:
+            print(f"  - {p.get('name')}: latency={p.get('latency_ms')}ms, cost=${p.get('cost_usd', 0):.4f}")
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+def logs_cmd(args):
+    """Watch logs (simulated)"""
+    print("Watching logs... (Ctrl+C to exit)")
+    try:
+        while True:
+            r = requests.get(f"{API_BASE}/metrics", timeout=5)
+            data = r.json()
+            print(f"[{time.strftime('%H:%M:%S')}] Jobs: {data.get('total_jobs')}, Cost: ${data.get('total_cost_usd', 0):.4f}")
+            time.sleep(args.interval)
+    except KeyboardInterrupt:
+        print("\nExiting...")
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+def main():
+    parser = argparse.ArgumentParser(description="AgentArmyOS CLI")
+    subparsers = parser.add_subparsers(dest="command", help="Commands")
+    
+    # status
+    subparsers.add_parser("status", help="Get system status")
+    
+    # start
+    subparsers.add_parser("start", help="Start orchestrator")
+    
+    # stop
+    subparsers.add_parser("stop", help="Stop orchestrator")
+    
+    # job submit
+    job_parser = subparsers.add_parser("job", help="Submit a job")
+    job_parser.add_argument("input", help="Job input")
+    job_parser.add_argument("--cycles", type=int, default=3, help="Max cycles")
+    
+    # job status
+    job_status_parser = subparsers.add_parser("job-status", help="Get job status")
+    job_status_parser.add_argument("job_id", help="Job ID")
+    
+    # metrics
+    subparsers.add_parser("metrics", help="Get system metrics")
+    
+    # agents
+    subparsers.add_parser("agents", help="List agents")
+    
+    # universes
+    subparsers.add_parser("universes", help="List universes")
+    
+    # providers
+    subparsers.add_parser("providers", help="List providers")
+    
+    # logs
+    logs_parser = subparsers.add_parser("logs", help="Watch logs")
+    logs_parser.add_argument("--interval", type=int, default=5, help="Polling interval")
+    
+    args = parser.parse_args()
+    
+    if not args.command:
+        parser.print_help()
+        return 1
+    
+    commands = {
+        "status": status_cmd,
+        "start": start_cmd,
+        "stop": stop_cmd,
+        "job": job_submit_cmd,
+        "job-status": job_status_cmd,
+        "metrics": metrics_cmd,
+        "agents": agents_cmd,
+        "universes": universes_cmd,
+        "providers": providers_cmd,
+        "logs": logs_cmd,
+    }
+    
+    return commands[args.command](args)
+
+if __name__ == "__main__":
+    sys.exit(main())

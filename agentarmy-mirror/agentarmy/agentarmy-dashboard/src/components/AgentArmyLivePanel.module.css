@@ -1,0 +1,19 @@
+.agentarmy-live-panel {
+  background: #f0f0f0;
+  padding: 12px;
+  margin: 8px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.agentarmy-live-panel ul {
+  margin: 0 0 8px 0;
+  padding-left: 18px;
+}
+.agentarmy-live-panel strong {
+  color: #1a3a5e;
+}
+.agentarmy-live-panel .log-ts {
+  color: #888;
+  font-size: 11px;
+  margin-left: 6px;
+}

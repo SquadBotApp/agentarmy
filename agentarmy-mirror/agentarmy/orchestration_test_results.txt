@@ -1,0 +1,369 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0
+rootdir: \\wsl.localhost\kali-linux\home\gregretom\agentarmy
+plugins: anyio-4.12.1
+collected 104 items
+
+agentarmy-dashboard\orchestration\agents\test_critic_agent.py .....      [  4%]
+agentarmy-dashboard\orchestration\agents\test_enterprise_agent.py ...... [ 10%]
+                                                                         [ 10%]
+agentarmy-dashboard\orchestration\agents\test_executor_agent.py ....     [ 14%]
+agentarmy-dashboard\orchestration\agents\test_governor_agent.py .....    [ 19%]
+agentarmy-dashboard\orchestration\agents\test_planner_agent.py .....     [ 24%]
+agentarmy-dashboard\orchestration\agents\test_response_utils.py ...      [ 26%]
+agentarmy-dashboard\orchestration\evaluation\test_evaluation.py ........ [ 34%]
+................                                                         [ 50%]
+agentarmy-dashboard\orchestration\frameworks\test_manager.py ...         [ 52%]
+agentarmy-dashboard\orchestration\test_comms_bridge.py ..                [ 54%]
+agentarmy-dashboard\orchestration\test_competition_arena.py FFFF         [ 58%]
+agentarmy-dashboard\orchestration\test_education_center_domain.py .....  [ 63%]
+agentarmy-dashboard\orchestration\test_efficiency_planner.py .....       [ 68%]
+agentarmy-dashboard\orchestration\test_executor.py .....                 [ 73%]
+agentarmy-dashboard\orchestration\test_job_runner.py ....FF              [ 78%]
+agentarmy-dashboard\orchestration\test_lifecycle_manager.py ..F.FF       [ 84%]
+agentarmy-dashboard\orchestration\test_n8n_adapter.py ..                 [ 86%]
+agentarmy-dashboard\orchestration\test_orchestrator.py .                 [ 87%]
+agentarmy-dashboard\orchestration\test_platform_hub.py ...               [ 90%]
+agentarmy-dashboard\orchestration\test_social_intel.py ..                [ 92%]
+agentarmy-dashboard\orchestration\test_sovereign_os.py ......            [ 98%]
+agentarmy-dashboard\orchestration\test_ssh_hub.py ..                     [100%]
+
+================================== FAILURES ===================================
+_______________ CompetitionArenaTest.test_invalid_inputs_raise ________________
+
+self = <orchestration.test_competition_arena.CompetitionArenaTest testMethod=test_invalid_inputs_raise>
+
+    def test_invalid_inputs_raise(self):
+        arena = CompetitionArena()
+>       with self.assertRaises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: ValueError not raised
+
+agentarmy-dashboard\orchestration\test_competition_arena.py:61: AssertionError
+______________ CompetitionArenaTest.test_launch_and_leaderboard _______________
+
+self = <orchestration.test_competition_arena.CompetitionArenaTest testMethod=test_launch_and_leaderboard>
+
+    def test_launch_and_leaderboard(self):
+        arena = CompetitionArena()
+        agents = [_Agent("A", 3), _Agent("B", 7)]
+    
+        def task(agent):
+            return {"score": agent.score, "output": agent.name}
+    
+        results = arena.launch_competition("basic", agents, task, rounds=2)
+>       self.assertEqual(len(results), 2)
+                         ^^^^^^^^^^^^
+E       TypeError: object of type 'coroutine' has no len()
+
+agentarmy-dashboard\orchestration\test_competition_arena.py:21: TypeError
+_____________ CompetitionArenaTest.test_safety_gate_blocks_agent ______________
+
+self = <orchestration.test_competition_arena.CompetitionArenaTest testMethod=test_safety_gate_blocks_agent>
+
+    def test_safety_gate_blocks_agent(self):
+        arena = CompetitionArena()
+        agents = [_Agent("safe", 5), _Agent("blocked", 9)]
+    
+        def task(agent):
+            return {"score": agent.score}
+    
+        def gate(agent, result):
+            if agent.name == "blocked":
+                return {"allowed": False, "reason": "policy"}
+            return {"allowed": True}
+    
+        arena.launch_competition("gated", agents, task, rounds=1, safety_gate=gate)
+        board = arena.get_leaderboard("gated")
+>       self.assertEqual(board[0]["agent"], "safe")
+                         ^^^^^^^^
+E       IndexError: list index out of range
+
+agentarmy-dashboard\orchestration\test_competition_arena.py:40: IndexError
+_______ CompetitionArenaTest.test_task_error_does_not_crash_competition _______
+
+self = <orchestration.test_competition_arena.CompetitionArenaTest testMethod=test_task_error_does_not_crash_competition>
+
+    def test_task_error_does_not_crash_competition(self):
+        arena = CompetitionArena()
+        agents = [_Agent("ok", 5), _Agent("boom", 1)]
+    
+        def task(agent):
+            if agent.name == "boom":
+                raise RuntimeError("failure")
+            return {"score": agent.score}
+    
+        results = arena.launch_competition("errors", agents, task, rounds=1)
+>       self.assertEqual(len(results[0]), 2)
+                             ^^^^^^^^^^
+E       TypeError: 'coroutine' object is not subscriptable
+
+agentarmy-dashboard\orchestration\test_competition_arena.py:54: TypeError
+______________ test_job_runner_dispatches_platform_integrations _______________
+
+    def test_job_runner_dispatches_platform_integrations():
+        fake_n8n = FakeN8N()
+        fake_hub = FakePlatformHub()
+        runner = JobRunner(
+            fake_orchestrate,
+            RegistryAgentExecutor({"executor": FakeAgent()}),
+            n8n=fake_n8n,
+            platform_hub=fake_hub,
+        )
+        payload = {
+            "job": {"goal": "Ship feature"},
+            "state": {"tasks": [{"id": "t1", "name": "Implement", "description": "Do it", "duration": 1}], "history": []},
+            "previous_zpe": 0.5,
+            "integrations": {
+                "platforms": {
+                    "enabled": True,
+                    "targets": ["openai_codex", "google_jules", "roo_code"],
+                }
+            },
+        }
+    
+>       result = asyncio.run(runner.run_workflow(payload))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+agentarmy-dashboard\orchestration\test_job_runner.py:164: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3312.0_x64__qbz5n2kfra8p0\Lib\asyncio\runners.py:195: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3312.0_x64__qbz5n2kfra8p0\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3312.0_x64__qbz5n2kfra8p0\Lib\asyncio\base_events.py:725: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+agentarmy-dashboard\orchestration\job_runner.py:67: in run_workflow
+    platform_results = self._trigger_platforms(payload, decision, execution, evaluation)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <job_runner.JobRunner object at 0x00000231F3C3F100>
+payload = {'integrations': {'platforms': {'enabled': True, 'targets': ['openai_codex', 'google_jules', 'roo_code']}}, 'job': {'g...e': 0.5, 'state': {'history': [], 'tasks': [{'description': 'Do it', 'duration': 1, 'id': 't1', 'name': 'Implement'}]}}
+decision = {'alternatives': [], 'cpm': {'critical_tasks': ['t1'], 'project_duration': 2.0}, 'nextAgentId': 'executor', 'nextTaskId': 't1', ...}
+execution = {'agent_id': 'executor', 'error': None, 'metrics': {'framework_used': 'native', 'latency_ms': 0.14734268188476562, 'tokens': 0}, 'output': {'content': 'execution output'}, ...}
+evaluation = {'notes': 'Execution completed and evaluated.', 'quality_score': 0.56, 'status': 'completed'}
+
+    def _trigger_platforms(
+        self,
+        payload: Dict[str, Any],
+        decision: Dict[str, Any],
+        execution: Dict[str, Any],
+        evaluation: Dict[str, Any],
+    ) -> Dict[str, Dict[str, Any]]:
+        integrations = payload.get("integrations", {}) or {}
+        platforms_cfg = integrations.get("platforms", {}) if isinstance(integrations, dict) else {}
+        mobile_cfg = integrations.get("mobile", {}) if isinstance(integrations, dict) else {}
+        if not isinstance(platforms_cfg, dict):
+            platforms_cfg = {}
+        if not isinstance(mobile_cfg, dict):
+            mobile_cfg = {}
+    
+        platform_enabled = bool(platforms_cfg.get("enabled", False))
+        mobile_enabled = bool(mobile_cfg.get("enabled", False))
+        enabled = platform_enabled or mobile_enabled
+        if not enabled:
+            return {}
+    
+        platform_targets = platforms_cfg.get("targets") or []
+        if not isinstance(platform_targets, list):
+            platform_targets = []
+    
+        mobile_vendors = mobile_cfg.get("vendors") or []
+        if not isinstance(mobile_vendors, list):
+            mobile_vendors = []
+>       mobile_targets = self._platform_hub.resolve_mobile_targets(mobile_vendors)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'FakePlatformHub' object has no attribute 'resolve_mobile_targets'
+
+agentarmy-dashboard\orchestration\job_runner.py:204: AttributeError
+______________ test_job_runner_dispatches_mobile_vendor_targets _______________
+
+    def test_job_runner_dispatches_mobile_vendor_targets():
+        fake_n8n = FakeN8N()
+        fake_hub = FakePlatformHub()
+        runner = JobRunner(
+            fake_orchestrate,
+            RegistryAgentExecutor({"executor": FakeAgent()}),
+            n8n=fake_n8n,
+            platform_hub=fake_hub,
+        )
+        payload = {
+            "job": {"goal": "Ship mobile release"},
+            "state": {"tasks": [{"id": "t1", "name": "Implement", "description": "Do it", "duration": 1}], "history": []},
+            "previous_zpe": 0.5,
+            "integrations": {
+                "mobile": {
+                    "enabled": True,
+                    "vendors": ["apple", "google"],
+                }
+            },
+        }
+    
+>       result = asyncio.run(runner.run_workflow(payload))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+agentarmy-dashboard\orchestration\test_job_runner.py:193: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3312.0_x64__qbz5n2kfra8p0\Lib\asyncio\runners.py:195: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3312.0_x64__qbz5n2kfra8p0\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3312.0_x64__qbz5n2kfra8p0\Lib\asyncio\base_events.py:725: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+agentarmy-dashboard\orchestration\job_runner.py:67: in run_workflow
+    platform_results = self._trigger_platforms(payload, decision, execution, evaluation)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <job_runner.JobRunner object at 0x00000231F3A9F1D0>
+payload = {'integrations': {'mobile': {'enabled': True, 'vendors': ['apple', 'google']}}, 'job': {'goal': 'Ship mobile release'}...e': 0.5, 'state': {'history': [], 'tasks': [{'description': 'Do it', 'duration': 1, 'id': 't1', 'name': 'Implement'}]}}
+decision = {'alternatives': [], 'cpm': {'critical_tasks': ['t1'], 'project_duration': 2.0}, 'nextAgentId': 'executor', 'nextTaskId': 't1', ...}
+execution = {'agent_id': 'executor', 'error': None, 'metrics': {'framework_used': 'native', 'latency_ms': 0.10180473327636719, 'tokens': 0}, 'output': {'content': 'execution output'}, ...}
+evaluation = {'notes': 'Execution completed and evaluated.', 'quality_score': 0.56, 'status': 'completed'}
+
+    def _trigger_platforms(
+        self,
+        payload: Dict[str, Any],
+        decision: Dict[str, Any],
+        execution: Dict[str, Any],
+        evaluation: Dict[str, Any],
+    ) -> Dict[str, Dict[str, Any]]:
+        integrations = payload.get("integrations", {}) or {}
+        platforms_cfg = integrations.get("platforms", {}) if isinstance(integrations, dict) else {}
+        mobile_cfg = integrations.get("mobile", {}) if isinstance(integrations, dict) else {}
+        if not isinstance(platforms_cfg, dict):
+            platforms_cfg = {}
+        if not isinstance(mobile_cfg, dict):
+            mobile_cfg = {}
+    
+        platform_enabled = bool(platforms_cfg.get("enabled", False))
+        mobile_enabled = bool(mobile_cfg.get("enabled", False))
+        enabled = platform_enabled or mobile_enabled
+        if not enabled:
+            return {}
+    
+        platform_targets = platforms_cfg.get("targets") or []
+        if not isinstance(platform_targets, list):
+            platform_targets = []
+    
+        mobile_vendors = mobile_cfg.get("vendors") or []
+        if not isinstance(mobile_vendors, list):
+            mobile_vendors = []
+>       mobile_targets = self._platform_hub.resolve_mobile_targets(mobile_vendors)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'FakePlatformHub' object has no attribute 'resolve_mobile_targets'
+
+agentarmy-dashboard\orchestration\job_runner.py:204: AttributeError
+_ LifecycleManagerTest.test_human_approved_evolution_requires_privileged_actor _
+
+self = <orchestration.test_lifecycle_manager.LifecycleManagerTest testMethod=test_human_approved_evolution_requires_privileged_actor>
+
+    def test_human_approved_evolution_requires_privileged_actor(self):
+        proposed = AgentVersion(
+            tools=["shell"],
+            safety_posture=SafetyPosture.RELAXED,
+            risk_level=RiskLevel.HIGH,
+            qb_efficiency=1.0,
+            specialization_tags=["executor"],
+        )
+        with self.assertRaises(ValueError):
+>           self.mgr.evolve_agent(self.agent.agent_id, proposed, actor="user:dev", human_approved=True)
+
+agentarmy-dashboard\orchestration\test_lifecycle_manager.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def evolve_agent(
+        self,
+        agent_id: str,
+        proposed_version: AgentVersion,
+        actor: str = "system",
+        human_approved: bool = False,
+    ) -> Tuple[ManagedAgent, LifecycleEvent, GovernanceDecision]:
+        agent = self.agents[agent_id]
+        prev = self._snapshot(agent)
+    
+        if agent.frozen:
+            raise ValueError(f"Agent {agent_id} is frozen ù cannot evolve")
+    
+        decision = self._check_safety(agent, proposed_version, "evolution")
+>       if human_approved and not self._is_privileged_actor(actor):
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'LifecycleManager' object has no attribute '_is_privileged_actor'
+
+agentarmy-dashboard\orchestration\lifecycle_manager.py:437: AttributeError
+__________ LifecycleManagerTest.test_unfreeze_requires_frozen_stage ___________
+
+self = <orchestration.test_lifecycle_manager.LifecycleManagerTest testMethod=test_unfreeze_requires_frozen_stage>
+
+    def test_unfreeze_requires_frozen_stage(self):
+        with self.assertRaises(ValueError):
+            self.mgr.unfreeze_agent(self.agent.agent_id)
+        self.mgr.freeze_agent(self.agent.agent_id)
+        with self.assertRaises(ValueError):
+>           self.mgr.unfreeze_agent(self.agent.agent_id, actor="user")
+
+agentarmy-dashboard\orchestration\test_lifecycle_manager.py:27: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def unfreeze_agent(self, agent_id: str, actor: str = "user") -> LifecycleEvent:
+        agent = self.agents[agent_id]
+        prev = self._snapshot(agent)
+        self._ensure_stage(agent, [LifecycleStage.FROZEN], "unfreeze")
+        if agent.governance_required:
+>           self._require_privileged_actor(actor, "unfreeze")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'LifecycleManager' object has no attribute '_require_privileged_actor'
+
+agentarmy-dashboard\orchestration\lifecycle_manager.py:683: AttributeError
+______ LifecycleManagerTest.test_unlock_tools_requires_privileged_actor _______
+
+self = <orchestration.test_lifecycle_manager.LifecycleManagerTest testMethod=test_unlock_tools_requires_privileged_actor>
+
+    def test_unlock_tools_requires_privileged_actor(self):
+        self.mgr.lock_tools(self.agent.agent_id)
+        with self.assertRaises(ValueError):
+>           self.mgr.unlock_tools(self.agent.agent_id, actor="user")
+
+agentarmy-dashboard\orchestration\test_lifecycle_manager.py:44: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def unlock_tools(self, agent_id: str, actor: str = "user") -> LifecycleEvent:
+        agent = self.agents[agent_id]
+        prev = self._snapshot(agent)
+>       self._require_privileged_actor(actor, "unlock_tools")
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'LifecycleManager' object has no attribute '_require_privileged_actor'
+
+agentarmy-dashboard\orchestration\lifecycle_manager.py:747: AttributeError
+============================== warnings summary ===============================
+agentarmy-dashboard/orchestration/test_competition_arena.py::CompetitionArenaTest::test_invalid_inputs_raise
+  \\wsl.localhost\kali-linux\home\gregretom\agentarmy\agentarmy-dashboard\orchestration\test_competition_arena.py:62: RuntimeWarning: coroutine 'CompetitionArena.launch_competition' was never awaited
+    arena.launch_competition("", [], lambda _: {}, rounds=1)
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+agentarmy-dashboard/orchestration/test_competition_arena.py::CompetitionArenaTest::test_safety_gate_blocks_agent
+  \\wsl.localhost\kali-linux\home\gregretom\agentarmy\agentarmy-dashboard\orchestration\test_competition_arena.py:38: RuntimeWarning: coroutine 'CompetitionArena.launch_competition' was never awaited
+    arena.launch_competition("gated", agents, task, rounds=1, safety_gate=gate)
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED agentarmy-dashboard/orchestration/test_competition_arena.py::CompetitionArenaTest::test_invalid_inputs_raise
+FAILED agentarmy-dashboard/orchestration/test_competition_arena.py::CompetitionArenaTest::test_launch_and_leaderboard
+FAILED agentarmy-dashboard/orchestration/test_competition_arena.py::CompetitionArenaTest::test_safety_gate_blocks_agent
+FAILED agentarmy-dashboard/orchestration/test_competition_arena.py::CompetitionArenaTest::test_task_error_does_not_crash_competition
+FAILED agentarmy-dashboard/orchestration/test_job_runner.py::test_job_runner_dispatches_platform_integrations
+FAILED agentarmy-dashboard/orchestration/test_job_runner.py::test_job_runner_dispatches_mobile_vendor_targets
+FAILED agentarmy-dashboard/orchestration/test_lifecycle_manager.py::LifecycleManagerTest::test_human_approved_evolution_requires_privileged_actor
+FAILED agentarmy-dashboard/orchestration/test_lifecycle_manager.py::LifecycleManagerTest::test_unfreeze_requires_frozen_stage
+FAILED agentarmy-dashboard/orchestration/test_lifecycle_manager.py::LifecycleManagerTest::test_unlock_tools_requires_privileged_actor
+================== 9 failed, 95 passed, 2 warnings in 22.26s ==================

@@ -1,0 +1,9 @@
+#! dashboard-C:\Users\gregr\Documents\agentarmy\dashboard-persistentVolumeClaim.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: dashboard-c--users-gregr-documents-agentarmy-dashboard
+    namespace: agentarmy
+spec:
+    storageClassName: "hostpath" # see docker/desktop-storage-provisioner

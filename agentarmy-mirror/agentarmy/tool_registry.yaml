@@ -1,0 +1,389 @@
+# Tool registry listing integrated models and metadata
+# Add or update entries here; adapters should reference 'id' and 'api_env_var'
+
+- id: openai-gpt
+  name: OpenAI GPT (chat/completions)
+  type: llm
+  capabilities:
+    - chat
+    - code
+    - summarization
+  api_env_var: OPENAI_API_KEY
+  endpoint: https://api.openai.com/v1/chat/completions
+  cost_per_1k_tokens_usd: 0.02
+  latency_ms_estimate: 200
+  reliability: high
+
+- id: anthropic-claude
+  name: Anthropic Claude
+  type: llm
+  capabilities:
+    - chat
+    - instruction
+  api_env_var: ANTHROPIC_API_KEY
+  endpoint: https://api.anthropic.com/v1/complete
+  cost_per_1k_tokens_usd: 0.03
+  latency_ms_estimate: 250
+  reliability: high
+
+- id: google-gemini
+  name: Google Gemini
+  type: llm
+  capabilities:
+    - chat
+    - reasoning
+  api_env_var: GOOGLE_API_KEY
+  endpoint: https://api.generativeai.google/v1beta2
+  cost_per_1k_tokens_usd: 0.025
+  latency_ms_estimate: 220
+  reliability: high
+
+- id: stable-diffusion
+  name: Stable Diffusion (image-gen)
+  type: image
+  capabilities:
+    - image-generation
+  api_env_var: STABLE_DIFFUSION_API_KEY
+  endpoint: https://api.stablediffusion.example/v1/generate
+  cost_per_image_usd: 0.08
+  latency_ms_estimate: 1500
+  reliability: medium
+
+- id: clip-vision
+  name: CLIP (image understanding)
+  type: vision
+  capabilities:
+    - image-embedding
+    - image-classification
+  api_env_var: CLIP_API_KEY
+  endpoint: https://api.clip.example/v1/encode
+  cost_per_1k_images_usd: 0.005
+  latency_ms_estimate: 300
+  reliability: medium
+
+- id: local-llama
+  name: Local LLaMA (ggml)
+  type: llm
+  capabilities:
+    - chat
+    - local-hosted
+  api_env_var: LOCAL_LLAMA_PATH
+  endpoint: file://{LOCAL_LLAMA_PATH}
+  cost_per_1k_tokens_usd: 0.0
+  latency_ms_estimate: 500
+  reliability: variable
+
+- id: n8n-webhook
+  name: n8n Webhook Automation
+  type: integration
+  capabilities:
+    - workflow-automation
+    - webhook
+    - claudebot
+  api_env_var: N8N_WEBHOOK_URL
+  endpoint: ${N8N_WEBHOOK_URL}
+  cost_per_call_usd: 0.001
+  latency_ms_estimate: 1000
+  reliability: medium
+
+- id: framework-langgraph
+  name: LangGraph Agent Runtime
+  type: framework
+  capabilities:
+    - orchestration
+    - state-graph
+    - multi-agent
+  api_env_var: LANGGRAPH_ENABLED
+  endpoint: python://langgraph
+  cost_per_call_usd: 0.0
+  latency_ms_estimate: 300
+  reliability: medium
+
+- id: framework-crewai
+  name: CrewAI Agent Runtime
+  type: framework
+  capabilities:
+    - orchestration
+    - crew
+    - multi-agent
+  api_env_var: CREWAI_ENABLED
+  endpoint: python://crewai
+  cost_per_call_usd: 0.0
+  latency_ms_estimate: 300
+  reliability: medium
+
+- id: framework-smolagents
+  name: SmolAgents Runtime
+  type: framework
+  capabilities:
+    - tool-agent
+    - coding-agent
+    - lightweight
+  api_env_var: SMOLAGENTS_ENABLED
+  endpoint: python://smolagents
+  cost_per_call_usd: 0.0
+  latency_ms_estimate: 250
+  reliability: medium
+
+- id: framework-autogen
+  name: AutoGen Runtime
+  type: framework
+  capabilities:
+    - group-chat
+    - multi-agent
+    - planning
+  api_env_var: AUTOGEN_ENABLED
+  endpoint: python://autogen
+  cost_per_call_usd: 0.0
+  latency_ms_estimate: 320
+  reliability: medium
+
+- id: platform-agentforce-360
+  name: Agentforce 360
+  type: integration
+  capabilities: [agent-platform, workflow-dispatch]
+  api_env_var: AGENTFORCE_360_WEBHOOK_URL
+  endpoint: ${AGENTFORCE_360_WEBHOOK_URL}
+  cost_per_call_usd: 0.002
+  latency_ms_estimate: 1500
+  reliability: medium
+
+- id: platform-microsoft-copilot-studio
+  name: Microsoft Copilot Studio
+  type: integration
+  capabilities: [agent-platform, workflow-dispatch]
+  api_env_var: MICROSOFT_COPILOT_STUDIO_WEBHOOK_URL
+  endpoint: ${MICROSOFT_COPILOT_STUDIO_WEBHOOK_URL}
+  cost_per_call_usd: 0.002
+  latency_ms_estimate: 1500
+  reliability: medium
+
+- id: platform-ibm-watsonx-assistant
+  name: IBM watsonx Assistant
+  type: integration
+  capabilities: [agent-platform, workflow-dispatch]
+  api_env_var: IBM_WATSONX_ASSISTANT_WEBHOOK_URL
+  endpoint: ${IBM_WATSONX_ASSISTANT_WEBHOOK_URL}
+  cost_per_call_usd: 0.002
+  latency_ms_estimate: 1500
+  reliability: medium
+
+- id: platform-openai-codex
+  name: OpenAI Codex
+  type: integration
+  capabilities: [coding-agent, workflow-dispatch]
+  api_env_var: OPENAI_CODEX_WEBHOOK_URL
+  endpoint: ${OPENAI_CODEX_WEBHOOK_URL}
+  cost_per_call_usd: 0.002
+  latency_ms_estimate: 1500
+  reliability: medium
+
+- id: platform-roo-code
+  name: Roo Code
+  type: integration
+  capabilities: [coding-agent, local-automation]
+  api_env_var: ROO_CODE_WEBHOOK_URL
+  endpoint: ${ROO_CODE_WEBHOOK_URL}
+  cost_per_call_usd: 0.0
+  latency_ms_estimate: 1200
+  reliability: medium
+
+- id: platform-google-jules
+  name: Google Jules
+  type: integration
+  capabilities: [coding-agent, workflow-dispatch]
+  api_env_var: GOOGLE_JULES_WEBHOOK_URL
+  endpoint: ${GOOGLE_JULES_WEBHOOK_URL}
+  cost_per_call_usd: 0.002
+  latency_ms_estimate: 1500
+  reliability: medium
+
+- id: platform-hashbrown
+  name: Hashbrown
+  type: integration
+  capabilities: [browser-agent, frontend-automation]
+  api_env_var: HASHBROWN_WEBHOOK_URL
+  endpoint: ${HASHBROWN_WEBHOOK_URL}
+  cost_per_call_usd: 0.001
+  latency_ms_estimate: 1200
+  reliability: medium
+
+- id: platform-project-astra
+  name: Project Astra
+  type: integration
+  capabilities: [multimodal, realtime-assistant]
+  api_env_var: PROJECT_ASTRA_WEBHOOK_URL
+  endpoint: ${PROJECT_ASTRA_WEBHOOK_URL}
+  cost_per_call_usd: 0.003
+  latency_ms_estimate: 1700
+  reliability: medium
+
+- id: platform-yellow-ai
+  name: Yellow.ai
+  type: integration
+  capabilities: [conversational-automation, multilingual]
+  api_env_var: YELLOW_AI_WEBHOOK_URL
+  endpoint: ${YELLOW_AI_WEBHOOK_URL}
+  cost_per_call_usd: 0.002
+  latency_ms_estimate: 1500
+  reliability: medium
+
+- id: platform-moveworks
+  name: Moveworks
+  type: integration
+  capabilities: [employee-support, automation]
+  api_env_var: MOVEWORKS_WEBHOOK_URL
+  endpoint: ${MOVEWORKS_WEBHOOK_URL}
+  cost_per_call_usd: 0.002
+  latency_ms_estimate: 1500
+  reliability: medium
+
+- id: platform-aws-q-dev
+  name: AWS Q Dev
+  type: integration
+  capabilities: [cloud-automation, diagnostics]
+  api_env_var: AWS_Q_DEV_WEBHOOK_URL
+  endpoint: ${AWS_Q_DEV_WEBHOOK_URL}
+  cost_per_call_usd: 0.002
+  latency_ms_estimate: 1600
+  reliability: medium
+
+- id: platform-sap-joule
+  name: SAP Joule
+  type: integration
+  capabilities: [erp-automation, approvals]
+  api_env_var: SAP_JOULE_WEBHOOK_URL
+  endpoint: ${SAP_JOULE_WEBHOOK_URL}
+  cost_per_call_usd: 0.002
+  latency_ms_estimate: 1500
+  reliability: medium
+
+- id: platform-apple-mobile
+  name: Apple Mobile Ecosystem
+  type: integration
+  capabilities: [mobile, ios, app-distribution, workflow-dispatch]
+  api_env_var: APPLE_MOBILE_WEBHOOK_URL
+  endpoint: ${APPLE_MOBILE_WEBHOOK_URL}
+  cost_per_call_usd: 0.002
+  latency_ms_estimate: 1500
+  reliability: medium
+
+- id: platform-samsung-mobile
+  name: Samsung Mobile Ecosystem
+  type: integration
+  capabilities: [mobile, galaxy, app-distribution, workflow-dispatch]
+  api_env_var: SAMSUNG_MOBILE_WEBHOOK_URL
+  endpoint: ${SAMSUNG_MOBILE_WEBHOOK_URL}
+  cost_per_call_usd: 0.002
+  latency_ms_estimate: 1500
+  reliability: medium
+
+- id: platform-google-mobile
+  name: Google Mobile Ecosystem
+  type: integration
+  capabilities: [mobile, android, play-store, workflow-dispatch]
+  api_env_var: GOOGLE_MOBILE_WEBHOOK_URL
+  endpoint: ${GOOGLE_MOBILE_WEBHOOK_URL}
+  cost_per_call_usd: 0.002
+  latency_ms_estimate: 1500
+  reliability: medium
+
+- id: platform-amazon-mobile
+  name: Amazon Mobile Ecosystem
+  type: integration
+  capabilities: [mobile, appstore, workflow-dispatch]
+  api_env_var: AMAZON_MOBILE_WEBHOOK_URL
+  endpoint: ${AMAZON_MOBILE_WEBHOOK_URL}
+  cost_per_call_usd: 0.002
+  latency_ms_estimate: 1500
+  reliability: medium
+
+- id: plugin-ios-bridge
+  name: AgentArmy iOS Bridge Plugin
+  type: mobile-plugin
+  capabilities: [mobile, ios, download]
+  api_env_var: APPLE_MOBILE_WEBHOOK_URL
+  endpoint: https://apps.apple.com/
+  cost_per_call_usd: 0.0
+  latency_ms_estimate: 200
+  reliability: high
+
+- id: plugin-galaxy-bridge
+  name: AgentArmy Galaxy Bridge Plugin
+  type: mobile-plugin
+  capabilities: [mobile, samsung, download]
+  api_env_var: SAMSUNG_MOBILE_WEBHOOK_URL
+  endpoint: https://galaxystore.samsung.com/
+  cost_per_call_usd: 0.0
+  latency_ms_estimate: 200
+  reliability: high
+
+- id: plugin-android-bridge
+  name: AgentArmy Android Bridge Plugin
+  type: mobile-plugin
+  capabilities: [mobile, android, download]
+  api_env_var: GOOGLE_MOBILE_WEBHOOK_URL
+  endpoint: https://play.google.com/store
+  cost_per_call_usd: 0.0
+  latency_ms_estimate: 200
+  reliability: high
+
+- id: plugin-fire-bridge
+  name: AgentArmy Fire Bridge Plugin
+  type: mobile-plugin
+  capabilities: [mobile, amazon, download]
+  api_env_var: AMAZON_MOBILE_WEBHOOK_URL
+  endpoint: https://www.amazon.com/mobile-apps
+  cost_per_call_usd: 0.0
+  latency_ms_estimate: 200
+  reliability: high
+
+- id: integration-ssh-ops
+  name: SSH Operations Integration
+  type: integration
+  capabilities: [ssh, terminal, remote-access, hardening]
+  api_env_var: SSH_OPS_ENABLED
+  endpoint: internal://ssh/plan
+  cost_per_call_usd: 0.0
+  latency_ms_estimate: 150
+  reliability: high
+
+- id: integration-sftp-gateway
+  name: SFTP Gateway Integration
+  type: integration
+  capabilities: [sftp, file-transfer, secure-ingest]
+  api_env_var: SFTP_GATEWAY_URL
+  endpoint: ${SFTP_GATEWAY_URL}
+  cost_per_call_usd: 0.001
+  latency_ms_estimate: 300
+  reliability: medium
+
+- id: platform-3cx-communications
+  name: 3CX Communications
+  type: integration
+  capabilities: [voice, telephony, communication, workflow-dispatch]
+  api_env_var: THREECX_PHONE_WEBHOOK_URL
+  endpoint: ${THREECX_PHONE_WEBHOOK_URL}
+  cost_per_call_usd: 0.001
+  latency_ms_estimate: 600
+  reliability: medium
+
+- id: platform-claude-channel
+  name: Claude Channel
+  type: integration
+  capabilities: [llm, assistant, communication]
+  api_env_var: CLAUDE_CHANNEL_WEBHOOK_URL
+  endpoint: ${CLAUDE_CHANNEL_WEBHOOK_URL}
+  cost_per_call_usd: 0.001
+  latency_ms_estimate: 500
+  reliability: medium
+
+- id: platform-copilot-channel
+  name: Copilot Channel
+  type: integration
+  capabilities: [assistant, communication, workflow-dispatch]
+  api_env_var: COPILOT_CHANNEL_WEBHOOK_URL
+  endpoint: ${COPILOT_CHANNEL_WEBHOOK_URL}
+  cost_per_call_usd: 0.001
+  latency_ms_estimate: 500
+  reliability: medium

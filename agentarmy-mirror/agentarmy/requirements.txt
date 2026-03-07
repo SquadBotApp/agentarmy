@@ -1,0 +1,14 @@
+Flask
+requests
+aiohttp
+pytest
+pytest-asyncio
+scikit-optimize
+pydantic
+ruff
+pyright
+numpy
+scipy
+scikit-learn
+PyYAML
+uvicorn

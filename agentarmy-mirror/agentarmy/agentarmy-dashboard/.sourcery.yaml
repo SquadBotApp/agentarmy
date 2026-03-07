@@ -1,0 +1,16 @@
+# Sourcery configuration — AgentArmy Dashboard
+# https://docs.sourcery.ai/Configuration/
+
+version: '1'
+
+rule_settings:
+  enable:
+    - default
+  disable:
+    # Phantom propagation: flagged on every line in kernelStore.ts despite no
+    # .slice() calls existing in that file. All .slice(0, N) in subsystem
+    # files are intentional (top-N). Silences ~20 false-positive hints.
+    - remove-redundant-slice-index
+    # Phantom propagation on symbolicInterpretation.ts: flags every filter/some
+    # call as "Remove unnecessary boolean value" despite correct usage.
+    - remove-unnecessary-cast

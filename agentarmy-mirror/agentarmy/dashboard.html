@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Army - Live Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --accent-primary: #58a6ff;
+            --accent-secondary: #7ee787;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --border: #30363d;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 1rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-secondary);
+        }
+
+        .status-light {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: #f85149;
+            /* Red for disconnected */
+            box-shadow: 0 0 8px #f85149;
+            transition: background-color 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        .status-light.connected {
+            background-color: var(--accent-secondary);
+            box-shadow: 0 0 8px var(--accent-secondary);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            color: var(--accent-primary);
+        }
+
+        .count {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        li {
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        li:last-child {
+            border-bottom: none;
+        }
+
+        #log-card pre {
+            background-color: var(--bg-primary);
+            padding: 1rem;
+            border-radius: 6px;
+            height: 300px;
+            overflow-y: scroll;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Agent Army - Live Dashboard</h1>
+        <div class="status-light" id="status-light" title="Connection Status"></div>
+    </header>
+    <main>
+        <div class="grid-container">
+            <div class="card" id="agents-card">
+                <h2>Agents</h2>
+                <div id="agent-count" class="count">0</div>
+                <ul id="agent-list"></ul>
+            </div>
+            <div class="card" id="tasks-card">
+                <h2>Pending Tasks</h2>
+                <div id="task-count" class="count">0</div>
+                <ul id="task-list"></ul>
+            </div>
+        </div>
+        <div class="card" id="log-card">
+            <h2>Live Log</h2>
+            <pre id="log-output"></pre>
+        </div>
+    </main>
+    <canvas id="matrix"
+        style="position:fixed; top:0; left:0; z-index:-1; width:100%; height:100%; opacity: 0.05; pointer-events: none;"></canvas>
+    <script>
+        const statusLight = document.getElementById('status-light');
+
+        // Matrix Rain Effect
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(13, 17, 23, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
+            for (let i = 0; i < drops.length; i++) {
+                const text = letters.charAt(Math.floor(Math.random() * letters.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 33);
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+
+        const agentCountEl = document.getElementById('agent-count');
+        const agentListEl = document.getElementById('agent-list');
+        const taskCountEl = document.getElementById('task-count');
+        const taskListEl = document.getElementById('task-list');
+        const logOutputEl = document.getElementById('log-output');
+
+        async function fetchState() {
+            try {
+                const response = await fetch('/state');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const state = await response.json();
+                updateUI(state);
+                statusLight.classList.add('connected');
+                statusLight.title = 'Connected';
+            } catch (error) {
+                console.error('Failed to fetch state:', error);
+                statusLight.classList.remove('connected');
+                statusLight.title = 'Disconnected';
+            }
+        }
+
+        function updateUI(state) {
+            // Update Agents
+            agentCountEl.textContent = state.agents.length;
+            agentListEl.innerHTML = state.agents.map(agent => `<li>${agent}</li>`).join('');
+
+            // Update Tasks
+            taskCountEl.textContent = state.tasks.length;
+            taskListEl.innerHTML = state.tasks.map(task => `<li>${task}</li>`).join('');
+
+            // Update Log
+            logOutputEl.textContent = state.log.join('\n');
+            // Auto-scroll to the bottom of the log
+            logOutputEl.scrollTop = logOutputEl.scrollHeight;
+        }
+
+        // Fetch state every 2 seconds
+        setInterval(fetchState, 2000);
+
+        // Initial fetch
+        fetchState();
+    </script>
+</body>
+
+</html>

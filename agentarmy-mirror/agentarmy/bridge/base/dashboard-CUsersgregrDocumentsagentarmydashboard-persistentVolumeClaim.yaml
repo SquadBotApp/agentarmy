@@ -1,0 +1,18 @@
+#! dashboard-C:\Users\gregr\Documents\agentarmy\dashboard-persistentVolumeClaim.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: dashboard-c--users-gregr-documents-agentarmy-dashboard
+    namespace: agentarmy
+    labels:
+        com.docker.compose.service: dashboard
+        com.docker.compose.volume: C:\Users\gregr\Documents\agentarmy\dashboard
+spec:
+    accessModes:
+        # TODO would need to check which services use this volume
+        - ReadWriteOnce
+    volumeMode: Filesystem
+    resources:
+        requests:
+            storage: 100Mi

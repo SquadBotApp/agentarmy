@@ -19,6 +19,26 @@ from langgraph.checkpoint.memory import MemorySaver
 from state import SpaceState, create_initial_state
 from nodes.telemetry import ingest_telemetry
 from nodes.analyzer import analyze
+try:
+    from nodes.power_analyzer import power_analyze
+    from nodes.science_analyzer import science_analyze
+    from nodes.logistics_analyzer import logistics_analyze
+except ImportError:
+    import importlib.util, sys, os
+    base = os.path.dirname(__file__)
+    sys.path.insert(0, base)
+    power_analyzer = importlib.util.spec_from_file_location("power_analyzer", os.path.join(base, "nodes", "power_analyzer.py"))
+    power_mod = importlib.util.module_from_spec(power_analyzer)
+    power_analyzer.loader.exec_module(power_mod)
+    power_analyze = power_mod.power_analyze
+    science_analyzer = importlib.util.spec_from_file_location("science_analyzer", os.path.join(base, "nodes", "science_analyzer.py"))
+    science_mod = importlib.util.module_from_spec(science_analyzer)
+    science_analyzer.loader.exec_module(science_mod)
+    science_analyze = science_mod.science_analyze
+    logistics_analyzer = importlib.util.spec_from_file_location("logistics_analyzer", os.path.join(base, "nodes", "logistics_analyzer.py"))
+    logistics_mod = importlib.util.module_from_spec(logistics_analyzer)
+    logistics_analyzer.loader.exec_module(logistics_mod)
+    logistics_analyze = logistics_mod.logistics_analyze
 from nodes.human_approval import request_human_approval, process_human_response
 from nodes.executor import execute_action, create_execution_report
 
@@ -39,15 +59,21 @@ def create_space_agent(station_type: str = "generic", simulation_mode: bool = Tr
     
     # Add nodes
     graph.add_node("ingest", lambda state: {**state, **ingest_telemetry({**state, "station_type": station_type, "simulation_mode": simulation_mode})})
-    graph.add_node("analyze", analyze)
+    # Multi-agent analyzers
+    def multi_analyze(state):
+        # Run all analyzers and aggregate results
+        base = analyze(state)
+        power = power_analyze(state)
+        science = science_analyze(state)
+        logistics = logistics_analyze(state)
+        return {**state, **base, **power, **science, **logistics}
+    graph.add_node("analyze", multi_analyze)
     graph.add_node("human_approval", request_human_approval)
     graph.add_node("execute", execute_action)
-    
     # Define the flow
     graph.add_edge(START, "ingest")
     graph.add_edge("ingest", "analyze")
     graph.add_edge("analyze", "human_approval")
-    
     # Conditional edge: execute only if approved
     graph.add_conditional_edges(
         "human_approval",
