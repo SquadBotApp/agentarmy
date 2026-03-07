@@ -5,21 +5,70 @@ services:
       - \ 6379:6379\
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: [\CMD\, \redis-cli\, \ping\]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   backend:
     build: .
+    command: python main.py
     ports:
       - \5001:5001\
+    volumes:
+      - .:/app
     environment:
+      - MODELSLAB_API_KEY=\
+      - OPENAI_API_KEY=\
+      - ANTHROPIC_API_KEY=\
+      - PYTHONUNBUFFERED=1
       - REDIS_URL=redis://redis:6379/0
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  dashboard:
+    build: ./dashboard
+    command: node server.js
+    ports:
+      - \3000:3000\
+    environment:
+      - NODE_ENV=development
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+
   spaceos-agent:
     build: ./space_hitl_agent
+    command: python main.py --station haven-1
     ports:
       - \7860:7860\
+    volumes:
+      - ./space_hitl_agent:/app
     environment:
+      - PYTHONUNBUFFERED=1
+      - REDIS_URL=redis://redis:6379/0
+      - STATION_TYPE=haven-1
+    depends_on:
+      redis:
+        condition: service_healthy
+    profiles:
+      - spaceos
+
+  tests:
+    build: .
+    command: pytest -v --tb=short
+    environment:
+      - PYTHONUNBUFFERED=1
       - REDIS_URL=redis://redis:6379/0
     depends_on:
+      - backend
       - redis
+    profiles:
+      - test
+
 volumes:
   redis_data:
