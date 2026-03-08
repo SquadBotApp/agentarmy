@@ -128,7 +128,10 @@ class Orchestrator:
                 else:
                     num_to_add = num_to_add_base
 
-            # Now num_to_add is always defined (0 or a real value)
+            # Ensure num_to_add is always an integer (not a MagicMock)
+            num_to_add = int(num_to_add) if not hasattr(num_to_add, '__mock_name__') else 0
+            
+            # Now num_to_add is guaranteed to be a proper integer
             if num_to_add > 0:
                 self._add_log(f"ATOM BOMB STRATEGY: Army expanding by {num_to_add} agents! 💥")
                 for i in range(num_to_add):
