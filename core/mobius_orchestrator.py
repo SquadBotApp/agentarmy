@@ -1,9 +1,10 @@
 import logging
 from typing import List
 import asyncio
+import uuid
 
 from .contracts import TaskResult, SimulationMetrics
-from .providers.router import ProviderRouter
+from .providers.router import ProviderRouter, ProviderRequest
 
 logger = logging.getLogger(__name__)
 
@@ -43,22 +44,25 @@ class MobiusOrchestrator:
         async def execute_task(task_name: str, agent_name: str) -> TaskResult:
             # Try to use the provider router to execute the task
             try:
-                # Call the provider router directly
-                response = await self.provider_router.choose_and_call(
-                    task_name=task_name,
-                    prompt=task_name,
-                    agent_name=agent_name
+                # Create a proper ProviderRequest object
+                request = ProviderRequest(
+                    task_id=str(uuid.uuid4()),
+                    prompt=task_name
                 )
+                
+                # Call the provider router and unpack the tuple response
+                provider, response = await self.provider_router.choose_and_call(request)
+                
                 # Convert ProviderResponse to TaskResult if response exists
                 if response:
                     return TaskResult(
                         task_name=task_name,
                         status='completed',
                         metrics=SimulationMetrics(
-                            accuracy=0.8,  # Default accuracy
-                            latency_ms=getattr(response, 'latency_ms', 0)
+                            accuracy=0.8  # Default accuracy
                         ),
-                        cost_usd=getattr(response, 'cost', 0.0)
+                        cost_usd=getattr(response, 'cost', 0.0),
+                        provider_name=provider.name if provider else None
                     )
                 else:
                     return TaskResult(

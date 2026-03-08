@@ -1,8 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock
 from core.mobius_orchestrator import MobiusOrchestrator
-from core.providers.router import ProviderRouter
-from core.providers.base import ProviderResponse
+from core.providers.router import ProviderRouter, ProviderResponse
 
 @pytest.fixture
 def mock_provider_router():
@@ -39,10 +38,15 @@ async def test_execution_phase_successful(mock_provider_router):
     mobius = MobiusOrchestrator(agents=["agent_1"], provider_router=mock_provider_router)
     plan = ["task_alpha", "task_beta"]
     
-    # Configure the mock router to return predictable async results
+    # Create mock provider with proper name attribute
+    mock_provider = MagicMock()
+    mock_provider.name = "test_provider"
+    
+    # Configure the mock router to return tuples (provider, response)
+    # This matches the actual return type of ProviderRouter.choose_and_call()
     mock_provider_router.choose_and_call.side_effect = [
-        ProviderResponse(output="res1", tokens_used=1, latency_ms=100, cost=0.001),
-        ProviderResponse(output="res2", tokens_used=1, latency_ms=120, cost=0.002),
+        (mock_provider, ProviderResponse(output="res1", tokens_used=1, latency_ms=100, cost=0.001, success=True)),
+        (mock_provider, ProviderResponse(output="res2", tokens_used=1, latency_ms=120, cost=0.002, success=True)),
     ]
 
     results = await mobius.execution_phase(plan)

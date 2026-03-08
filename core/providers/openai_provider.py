@@ -1,13 +1,20 @@
 
+"""
+OpenAI Provider - Standalone implementation
+"""
+
 from .base import Provider, ProviderRequest, ProviderResponse
 import time
 
-class OpenAIProvider:
+
+class OpenAIProvider(Provider):
+    """OpenAI API provider implementation"""
     name = "openai"
 
     def __init__(self, api_key=None):
+        super().__init__("openai", api_key)
         self.client = None
-        self.api_key = api_key
+        self.model = "gpt-4"
 
     def get_client(self):
         if self.client is None:
@@ -16,18 +23,31 @@ class OpenAIProvider:
             self.client = object()  # Placeholder for mock client
         return self.client
 
-    async def call(self, req: ProviderRequest) -> ProviderResponse:
+    async def generate(self, request: ProviderRequest) -> ProviderResponse:
+        """Generate response using OpenAI API"""
+        
         client = self.get_client()
-        # Simulate OpenAI call
-        start = time.time()
-        # ... real OpenAI API call would go here using `client` ...
-        output = f"[OpenAI] {req.prompt}"
-        latency = int((time.time() - start) * 1000)
-        return ProviderResponse(
-            output=output,
-            tokens_in=len(req.prompt.split()),
-            tokens_out=len(output.split()),
-            latency_ms=latency,
-            cost_usd=0.001,
-            raw={"provider": "openai"}
-        )
+        
+        start_time = time.time()
+        
+        try:
+            # Simulate OpenAI call
+            output = f"[OpenAI] {request.prompt}"
+            latency_ms = (time.time() - start_time) * 1000
+            tokens_used = len(request.prompt.split()) + len(output.split())
+            
+            return ProviderResponse(
+                provider_name=self.name,
+                output=output,
+                tokens_used=tokens_used,
+                latency_ms=latency_ms,
+                cost=0.001,
+                success=True
+            )
+        except Exception as e:
+            return ProviderResponse(
+                provider_name=self.name,
+                output="",
+                success=False,
+                error=str(e)
+            )
