@@ -1,0 +1,267 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\gregr\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\gregr\Documents\agentarmy
+configfile: pytest.ini
+plugins: anyio-4.12.1, langsmith-0.7.14, asyncio-1.3.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 199 items
+
+tests/test_agentarmy_e2e.py::test_agentarmy_e2e FAILED                   [  0%]
+tests/test_api_smoke.py::test_api_provider_smoke SKIPPED (API server...) [  1%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_assistant_initialization PASSED [  1%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_create_assistant_factory PASSED [  2%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_get_status PASSED  [  2%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_send_email_without_config PASSED [  3%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_check_replies_without_config PASSED [  3%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_hunt_cofounders PASSED [  4%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_coach_analyze PASSED [  4%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_coach_generate_strategy PASSED [  5%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_coach_refine PASSED [  5%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_generate_pitch_deck PASSED [  6%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_generate_video_short PASSED [  6%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_post_social PASSED [  7%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_mass_post PASSED   [  7%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_find_investors PASSED [  8%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_generate_investor_outreach PASSED [  8%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_process_cofounder_request PASSED [  9%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_process_pitch_request PASSED [  9%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_process_video_request PASSED [ 10%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_process_social_request PASSED [ 10%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_process_investor_request PASSED [ 11%]
+tests/test_assistant.py::TestAgentArmyAssistant::test_process_unknown_request PASSED [ 11%]
+tests/test_assistant.py::test_email_reply_dataclass PASSED               [ 12%]
+tests/test_assistant.py::test_reply_assessment_dataclass PASSED          [ 12%]
+tests/test_assistant.py::test_cofounder_candidate_dataclass PASSED       [ 13%]
+tests/test_assistant.py::test_investor_dataclass PASSED                  [ 13%]
+tests/test_assistant.py::test_post_dataclass PASSED                      [ 14%]
+tests/test_assistant.py::test_reply_importance_enum PASSED               [ 14%]
+tests/test_assistant.py::test_social_platform_enum PASSED                [ 15%]
+tests/test_assistant.py::test_investor_type_enum PASSED                  [ 15%]
+tests/test_cli_smoke.py::test_cli_provider_smoke PASSED                  [ 16%]
+tests/test_dashboard_smoke.py::test_dashboard_provider_smoke SKIPPED     [ 16%]
+tests/test_expansion.py::test_expansion_manager_initialization PASSED    [ 17%]
+tests/test_expansion.py::test_invalid_threshold_raises_error PASSED      [ 17%]
+tests/test_expansion.py::test_should_expand_on_good_performance PASSED   [ 18%]
+tests/test_expansion.py::test_should_not_expand_on_poor_performance FAILED [ 18%]
+tests/test_expansion.py::test_should_expand_on_exact_threshold PASSED    [ 19%]
+tests/test_expansion.py::test_expansion_cooldown_prevents_immediate_re_expansion PASSED [ 19%]
+tests/test_expansion.py::test_handles_empty_or_invalid_results FAILED    [ 20%]
+tests/test_expansion_engine.py::test_expansion_engine_initialization PASSED [ 20%]
+tests/test_expansion_engine.py::test_expansion_level_decision_excellent PASSED [ 21%]
+tests/test_expansion_engine.py::test_expansion_level_decision_good PASSED [ 21%]
+tests/test_expansion_engine.py::test_expansion_level_decision_fair PASSED [ 22%]
+tests/test_expansion_engine.py::test_expansion_level_decision_poor PASSED [ 22%]
+tests/test_expansion_engine.py::test_branch_generation PASSED            [ 23%]
+tests/test_expansion_engine.py::test_branch_diversity PASSED             [ 23%]
+tests/test_expansion_engine.py::test_branch_provider_assignment PASSED   [ 24%]
+tests/test_expansion_engine.py::test_branch_temperature_configuration PASSED [ 24%]
+tests/test_expansion_engine.py::test_collapse_merge_successful_branches PASSED [ 25%]
+tests/test_expansion_engine.py::test_collapse_merge_mixed_results PASSED [ 25%]
+tests/test_expansion_engine.py::test_voting_provider_selection PASSED    [ 26%]
+tests/test_expansion_extended.py::TestExpansionManagerBasics::test_initialization_with_defaults PASSED [ 26%]
+tests/test_expansion_extended.py::TestExpansionManagerBasics::test_initialization_with_custom_values PASSED [ 27%]
+tests/test_expansion_extended.py::TestAllSuccessProperty::test_all_success_true_when_all_success PASSED [ 27%]
+tests/test_expansion_extended.py::TestAllSuccessProperty::test_all_success_false_with_mixed_results PASSED [ 28%]
+tests/test_expansion_extended.py::TestAllSuccessProperty::test_all_success_false_when_all_failed PASSED [ 28%]
+tests/test_expansion_extended.py::TestAllSuccessProperty::test_all_success_true_for_empty_results PASSED [ 29%]
+tests/test_expansion_extended.py::TestShouldExpand::test_should_expand_true_when_all_success PASSED [ 29%]
+tests/test_expansion_extended.py::TestShouldExpand::test_should_expand_true_with_positive_average_score PASSED [ 30%]
+tests/test_expansion_extended.py::TestShouldExpand::test_should_expand_true_when_both_conditions_met PASSED [ 30%]
+tests/test_expansion_extended.py::TestShouldExpand::test_should_expand_true_with_empty_results_positive_score PASSED [ 31%]
+tests/test_expansion_extended.py::TestShouldExpand::test_should_expand_false_when_all_failed FAILED [ 31%]
+tests/test_expansion_extended.py::TestShouldExpand::test_should_expand_false_with_zero_average_score_and_empty_results PASSED [ 32%]
+tests/test_expansion_extended.py::TestShouldExpand::test_should_expand_false_with_negative_average_score_and_empty_results PASSED [ 32%]
+tests/test_expansion_extended.py::TestShouldExpand::test_should_expand_updates_results FAILED [ 33%]
+tests/test_expansion_extended.py::TestGetExpansionCount::test_expansion_count_two_when_all_success PASSED [ 33%]
+tests/test_expansion_extended.py::TestGetExpansionCount::test_expansion_count_one_when_positive_average_score_no_results FAILED [ 34%]
+tests/test_expansion_extended.py::TestGetExpansionCount::test_expansion_count_two_when_both_conditions_met FAILED [ 34%]
+tests/test_expansion_extended.py::TestGetExpansionCount::test_expansion_count_zero_when_all_failed PASSED [ 35%]
+tests/test_expansion_extended.py::TestEdgeCases::test_results_with_missing_status_attribute PASSED [ 35%]
+tests/test_expansion_extended.py::TestEdgeCases::test_results_with_none_status PASSED [ 36%]
+tests/test_expansion_extended.py::TestEdgeCases::test_mixed_status_objects PASSED [ 36%]
+tests/test_governance_safety.py::TestSelfHarmDomain::test_suicide_prompt_blocked PASSED [ 37%]
+tests/test_governance_safety.py::TestSelfHarmDomain::test_self_harm_prompt_blocked PASSED [ 37%]
+tests/test_governance_safety.py::TestSelfHarmDomain::test_suicidal_thoughts_prompt_blocked PASSED [ 38%]
+tests/test_governance_safety.py::TestSelfHarmDomain::test_eating_disorder_prompt_blocked PASSED [ 38%]
+tests/test_governance_safety.py::TestSelfHarmDomain::test_self_harm_safe_guidance_contains_crisis_line PASSED [ 39%]
+tests/test_governance_safety.py::TestSelfHarmDomain::test_self_injury_prompt_blocked PASSED [ 39%]
+tests/test_governance_safety.py::TestViolenceDomain::test_murder_prompt_blocked PASSED [ 40%]
+tests/test_governance_safety.py::TestViolenceDomain::test_weapon_prompt_blocked PASSED [ 40%]
+tests/test_governance_safety.py::TestViolenceDomain::test_assault_prompt_blocked PASSED [ 41%]
+tests/test_governance_safety.py::TestViolenceDomain::test_bomb_prompt_blocked PASSED [ 41%]
+tests/test_governance_safety.py::TestViolenceDomain::test_terrorist_prompt_blocked PASSED [ 42%]
+tests/test_governance_safety.py::TestViolenceDomain::test_shooting_prompt_blocked PASSED [ 42%]
+tests/test_governance_safety.py::TestIllegalActivitiesDomain::test_drug_manufacturing_prompt_blocked PASSED [ 43%]
+tests/test_governance_safety.py::TestIllegalActivitiesDomain::test_hacking_prompt_blocked PASSED [ 43%]
+tests/test_governance_safety.py::TestIllegalActivitiesDomain::test_fraud_prompt_blocked PASSED [ 44%]
+tests/test_governance_safety.py::TestIllegalActivitiesDomain::test_theft_prompt_blocked PASSED [ 44%]
+tests/test_governance_safety.py::TestIllegalActivitiesDomain::test_piracy_prompt_blocked PASSED [ 45%]
+tests/test_governance_safety.py::TestIllegalActivitiesDomain::test_drug_use_prompt_blocked PASSED [ 45%]
+tests/test_governance_safety.py::TestDangerousInstructionsDomain::test_explosive_prompt_blocked PASSED [ 46%]
+tests/test_governance_safety.py::TestDangerousInstructionsDomain::test_poison_prompt_blocked PASSED [ 46%]
+tests/test_governance_safety.py::TestDangerousInstructionsDomain::test_bioweapon_prompt_blocked PASSED [ 47%]
+tests/test_governance_safety.py::TestDangerousInstructionsDomain::test_chemical_weapon_prompt_blocked PASSED [ 47%]
+tests/test_governance_safety.py::TestDangerousInstructionsDomain::test_ied_prompt_blocked PASSED [ 48%]
+tests/test_governance_safety.py::TestDangerousInstructionsDomain::test_firebomb_prompt_blocked PASSED [ 48%]
+tests/test_governance_safety.py::TestDomainClassification::test_classify_self_harm PASSED [ 49%]
+tests/test_governance_safety.py::TestDomainClassification::test_classify_violence FAILED [ 49%]
+tests/test_governance_safety.py::TestDomainClassification::test_classify_illegal PASSED [ 50%]
+tests/test_governance_safety.py::TestDomainClassification::test_non_safety_content_not_classified PASSED [ 50%]
+tests/test_governance_safety.py::TestSafeContentNotBlocked::test_educational_medical_not_blocked PASSED [ 51%]
+tests/test_governance_safety.py::TestSafeContentNotBlocked::test_self_defense_not_blocked PASSED [ 51%]
+tests/test_governance_safety.py::TestSafeContentNotBlocked::test_legal_drugs_not_blocked PASSED [ 52%]
+tests/test_governance_safety.py::TestSafeContentNotBlocked::test_legal_advice_not_blocked PASSED [ 52%]
+tests/test_governance_safety.py::TestSafetyLogging::test_safety_events_logged PASSED [ 53%]
+tests/test_governance_safety.py::TestSafetyLogging::test_log_contains_domain PASSED [ 53%]
+tests/test_governance_safety.py::TestSafetyLogging::test_all_content_logged PASSED [ 54%]
+tests/test_governance_safety.py::TestSafetyEdgeCases::test_empty_task PASSED [ 54%]
+tests/test_governance_safety.py::TestSafetyEdgeCases::test_case_insensitive PASSED [ 55%]
+tests/test_governance_safety.py::TestSafetyEdgeCases::test_partial_matches PASSED [ 55%]
+tests/test_governance_safety.py::TestSafetyEdgeCases::test_combined_domains PASSED [ 56%]
+tests/test_hivemind.py::test_hive_mind_generates_tasks FAILED            [ 56%]
+tests/test_hivemind.py::test_hive_mind_falls_back_on_no_api_key PASSED   [ 57%]
+tests/test_integration_arena.py::test_integration_arena FAILED           [ 57%]
+tests/test_kernel_smoke.py::test_kernel_smoke FAILED                     [ 58%]
+tests/test_lifecycle_dashboard.py::test_lifecycle_dashboard FAILED       [ 58%]
+tests/test_medical_safety.py::TestSafeFirstAidPrompts::test_fainting_prompt_allowed PASSED [ 59%]
+tests/test_medical_safety.py::TestSafeFirstAidPrompts::test_bleeding_prompt_allowed PASSED [ 59%]
+tests/test_medical_safety.py::TestSafeFirstAidPrompts::test_chest_pain_prompt PASSED [ 60%]
+tests/test_medical_safety.py::TestSafeFirstAidPrompts::test_nosebleed_prompt_allowed PASSED [ 60%]
+tests/test_medical_safety.py::TestSafeFirstAidPrompts::test_burn_first_aid_prompt PASSED [ 61%]
+tests/test_medical_safety.py::TestSafeFirstAidPrompts::test_cpr_guidance_prompt PASSED [ 61%]
+tests/test_medical_safety.py::TestUnsafeMedicalPrompts::test_surgery_prompt_blocked PASSED [ 62%]
+tests/test_medical_safety.py::TestUnsafeMedicalPrompts::test_cutting_prompt_blocked PASSED [ 62%]
+tests/test_medical_safety.py::TestUnsafeMedicalPrompts::test_amputate_prompt_blocked PASSED [ 63%]
+tests/test_medical_safety.py::TestUnsafeMedicalPrompts::test_improvised_tools_prompt_blocked PASSED [ 63%]
+tests/test_medical_safety.py::TestUnsafeMedicalPrompts::test_home_surgery_prompt_blocked PASSED [ 64%]
+tests/test_medical_safety.py::TestUnsafeMedicalPrompts::test_tumor_prompt_blocked PASSED [ 64%]
+tests/test_medical_safety.py::TestHighRiskAmbiguousPrompts::test_collapse_prompt_triggers_conservative_reasoning PASSED [ 65%]
+tests/test_medical_safety.py::TestHighRiskAmbiguousPrompts::test_severe_pain_prompt_triggers_conservative_reasoning PASSED [ 65%]
+tests/test_medical_safety.py::TestHighRiskAmbiguousPrompts::test_confusion_prompt_triggers_conservative_reasoning PASSED [ 66%]
+tests/test_medical_safety.py::TestHighRiskAmbiguousPrompts::test_unconscious_prompt_triggers_conservative_reasoning PASSED [ 66%]
+tests/test_medical_safety.py::TestMedicalPromptClassification::test_classify_safe_first_aid PASSED [ 67%]
+tests/test_medical_safety.py::TestMedicalPromptClassification::test_classify_unsafe_procedures PASSED [ 67%]
+tests/test_medical_safety.py::TestMedicalPromptClassification::test_classify_high_risk_symptoms PASSED [ 68%]
+tests/test_medical_safety.py::TestMedicalPromptClassification::test_classify_non_medical_prompts PASSED [ 68%]
+tests/test_medical_safety.py::TestGovernanceOverride::test_unsafe_prompt_gets_safe_guidance PASSED [ 69%]
+tests/test_medical_safety.py::TestGovernanceOverride::test_safe_guidance_contains_emergency_contact PASSED [ 69%]
+tests/test_medical_safety.py::TestGovernanceOverride::test_high_risk_prompt_encourages_professional_help PASSED [ 70%]
+tests/test_medical_safety.py::TestMedicalPromptLogging::test_medical_prompts_are_logged PASSED [ 70%]
+tests/test_medical_safety.py::TestMedicalPromptLogging::test_log_contains_risk_level PASSED [ 71%]
+tests/test_medical_safety.py::TestMedicalPromptLogging::test_non_medical_not_in_log PASSED [ 71%]
+tests/test_medical_safety.py::TestMedicalPromptLogging::test_multiple_medical_prompts_logged PASSED [ 72%]
+tests/test_medical_safety.py::TestComplianceEngineIntegration::test_existing_rules_still_work PASSED [ 72%]
+tests/test_medical_safety.py::TestComplianceEngineIntegration::test_medical_rules_extend_existing_rules PASSED [ 73%]
+tests/test_medical_safety.py::TestComplianceEngineIntegration::test_original_compliance_check_works PASSED [ 73%]
+tests/test_medical_safety.py::TestMedicalSafetyEdgeCases::test_empty_task_name PASSED [ 74%]
+tests/test_medical_safety.py::TestMedicalSafetyEdgeCases::test_mixed_medical_non_medical_task PASSED [ 74%]
+tests/test_medical_safety.py::TestMedicalSafetyEdgeCases::test_case_insensitive_detection PASSED [ 75%]
+tests/test_medical_safety.py::TestMedicalSafetyEdgeCases::test_partial_keyword_match PASSED [ 75%]
+tests/test_mobius.py::test_mobius_initialization PASSED                  [ 76%]
+tests/test_mobius.py::test_mobius_initialization_fails_with_no_agents PASSED [ 76%]
+tests/test_mobius.py::test_strategy_phase_passthrough PASSED             [ 77%]
+tests/test_mobius.py::test_execution_phase_successful FAILED             [ 77%]
+tests/test_mobius.py::test_execution_phase_handles_provider_failure FAILED [ 78%]
+tests/test_mobius_loop.py::test_feedback_signals_collection PASSED       [ 78%]
+tests/test_mobius_loop.py::test_best_providers_ranking PASSED            [ 79%]
+tests/test_mobius_loop.py::test_provider_health_calculation PASSED       [ 79%]
+tests/test_mobius_loop.py::test_plan_rewriting PASSED                    [ 80%]
+tests/test_mobius_loop.py::test_plan_with_checkpoints PASSED             [ 80%]
+tests/test_mobius_loop.py::test_task_combining PASSED                    [ 81%]
+tests/test_mobius_loop.py::test_strategy_refinement PASSED               [ 81%]
+tests/test_mobius_loop.py::test_parallelism_adjustment PASSED            [ 82%]
+tests/test_mobius_loop.py::test_task_dependencies PASSED                 [ 82%]
+tests/test_mobius_loop.py::test_full_mobius_refinement PASSED            [ 83%]
+tests/test_mobius_loop.py::test_mobius_iteration_tracking PASSED         [ 83%]
+tests/test_mobius_loop.py::test_optimization_variant PASSED              [ 84%]
+tests/test_mobius_loop.py::test_checkpoint_variant FAILED                [ 84%]
+tests/test_mobius_loop.py::test_provider_recommendations PASSED          [ 85%]
+tests/test_mobius_loop.py::test_plan_quality_estimate PASSED             [ 85%]
+tests/test_mobius_loop.py::test_empty_plan_handling PASSED               [ 86%]
+tests/test_mobius_loop.py::test_plan_without_providers PASSED            [ 86%]
+tests/test_orchestration.py::test_orchestrator_single_cycle FAILED       [ 87%]
+tests/test_orchestration.py::test_orchestrator_handles_empty_tasks FAILED [ 87%]
+tests/test_orchestration.py::test_orchestrator_expands_agent_pool_on_recommendation FAILED [ 88%]
+tests/test_orchestration.py::test_orchestrator_does_not_expand_without_recommendation FAILED [ 88%]
+tests/test_provider_integration.py::test_orchestrator_with_provider_routing FAILED [ 89%]
+tests/test_provider_routing.py::test_round_robin_routing PASSED          [ 89%]
+tests/test_provider_routing.py::test_performance_based_routing PASSED    [ 90%]
+tests/test_provider_routing.py::test_load_balanced_routing PASSED        [ 90%]
+tests/test_provider_routing.py::test_provider_stats PASSED               [ 91%]
+tests/test_provider_routing.py::test_provider_unavailability PASSED      [ 91%]
+tests/test_provider_routing.py::test_request_logging PASSED              [ 92%]
+tests/test_provider_routing.py::test_strategy_switching PASSED           [ 92%]
+tests/test_recursive_engine.py::test_recursive_engine_ingests_and_updates_scores PASSED [ 93%]
+tests/test_recursive_engine.py::test_recursive_engine_tracks_job_history PASSED [ 93%]
+tests/test_recursive_engine.py::test_recursive_engine_computes_job_zpe PASSED [ 94%]
+tests/test_recursive_engine.py::test_recursive_engine_stores_insights PASSED [ 94%]
+tests/test_recursive_engine.py::test_recursive_engine_multiple_jobs FAILED [ 95%]
+tests/test_reflection.py::test_reflection_engine_initialization PASSED   [ 95%]
+tests/test_reflection.py::test_update_lessons_on_successful_results PASSED [ 96%]
+tests/test_reflection.py::test_update_lessons_on_failed_results PASSED   [ 96%]
+tests/test_reflection.py::test_update_lessons_on_mixed_results PASSED    [ 97%]
+tests/test_reflection.py::test_update_lessons_handles_malformed_results PASSED [ 97%]
+tests/test_reflection.py::test_update_lessons_handles_empty_input PASSED [ 98%]
+tests/test_universes.py::test_low_complexity FAILED                      [ 98%]
+tests/test_universes.py::test_medium_complexity FAILED                   [ 99%]
+tests/test_universes.py::test_high_complexity FAILED                     [100%]
+
+============================== warnings summary ===============================
+tests/test_agentarmy_e2e.py: 4 warnings
+tests/test_expansion_engine.py: 41 warnings
+tests/test_mobius_loop.py: 34 warnings
+tests/test_orchestration.py: 2 warnings
+tests/test_recursive_engine.py: 17 warnings
+  <string>:11: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+tests/test_agentarmy_e2e.py: 2 warnings
+tests/test_expansion_engine.py: 5 warnings
+tests/test_mobius_loop.py: 17 warnings
+tests/test_orchestration.py: 1 warning
+tests/test_recursive_engine.py: 6 warnings
+  <string>:5: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+tests/test_kernel_smoke.py::test_kernel_smoke
+  C:\Users\gregr\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\scipy\stats\_distn_infrastructure.py:750: RuntimeWarning: coroutine 'RecursiveEngine.run' was never awaited
+    setattr(self, name, types.MethodType(ns[name], self))
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/test_mobius_loop.py: 16 warnings
+  C:\Users\gregr\Documents\agentarmy\core\mobius\feedback_signals.py:92: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return datetime.utcnow().isoformat()
+
+tests/test_provider_integration.py::test_orchestrator_with_provider_routing
+  C:\Users\gregr\Documents\agentarmy\tests\test_provider_integration.py:20: RuntimeWarning: coroutine 'Orchestrator.run' was never awaited
+    orch.run(max_cycles=1)
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_agentarmy_e2e.py::test_agentarmy_e2e - AssertionError: New ...
+FAILED tests/test_expansion.py::test_should_not_expand_on_poor_performance - ...
+FAILED tests/test_expansion.py::test_handles_empty_or_invalid_results - asser...
+FAILED tests/test_expansion_extended.py::TestShouldExpand::test_should_expand_false_when_all_failed
+FAILED tests/test_expansion_extended.py::TestShouldExpand::test_should_expand_updates_results
+FAILED tests/test_expansion_extended.py::TestGetExpansionCount::test_expansion_count_one_when_positive_average_score_no_results
+FAILED tests/test_expansion_extended.py::TestGetExpansionCount::test_expansion_count_two_when_both_conditions_met
+FAILED tests/test_governance_safety.py::TestDomainClassification::test_classify_violence
+FAILED tests/test_hivemind.py::test_hive_mind_generates_tasks - AttributeErro...
+FAILED tests/test_integration_arena.py::test_integration_arena - AttributeErr...
+FAILED tests/test_kernel_smoke.py::test_kernel_smoke - AttributeError: 'str' ...
+FAILED tests/test_lifecycle_dashboard.py::test_lifecycle_dashboard - Attribut...
+FAILED tests/test_mobius.py::test_execution_phase_successful - TypeError: Pro...
+FAILED tests/test_mobius.py::test_execution_phase_handles_provider_failure - ...
+FAILED tests/test_mobius_loop.py::test_checkpoint_variant - assert 0 > 0
+FAILED tests/test_orchestration.py::test_orchestrator_single_cycle - TypeErro...
+FAILED tests/test_orchestration.py::test_orchestrator_handles_empty_tasks - T...
+FAILED tests/test_orchestration.py::test_orchestrator_expands_agent_pool_on_recommendation
+FAILED tests/test_orchestration.py::test_orchestrator_does_not_expand_without_recommendation
+FAILED tests/test_provider_integration.py::test_orchestrator_with_provider_routing
+FAILED tests/test_recursive_engine.py::test_recursive_engine_multiple_jobs - ...
+FAILED tests/test_universes.py::test_low_complexity - AttributeError: 'list' ...
+FAILED tests/test_universes.py::test_medium_complexity - AttributeError: 'lis...
+FAILED tests/test_universes.py::test_high_complexity - assert 6 == 9
+========== 24 failed, 173 passed, 2 skipped, 147 warnings in 27.78s ===========

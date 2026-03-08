@@ -72,16 +72,14 @@ class JobRunner:
             from core.universes.universes import Universes
             from core.universes.collapse import UniverseCollapse
             from core.universes.selector import UniverseSelector
-            from core.contracts.types import TaskResult
+            from core.contracts import TaskResult
 
-            # Convert dict results to TaskResult dataclasses
+            # Convert dict results to minimal TaskResult dataclasses
             task_result_objs = [
                 TaskResult(
-                    task_id=tr["task_id"],
-                    provider=tr["provider"],
                     success=tr["success"],
-                    output=tr.get("output"),
-                    metadata=tr.get("metadata", {})
+                    output=str(tr.get("output", "")),
+                    provider=tr.get("provider")
                 ) for tr in job_result["tasks"]
             ]
 

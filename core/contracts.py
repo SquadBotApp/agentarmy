@@ -1,12 +1,20 @@
 # contracts.py
-# Defines core contract types for AgentArmy
+# Re-exports from core.models for backward compatibility
 
-from typing import Any, Dict
+from core.models import (
+    TaskResult,
+    ProviderResponse,
+    Task,
+    Agent,
+    SimulationMetrics,
+    TaskStatus,
+)
 
-class TaskResult:
-    """Represents the result of a task execution."""
-    def __init__(self, success: bool, output: Any = None, error: str = None, metadata: Dict = None):
-        self.success = success
-        self.output = output
-        self.error = error
-        self.metadata = metadata or {}
+__all__ = [
+    "TaskResult",
+    "ProviderResponse",
+    "Task",
+    "Agent",
+    "SimulationMetrics",
+    "TaskStatus",
+]

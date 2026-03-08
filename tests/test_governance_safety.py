@@ -19,152 +19,146 @@ from core.compliance import ComplianceEngine
 from core.contracts import TaskResult, SimulationMetrics
 
 
+
+import logging
+from typing import List
+
+logger = logging.getLogger(__name__)
+
+
 class ExtendedSafetyComplianceEngine(ComplianceEngine):
     """
     Extended compliance engine covering all high-risk safety domains.
     """
+
     # Self-harm keywords
-    SELF_HARM_KEYWORDS = [
-        'suicide', 'suicidal', 'kill myself', 'end my life', 'self harm',
-        'self-injury', 'cut myself', 'burn myself', 'anorexia', 'bulimia',
-        'eating disorder', 'purge', 'fasting to death', 'overdose myself',
-        'self injury', 'hurt myself', 'ways to hurt'
+    SELF_HARM_KEYWORDS: List[str] = [
+        "suicide",
+        "suicidal",
+        "kill myself",
+        "end my life",
+        "self harm",
+        "self-harm",
+        "self-injury",
+        "self injury",
+        "cut myself",
+        "burn myself",
+        "anorexia",
+        "bulimia",
+        "eating disorder",
+        "purge",
+        "fasting to death",
+        "overdose myself",
+        "hurt myself",
+        "ways to hurt",
     ]
-    
-    # Violence keywords
-    VIOLENCE_KEYWORDS = [
-        'assault', 'attack', 'kill', 'kill someone', 'murder', 'rape', 'abuse',
-        'weapon', 'gun', 'bomb', 'explosive', 'terrorist', 'shoot',
-        'stab', 'beat up', 'hurt someone', 'violence', 'bioweapon',
-        'chemical weapon', 'firebomb', 'ied', 'kill someone'
+
+    # Violence / weapons
+    VIOLENCE_KEYWORDS: List[str] = [
+        "kill someone",
+        "hurt someone",
+        "attack",
+        "assault",
+        "murder",
+        "stab",
+        "shoot",
+        "bomb",
+        "terrorist",
+        "terrorism",
+        "mass shooting",
+        "school shooting",
+        "how to make a weapon",
     ]
-    
-    # Illegal activity keywords
-    ILLEGAL_KEYWORDS = [
-        'drug', 'marijuana', 'cocaine', 'heroin', 'meth', 'fraud',
-        'hack', 'steal', 'theft', 'pirate', 'copyright', 'scam',
-        'illegal', 'contraband', 'smuggle', 'bribe'
+
+    # Illegal activities
+    ILLEGAL_KEYWORDS: List[str] = [
+        "buy drugs",
+        "sell drugs",
+        "cook meth",
+        "launder money",
+        "credit card fraud",
+        "identity theft",
+        "hack into",
+        "bypass password",
+        "crack wifi",
+        "dark web",
     ]
-    
-    # Dangerous instruction keywords
-    DANGEROUS_KEYWORDS = [
-        'make bomb', 'make weapon', 'explosive', 'poison', 'bioweapon',
-        'chemical weapon', 'dirty bomb', 'firebomb', 'ied', 'molotov',
-        'how to kill', 'how to hurt', 'harmful chemical'
+
+    # Dangerous instructions
+    DANGEROUS_INSTRUCTION_KEYWORDS: List[str] = [
+        "make a bomb",
+        "build an explosive",
+        "homemade explosive",
+        "poison someone",
+        "lethal dose",
+        "kill silently",
+        "undetectable poison",
     ]
-    
-    def __init__(self):
-        super().__init__()
-        
-        # Add all safety domain rules
-        self.safety_rules = [
-            {
-                "description": "Block self-harm content",
-                "task_keywords": self.SELF_HARM_KEYWORDS,
-                "action": "block",
-                "severity": "critical",
-                "domain": "self_harm"
-            },
-            {
-                "description": "Block violent content",
-                "task_keywords": self.VIOLENCE_KEYWORDS,
-                "action": "block",
-                "severity": "critical",
-                "domain": "violence"
-            },
-            {
-                "description": "Block illegal activity content",
-                "task_keywords": self.ILLEGAL_KEYWORDS,
-                "action": "block",
-                "severity": "critical",
-                "domain": "illegal"
-            },
-            {
-                "description": "Block dangerous instruction content",
-                "task_keywords": self.DANGEROUS_KEYWORDS,
-                "action": "block",
-                "severity": "critical",
-                "domain": "dangerous"
-            }
-        ]
-        self.rules.extend(self.safety_rules)
-        
-        # Safety log
-        self.safety_log = []
-        
-    def is_safety_concern(self, task_name: str) -> bool:
-        """Check if task is a safety concern."""
-        task_lower = task_name.lower()
-        all_keywords = (
-            self.SELF_HARM_KEYWORDS + 
-            self.VIOLENCE_KEYWORDS + 
-            self.ILLEGAL_KEYWORDS + 
-            self.DANGEROUS_KEYWORDS
+
+    def _contains_any(self, text: str, keywords: List[str]) -> bool:
+        lowered = text.lower()
+        return any(k in lowered for k in keywords)
+
+    def check_compliance(self, task_name: str, result: TaskResult) -> SimulationMetrics:
+        """
+        Override base compliance check with extended high-risk domain coverage.
+        """
+        content = (getattr(result, 'output', None) or "") + " " + (getattr(result, 'prompt', None) or "")
+        content = content.strip()
+
+        metrics = SimulationMetrics(
+            is_safe=True,
+            blocked=False,
+            reason=None,
+            domain=None,
         )
-        return any(kw in task_lower for kw in all_keywords)
-    
-    def classify_safety_domain(self, task_name: str) -> str:
-        """Classify which safety domain this belongs to."""
-        task_lower = task_name.lower()
-        
-        if any(kw in task_lower for kw in self.SELF_HARM_KEYWORDS):
-            return "self_harm"
-        
-        if any(kw in task_lower for kw in self.VIOLENCE_KEYWORDS):
-            return "violence"
-        
-        if any(kw in task_lower for kw in self.ILLEGAL_KEYWORDS):
-            return "illegal"
-        
-        if any(kw in task_lower for kw in self.DANGEROUS_KEYWORDS):
-            return "dangerous"
-        
-        return "none"
-    
-    def get_safe_response(self, domain: str) -> str:
-        """Return safe guidance for blocked domains."""
-        responses = {
-            "self_harm": (
-                "I'm not able to provide help with this. "
-                "If you're having thoughts of self-harm, please contact a crisis helpline: "
-                "National Suicide Prevention Lifeline: 988 (US). "
-                "You deserve support - please reach out to a mental health professional."
-            ),
-            "violence": (
-                "I'm not able to provide help with this. "
-                "Violence is never the answer. "
-                "If you're in danger, please contact local law enforcement. "
-                "For immediate emergencies, call 911."
-            ),
-            "illegal": (
-                "I'm not able to provide help with this. "
-                "This activity is illegal and could harm you or others. "
-                "Please consult a legal professional for guidance on legal matters."
-            ),
-            "dangerous": (
-                "I'm not able to provide help with this. "
-                "This type of information could cause serious harm. "
-                "Please do not pursue dangerous activities."
-            )
-        }
-        return responses.get(domain, "This request cannot be fulfilled.")
-    
-    def check_safety(self, task_name: str):
-        """
-        Comprehensive safety check for all domains.
-        Returns: (is_safe, domain, safe_response)
-        """
-        # Log the request
-        self.safety_log.append({
-            "task_name": task_name,
-            "domain": self.classify_safety_domain(task_name)
-        })
-        
-        if not self.is_safety_concern(task_name):
-            return True, "none", None
-        
-        domain = self.classify_safety_domain(task_name)
-        return False, domain, self.get_safe_response(domain)
+
+        if not content:
+            return metrics
+
+        # Self-harm
+        if self._contains_any(content, self.SELF_HARM_KEYWORDS):
+            metrics.is_safe = False
+            metrics.blocked = True
+            metrics.domain = "self_harm"
+            metrics.reason = "Detected self-harm related content."
+            logger.warning("Compliance block (self-harm): %s", task_name)
+            return metrics
+
+        # Violence
+        if self._contains_any(content, self.VIOLENCE_KEYWORDS):
+            metrics.is_safe = False
+            metrics.blocked = True
+            metrics.domain = "violence"
+            metrics.reason = "Detected violence-related content."
+            logger.warning("Compliance block (violence): %s", task_name)
+            return metrics
+
+        # Illegal activities
+        if self._contains_any(content, self.ILLEGAL_KEYWORDS):
+            metrics.is_safe = False
+            metrics.blocked = True
+            metrics.domain = "illegal_activity"
+            metrics.reason = "Detected illegal-activity-related content."
+            logger.warning("Compliance block (illegal): %s", task_name)
+            return metrics
+
+        # Dangerous instructions
+        if self._contains_any(content, self.DANGEROUS_INSTRUCTION_KEYWORDS):
+            metrics.is_safe = False
+            metrics.blocked = True
+            metrics.domain = "dangerous_instructions"
+            metrics.reason = "Detected dangerous-instruction-related content."
+            logger.warning("Compliance block (dangerous instructions): %s", task_name)
+            return metrics
+
+        # If nothing triggered, defer to base behavior (if any)
+        base_metrics = super().check_compliance(task_name, result)
+        # Prefer stricter outcome
+        if not getattr(base_metrics, 'is_safe', True) or getattr(base_metrics, 'blocked', False):
+            return base_metrics
+
+        return metrics
 
 
 # Test fixtures
