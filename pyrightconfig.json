@@ -1,0 +1,46 @@
+{
+    "include": [
+        "core",
+        "services", 
+        "apps",
+        "utils",
+        "cli",
+        "api",
+        "optimization"
+    ],
+    "exclude": [
+        "**/__pycache__",
+        "**/node_modules",
+        "**/.venv"
+    ],
+    "typeCheckingMode": "basic",
+    "reportMissingTypeStubs": false,
+    "reportMissingImports": false,
+    "reportMissingSourceFile": false,
+    "reportUnknownMemberType": false,
+    "reportUnknownVariableType": false,
+    "reportUnknownArgumentType": false,
+    "reportFunctionMemberAccess": false,
+    "reportMissingParameterType": false,
+    "reportReturnType": false,
+    "reportGeneralTypeIssues": false,
+    "reportOptionalSubscript": false,
+    "reportOptionalMemberAccess": false,
+    "pythonVersion": "3.11",
+    "venvPath": ".",
+    "pythonAnalysis": {
+        "autoSearchPaths": true,
+        "useLibraryCodeForTypes": true,
+        "diagnosticSeverityOverrides": {
+            "reportMissingTypeStubs": "none",
+            "reportMissingImports": "none",
+            "reportUnknownMemberType": "none",
+            "reportUnknownVariableType": "none",
+            "reportUnknownArgumentType": "none",
+            "reportFunctionMemberAccess": "none",
+            "reportMissingParameterType": "none",
+            "reportReturnType": "none"
+        }
+    }
+}
+

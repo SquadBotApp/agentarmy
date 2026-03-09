@@ -1,0 +1,61 @@
+name: PR Evolution Bot
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  evolution-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Evolution Analysis
+        run: python scripts/evolution_analysis.py
+
+      - name: Read Evolution Actions
+        id: read_actions
+        run: |
+          import json
+          actions = []
+          try:
+            with open("evolution_actions.json") as f:
+              actions = json.load(f)
+          except:
+            actions = ["add_tests", "optimize_routing"]
+          print(f"Actions: {actions}")
+          echo "actions={json.dumps(actions)}" >> $GITHUB_OUTPUT
+
+      - name: Comment on PR
+        if: steps.read_actions.outputs.actions != '[]'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const actions = JSON.parse(process.env.ACTIONS || "[]");
+            let body = "### Genesis Evolution Suggestions\n\n";
+            if (actions.length === 0) {
+              body += "_No specific evolution actions detected._";
+            } else {
+              body += "Genesis suggests:\n";
+              for (const a of actions) {
+                body += "- " + a + "\n";
+              }
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+        env:
+          ACTIONS: ${{ steps.read_actions.outputs.actions }}

@@ -1,0 +1,90 @@
+# Governance Configuration for AGENTARMY OS v7.6
+# ===============================================
+# Vision-related governance policies
+
+# Vision Policies (v7.6 - Safe Vision)
+vision_policies:
+  # Core vision settings
+  enabled: true
+  
+  # Privacy controls
+  privacy:
+    user_images_only: true  # Only allow user-supplied images
+    no_identification: true  # No person identification
+    no_database_matching: false  # No facial recognition database matching
+    no_surveillance: true  # No surveillance capabilities
+  
+  # Allowed operations
+  allowed_tools:
+    - face_detect    # Detect faces in images
+    - face_analyze  # Analyze face attributes
+    - face_compare  # Compare two faces (user-only)
+    - face_blur     # Apply privacy blur
+  
+  # Forbidden query patterns (blocked by governance)
+  forbidden_patterns:
+    - "identify this person"
+    - "who is this"
+    - "who is this person"
+    - "match to database"
+    - "match to criminal"
+    - "surveillance"
+    - "find person"
+    - "recognize face"
+    - "facial recognition database"
+  
+  # Comparison threshold
+  comparison_threshold: 0.6  # Similarity threshold for face comparison
+  
+  # Audit settings
+  audit:
+    enabled: true
+    log_directory: "vision_audit_logs"
+    log_format: "jsonl"
+
+# Facial Login Policies (v7.7 - Opt-in Authentication)
+facial_login_policies:
+  # Core settings
+  enabled: false  # Disabled by default, requires opt-in
+  
+  # Opt-in requirements
+  require_explicit_consent: true
+  require_opt_in: true
+  
+  # Login-only mode (comparison only for authentication)
+  login_context_only: true
+  
+  # User control
+  allow_revocation: true
+  require_human_review: false
+  
+  # Template storage
+  template_storage: "local"  # Local file storage
+  template_directory: "memory"
+  
+  # Thresholds
+  auth_threshold: 0.6  # Lower = stricter match required
+
+# General Governance
+general:
+  # Red flags that block any operation
+  red_flags:
+    - harm
+    - attack
+    - exploit
+    - weapon
+    - dangerous
+  
+  # Caution flags that trigger review
+  caution_flags:
+    - uncertain
+    - unknown
+    - unverified
+  
+  # Constitution principles
+  constitution:
+    - "Do no harm"
+    - "Maximize truth"
+    - "Respect universes"
+    - "Profit only with consent"
+

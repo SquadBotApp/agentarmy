@@ -80,8 +80,12 @@ def status():
     click.echo(f"Providers: {len(providers)}")
     for provider in providers:
         click.echo(f"  - {provider.name}")
-    
-    click.echo("\nArchitecture: Input → ProviderRouter → Provider → TaskResult")
+
+    # Use Unicode arrow for architecture, fallback to ASCII if encoding fails
+    try:
+        click.echo("Architecture: Input  ProviderRouter  Provider  TaskResult")
+    except UnicodeEncodeError:
+        click.echo("Architecture: Input -> ProviderRouter -> Provider -> TaskResult")
     click.echo("Status: ✓ Ready")
 
 

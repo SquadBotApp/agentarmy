@@ -12,3 +12,9 @@ scipy
 scikit-learn
 PyYAML
 uvicorn
+click
+fastapi
+sympy
+networkx
+torch
+pyyaml

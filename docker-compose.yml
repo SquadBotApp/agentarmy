@@ -1,43 +1,17 @@
-services:
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
+version: "3.9"
 
-  backend:
+services:
+  agentarmy:
     build: .
-    command: python main.py
+    container_name: agentarmy
     ports:
       - "5001:5001"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: "/app:/app/core"
     volumes:
       - .:/app
-    environment:
-      - MODELSLAB_API_KEY=
-      - OPENAI_API_KEY=
-      - ANTHROPIC_API_KEY=
-      - PYTHONUNBUFFERED=1
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-
-  dashboard:
-    build: ./dashboard
-    command: node server.js
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
+    command: ["python", "main.py"]
       redis:
         condition: service_healthy
 

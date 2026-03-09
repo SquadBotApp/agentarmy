@@ -1,0 +1,21 @@
+{
+  "users": {
+    "greg allen": {
+      "user_id": "greg allen",
+      "username": "greg allen",
+      "email": "gregre-tom@hotmail.com",
+      "password_hash": "62e8466d2c84ea77f8b474f3e862da26$49f740eeef52762343fb46decf10a7e8a0283a9f74573c237da87a7077eb9787",
+      "segment": "production",
+      "tier": "owner",
+      "created_at": "2026-03-09T14:29:59.739925",
+      "last_login_at": null,
+      "mfa_enabled": false,
+      "mfa_secret": null,
+      "facial_login_enabled": false,
+      "facial_safety_override": false,
+      "facial_template_path": null,
+      "last_facial_auth_at": null,
+      "api_keys": []
+    }
+  }
+}
