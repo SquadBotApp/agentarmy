@@ -1,20 +1,28 @@
-# Core package initialization
-# Unified model imports
+"""
+OPTION B: Core AgentArmy Module
+Input → ProviderRouter → Provider → TaskResult
 
-from .models import (
-    TaskResult,
-    ProviderResponse,
-    Task,
-    Agent,
-    SimulationMetrics,
-    TaskStatus,
-)
+Clean, minimal architecture.
+"""
+
+from .models import TaskResult, Task
+from .orchestration import Orchestrator
+from .providers.router import ProviderRouter, ProviderRequest, ProviderResponse, RoutingStrategy
+from .providers.base import OpenAIProvider, ClaudeProvider, MockProvider
 
 __all__ = [
+    # Models
     "TaskResult",
-    "ProviderResponse",
     "Task",
-    "Agent",
-    "SimulationMetrics",
-    "TaskStatus",
+    # Orchestrator
+    "Orchestrator",
+    # Routing
+    "ProviderRouter",
+    "ProviderRequest",
+    "ProviderResponse",
+    "RoutingStrategy",
+    # Providers
+    "OpenAIProvider",
+    "ClaudeProvider",
+    "MockProvider",
 ]
